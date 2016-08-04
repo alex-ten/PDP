@@ -1,0 +1,2 @@
+model_checkpoint_path: "/Users/tenalexander1991/IT/python/PDP_project/FFBP/xor_files/xor_params.ckpt"
+all_model_checkpoint_paths: "/Users/tenalexander1991/IT/python/PDP_project/FFBP/xor_files/xor_params.ckpt"
