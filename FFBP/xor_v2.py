@@ -1,12 +1,12 @@
 import tensorflow as tf
 import FFBP.utilities.evaluation_functions as evalf
-from FFBP.classes.DataSet import load_data
-from FFBP.classes.Layer import Layer
 import FFBP.utilities.activation_functions as af
 import FFBP.utilities.error_functions as ef
 import FFBP.utilities.train as train
+from FFBP.classes.DataSet import load_data
+from FFBP.classes.Layer import Layer
 
-DS = load_data('xor_files/f_XOR.txt')
+DS = load_data('ex_XOR/f_XOR.txt')
 
 batch_size = 4
 lrate = 0.5
@@ -33,14 +33,14 @@ output =  Layer(input_tensor = hidden1.activations,
 mymodel = (X, hidden1, output, target)
 
 with tf.Session() as sess:
-    train.SGDM(model = mymodel,
-               dataset = DS,
-               num_epochs = num_epochs,
-               learning_rate = lrate,
-               momentum = mrate,
-               error = ef.squared_error,
-               batch_size = batch_size,
-               evaluation = evalf.tss,
-               checkpoint = 100,
-               permute = False,
-               _restore_XOR = 'xor_files/xor_params.ckpt')
+    train.SGD(model = mymodel,
+              dataset = DS,
+              num_epochs = num_epochs,
+              learning_rate = lrate,
+              momentum = mrate,
+              error = ef.squared_error,
+              batch_size = batch_size,
+              evaluation = evalf.tss,
+              checkpoint = 100,
+              permute = False,
+              _restore_XOR = 'ex_XOR/xor_params.ckpt')

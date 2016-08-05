@@ -7,17 +7,17 @@ import FFBP.utilities.logdir as logdir
 import FFBP.utilities.store_hyper_params as shp
 from FFBP.utilities.restore_params import restore_xor
 
-def SGDM(model,
-                 dataset,
-                 num_epochs,
-                 learning_rate,
-                 momentum,
-                 error,
-                 batch_size,
-                 evaluation,
-                 checkpoint = 100,
-                 permute = False,
-                 _restore_XOR = False):
+def SGD(model,
+        dataset,
+        num_epochs,
+        learning_rate,
+        momentum,
+        error,
+        batch_size,
+        evaluation,
+        checkpoint = 100,
+        permute = False,
+        _restore_XOR = False):
 
     # Create log directory to store hyperparameters, model parameters and events, return directory's path to dir_path
     dir_path = logdir.logdir()

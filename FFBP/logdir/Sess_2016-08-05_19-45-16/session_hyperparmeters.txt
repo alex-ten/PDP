@@ -1,0 +1,6 @@
+Number of epochs:  300
+Learning rate:     0.5
+Momentum rate:     0.9
+Error:             <function squared_error at 0x10ae44d90>
+Batch size:        4
+Permuted mode:     False

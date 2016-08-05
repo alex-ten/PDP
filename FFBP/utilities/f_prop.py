@@ -7,7 +7,7 @@ def f_prop(image, ):
     # Run the graph
     with tf.Session() as sess:
         sess.run(init_op)
-        R.restore(sess, "xor_files/xor-params.ckpt")
+        R.restore(sess, "ex_XOR/xor-params.ckpt")
         tf.get_default_graph()
         batch_xs, batch_ys = DS.next_batch(4)
         print(sess.run(output.activations, feed_dict={x: batch_xs, y_: batch_ys}))

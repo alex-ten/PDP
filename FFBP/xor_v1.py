@@ -17,7 +17,7 @@ momentum = 0.9
 error_measure = 'squared error'
 
 # Create a DataSet object by loading a txt file. The txt file must be structured in a particular way (see file f_XOR.txt)
-data_set = load_data('xor_files/f_XOR.txt')
+data_set = load_data('ex_XOR/f_XOR.txt')
 
 # Create input and output placeholders
 x_ = tf.placeholder(tf.float32, shape=(None, 2), name='inslot')
@@ -87,7 +87,7 @@ summary_writer = tf.train.SummaryWriter(os.getcwd()+'/events', graph=tf.get_defa
 sess = tf.Session()
 
 sess.run(init_op)
-saver_op.restore(sess, "xor_files/xor_params.ckpt")
+saver_op.restore(sess, "ex_XOR/xor_params.ckpt")
 start_time = time.time()
 i=0
 while i < numepochs:
