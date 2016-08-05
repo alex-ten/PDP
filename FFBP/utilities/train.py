@@ -3,12 +3,11 @@ import tensorflow as tf
 import time
 import math
 import collections
-from FFBP.utilities.logdir import *
-from FFBP.utilities.restore_params import *
-from FFBP.utilities.evaluation_functions import *
-from FFBP.utilities.store_hyper_params import *
+import FFBP.utilities.logdir as logdir
+import FFBP.utilities.store_hyper_params as shp
+from FFBP.utilities.restore_params import restore_xor
 
-def run_training(model,
+def SGDM(model,
                  dataset,
                  num_epochs,
                  learning_rate,
@@ -21,7 +20,7 @@ def run_training(model,
                  _restore_XOR = False):
 
     # Create log directory to store hyperparameters, model parameters and events, return directory's path to dir_path
-    dir_path = logdir()
+    dir_path = logdir.logdir()
     # Store hyperparameters in dir_path
     hyper_parameters = [('Number of epochs:', num_epochs),
                         ('Learning rate:', learning_rate),
@@ -29,7 +28,7 @@ def run_training(model,
                         ('Error:', error),
                         ('Batch size:', batch_size),
                         ('Permuted mode:', permute)]
-    store_hyper_params(collections.OrderedDict(hyper_parameters), dir_path)
+    shp.store_hyper_params(collections.OrderedDict(hyper_parameters), dir_path)
 
     # Tell TensorFlow that the model will be built into the default Graph.
     #with tf.Graph().as_default(): TODO what difference does this make?
