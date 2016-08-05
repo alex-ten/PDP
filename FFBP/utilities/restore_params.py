@@ -2,10 +2,10 @@ import tensorflow as tf
 import os
 
 def restore_xor(path, model):
-    restore_dict = {'w_1': model[1].W,
-                    'b_1': model[1].b,
-                    'w_2': model[2].W,
-                    'b_2': model[2].b}
+    restore_dict = {'w_1': model['network'][0].W,
+                    'b_1': model['network'][0].b,
+                    'w_2': model['network'][1].W,
+                    'b_2': model['network'][1].b}
     restore_op = tf.train.Saver(restore_dict)
     restore_op.restore(tf.get_default_session(), path)
 
