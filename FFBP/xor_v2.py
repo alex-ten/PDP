@@ -5,6 +5,7 @@ import FFBP.utilities.error_functions as ef
 import FFBP.utilities.train as train
 from FFBP.classes.DataSet import load_data
 from FFBP.classes.Layer import Layer
+from FFBP.utilities.model import model
 
 DS = load_data('ex_XOR/f_XOR.txt')
 
@@ -30,7 +31,7 @@ output =  Layer(input_tensor = hidden1.activations,
                 layer_name = 'output',
                 seed = 2)
 
-mymodel = {'images': image, 'network': [hidden1, output], 'labels': label}
+mymodel = model([image], [hidden1, output], label)
 
 with tf.Session() as sess:
     train.SGD(model = mymodel,

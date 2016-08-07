@@ -1,4 +1,0 @@
-model_checkpoint_path: "/Users/tenalexander1991/IT/python/PDP_project/FFBP/logdir/Sess_2016-08-05_19-32-19/params/graph_vars_epoch-299.ckpt-299"
-all_model_checkpoint_paths: "/Users/tenalexander1991/IT/python/PDP_project/FFBP/logdir/Sess_2016-08-05_19-32-19/params/graph_vars_epoch-99.ckpt-99"
-all_model_checkpoint_paths: "/Users/tenalexander1991/IT/python/PDP_project/FFBP/logdir/Sess_2016-08-05_19-32-19/params/graph_vars_epoch-199.ckpt-199"
-all_model_checkpoint_paths: "/Users/tenalexander1991/IT/python/PDP_project/FFBP/logdir/Sess_2016-08-05_19-32-19/params/graph_vars_epoch-299.ckpt-299"
