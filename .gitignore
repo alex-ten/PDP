@@ -93,3 +93,5 @@ ENV/
 .idea
 
 FFBP/sandbox.py
+
+FFBP/logdir/*

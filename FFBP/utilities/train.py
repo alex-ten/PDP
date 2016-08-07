@@ -34,8 +34,8 @@ def SGD(model,
     #with tf.Graph().as_default(): TODO what difference does this make?
 
     # Add ops for computing loss function and evatuation metric
-    loss = error(model[-1], model[-2].activations)
-    eval = evaluation(model[-1], model[-2].activations)
+    loss = error(model['labels'], model['network'][-1].activations)
+    eval = evaluation(model['labels'], model['network'][-1].activations)
 
     # Define optimization algorithm.
     # Add ops for computing and applying gradients.
@@ -78,8 +78,16 @@ def SGD(model,
 
         # Fill a feed dictionary with the actual set of images and labels
         # for this particular training step.
-        batch_xs, batch_ys = dataset.next_batch(batch_size, permute=permute)
-        feed_dict = {model[0]: batch_xs, model[-1]: batch_ys}
+        batch_xs, batch_ys = dataset.next_batch(batch_size)
+        feed_dict = {}
+        # if len(model['images']) > 1:
+        start = 0
+        end = 0
+        for in_placeholder in model['images']:
+            end += int(in_placeholder.get_shape()[1])
+            feed_dict[in_placeholder] = batch_xs[:,start:end]
+            start += end
+        feed_dict[model['labels']] = batch_ys
 
         # Run one step of the training.  The return values are the activations
         # from the `train_op` (which is discarded) and the `loss` Op.  To
