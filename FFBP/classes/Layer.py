@@ -17,10 +17,10 @@ class Layer(object):
                 init_W = tf.random_uniform((self.size, self.sender_size), minval=self.wrange[0], maxval=self.wrange[1], seed=self.rand_seed)
                 init_b = tf.random_uniform((1, self.size), minval=self.wrange[0], maxval=self.wrange[1], seed=self.rand_seed+1)
             with tf.name_scope('weights'):
-                self.W = tf.Variable(init_W, dtype=tf.float32)
+                self.W = tf.Variable(init_W, dtype=tf.float32, collections=['Wb'])
                 self.variable_summaries(self.W, layer_name + '/weights')
             with tf.name_scope('biases'):
-                self.b = tf.Variable(init_b, dtype=tf.float32)
+                self.b = tf.Variable(init_b, dtype=tf.float32, collections=['Wb'])
                 self.variable_summaries(self.b, layer_name + '/biases')
             with tf.name_scope('netinp'):
                 self.netinp = tf.matmul(input_tensor, self.W, transpose_b=True) + self.b

@@ -1,4 +1,5 @@
 # CPR
+# todo split the train function into three
 import tensorflow as tf
 import time
 import math

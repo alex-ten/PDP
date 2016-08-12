@@ -9,10 +9,10 @@ from FFBP.utilities.model import model
 
 ET = load_data('ex_EightThings/f_EightThings.txt')
 
-batch_size = 8
+batch_size = 16
 lrate = 0.05
 mrate = 0.9
-num_epochs = 10000
+num_epochs = 5000
 
 item = tf.placeholder(tf.float32, shape=[batch_size,8], name='item')
 relation = tf.placeholder(tf.float32, shape=[batch_size,4], name='relation')
