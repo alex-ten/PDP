@@ -38,15 +38,20 @@ batch_size = 4
 lrate = 0.5
 mrate = 0.9
 num_epochs = 300
+ecrit = 0.01
+error = errf.squared_error
 
-for s in range(3):
+while mynet.ecrit_not_reached:
     mynet.train(num_epochs = None,
                 learning_rate = lrate,
                 momentum = mrate,
-                error = errf.squared_error,
+                loss = error,
                 batch_size = batch_size,
                 checkpoint = 300,
                 permute = False)
-    mynet.test(batch_size=batch_size)
+    mynet.test(batch_size = batch_size,
+               eval = evalf.tss,
+               loss = error)
+
 mynet.print_logdir()
 mynet.off()
