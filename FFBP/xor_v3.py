@@ -41,7 +41,11 @@ num_epochs = 300
 ecrit = 0.01
 error = errf.squared_error
 
+
 while mynet.ecrit_not_reached:
+    mynet.test(batch_size=batch_size,
+               eval=evalf.tss,
+               loss=error)
     mynet.train(num_epochs = None,
                 learning_rate = lrate,
                 momentum = mrate,
@@ -49,9 +53,5 @@ while mynet.ecrit_not_reached:
                 batch_size = batch_size,
                 checkpoint = 300,
                 permute = False)
-    mynet.test(batch_size = batch_size,
-               eval = evalf.tss,
-               loss = error)
-
 mynet.print_logdir()
 mynet.off()

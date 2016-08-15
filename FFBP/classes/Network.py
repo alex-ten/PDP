@@ -41,66 +41,74 @@ class Network(object):
         checkpoint = 100,
         permute = False):
 
-        self._training = True
-
-        if num_epochs is None:
-            usr_inp = input('Enter number of epochs to train: ')
-            num_epochs = int(usr_inp)
-
-        hyper_parameters = [('Number of epochs:', num_epochs),
-                            ('Learning rate:', learning_rate),
-                            ('Momentum rate:', momentum),
-                            ('Error:', loss),
-                            ('Batch size:', batch_size),
-                            ('Permuted mode:', permute)]
-        shp.store_hyper_params(collections.OrderedDict(hyper_parameters), self.logpath)
-
-        self.loss = loss(self.model['labels'], self.model['network'][-1].activations)
-        opt = tf.train.MomentumOptimizer(learning_rate, momentum)
-        learn = opt.minimize(self.loss)
-        error_measure_summary = tf.scalar_summary(self.loss.name, self.loss)
-        summary_op = tf.merge_all_summaries()
-
-        saver = tf.train.Saver()
-
-        summary_writer = tf.train.SummaryWriter(self.logpath + '/events', self.sess.graph)
-
-        init = init_rest()
-        self.sess.run(init)
-
-        t0 = self.counter
-        t1 = t0 + num_epochs
-        global_start = time.time()
-
-        for step in range(t0,t1):
-            print('Running epoch {}'.format(self.counter))
-            step_start = time.time()
-            if permute: self.dataset.permute()
-
-            train_dict = self.feed_dict(batch_size)
-
-            _, loss_val, summary_str = self.sess.run([learn, self.loss, summary_op], feed_dict=train_dict)
-
-            step_duration = time.time() - step_start
-
-            summary_writer.add_summary(summary_str, step)
-            summary_writer.flush()
-
-            # Save a checkpoint periodically.
-            if (self.counter + 1) % checkpoint == 0 or (self.counter + 1) == t1:
-                saver.save(self.sess, self.logpath + '/params/graph_vars_epoch-{}.ckpt'.format(self.counter))
-
-            if (step + 1) == t1:
-                training_duration = time.time() - global_start
-                print('Done training for {1}/{2} epochs ({0} seconds)\n'.format(round(training_duration, 3),
-                                                                              num_epochs,
-                                                                              self.counter+1))
-            if loss_val < ecrit:
-                print('Reached critical loss value on epoch {}'.format(self.counter))
+        if not self._training:
+            self._training = True
+            begin = input("\n>>> Hit 'enter' to begin training, or enter 'Q' to quit without training: ")
+            if begin=='Q':
                 self.ecrit_not_reached = False
-                break
+                return
+        if not self.ecrit_not_reached:
+            pass
+        else:
 
-            self.counter += 1
+            if num_epochs is None:
+                usr_inp = input('\n>>> Enter number of epochs to train: ')
+                num_epochs = int(usr_inp)
+
+            hyper_parameters = [('Number of epochs:', num_epochs),
+                                ('Learning rate:', learning_rate),
+                                ('Momentum rate:', momentum),
+                                ('Error:', loss),
+                                ('Batch size:', batch_size),
+                                ('Permuted mode:', permute)]
+            shp.store_hyper_params(collections.OrderedDict(hyper_parameters), self.logpath)
+
+            self.loss = loss(self.model['labels'], self.model['network'][-1].activations)
+            opt = tf.train.MomentumOptimizer(learning_rate, momentum)
+            learn = opt.minimize(self.loss)
+            error_measure_summary = tf.scalar_summary(self.loss.name, self.loss)
+            summary_op = tf.merge_all_summaries()
+
+            saver = tf.train.Saver()
+
+            summary_writer = tf.train.SummaryWriter(self.logpath + '/events', self.sess.graph)
+
+            init = init_rest()
+            self.sess.run(init)
+
+            t0 = self.counter
+            t1 = t0 + num_epochs
+            global_start = time.time()
+
+            for step in range(t0,t1):
+                print('Running epoch {}'.format(self.counter))
+                step_start = time.time()
+                if permute: self.dataset.permute()
+
+                train_dict = self.feed_dict(batch_size)
+
+                _, loss_val, summary_str = self.sess.run([learn, self.loss, summary_op], feed_dict=train_dict)
+
+                step_duration = time.time() - step_start
+
+                summary_writer.add_summary(summary_str, step)
+                summary_writer.flush()
+
+                # Save a checkpoint periodically.
+                if (self.counter + 1) % checkpoint == 0 or (self.counter + 1) == t1:
+                    saver.save(self.sess, self.logpath + '/params/graph_vars_epoch-{}.ckpt'.format(self.counter))
+
+                if (step + 1) == t1:
+                    training_duration = time.time() - global_start
+                    print('Done training for {1}/{2} epochs ({0} seconds)\n'.format(round(training_duration, 3),
+                                                                                  num_epochs,
+                                                                                  self.counter+1))
+                if loss_val < ecrit:
+                    print('Reached critical loss value on epoch {}'.format(self.counter))
+                    self.ecrit_not_reached = False
+                    break
+
+                self.counter += 1
 
     def test(self, batch_size, eval, loss):
         np.set_printoptions(precision=5,suppress=True)
@@ -131,11 +139,15 @@ class Network(object):
         print('Partial derivatives w.r.t. biases:\n', b)
 
         if self._training:
-            go_on = input('continue training? [y/n]: ')
-            if go_on == 'y':
-                pass
-            elif go_on == 'n':
-                self.ecrit_not_reached = False
+            go_on = input('\n>>> Continue training? [y/n]: ')
+            while go_on != 'y' or go_on != 'n':
+                if go_on == 'y':
+                    break
+                elif go_on == 'n':
+                    self.ecrit_not_reached = False
+                    break
+                else:
+                    go_on = input("\n>>> Please enter 'y' if you wish to proceed, or 'n' to terminate [y/n]:" )
 
     def feed_dict(self, batch_size):
         # Fill a feed dictionary with the actual set of images and labels
