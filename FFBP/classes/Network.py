@@ -20,13 +20,13 @@ class Network(object):
         self.loss = None
         self.ecrit_not_reached = True
         self._training = False
+        self.history = {'loss': np.empty(shape=(0,2))}
 
     def init_weights(self):
         # Initialize weights and biases
         Wb_vars = self.graph.get_collection('Wb')
         init_Wb_vars = tf.initialize_variables(Wb_vars)
         self.sess.run(init_Wb_vars)
-
 
     def restore(self, path, xor=True):
         if xor: restore_xor(path, model=self.model)
@@ -81,16 +81,16 @@ class Network(object):
             global_start = time.time()
 
             for step in range(t0,t1):
-                print('Running epoch {}'.format(self.counter))
                 step_start = time.time()
                 if permute: self.dataset.permute()
 
                 train_dict = self.feed_dict(batch_size)
-
                 _, loss_val, summary_str = self.sess.run([learn, self.loss, summary_op], feed_dict=train_dict)
 
                 step_duration = time.time() - step_start
 
+                # Collect stats (note that loss is measured before the gradients are applied):
+                self.history['loss'] = np.append(self.history['loss'], [[self.counter, loss_val]], axis=0)
                 summary_writer.add_summary(summary_str, step)
                 summary_writer.flush()
 
@@ -98,6 +98,8 @@ class Network(object):
                 if (self.counter + 1) % checkpoint == 0 or (self.counter + 1) == t1:
                     saver.save(self.sess, self.logpath + '/params/graph_vars_epoch-{}.ckpt'.format(self.counter))
 
+                # Print something to stdout
+                print('Running epoch {}, loss: {}'.format(self.counter, loss_val)) #todo probably delete later
                 if (step + 1) == t1:
                     training_duration = time.time() - global_start
                     print('Done training for {1}/{2} epochs ({0} seconds)\n'.format(round(training_duration, 3),

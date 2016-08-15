@@ -1,3 +1,5 @@
+import numpy
+
 import tensorflow as tf
 import FFBP.utilities.evaluation_functions as evalf
 import FFBP.utilities.activation_functions as actf
@@ -43,9 +45,9 @@ error = errf.squared_error
 
 
 while mynet.ecrit_not_reached:
-    mynet.test(batch_size=batch_size,
-               eval=evalf.tss,
-               loss=error)
+    mynet.test(batch_size = batch_size,
+               eval = evalf.tss,
+               loss = error)
     mynet.train(num_epochs = None,
                 learning_rate = lrate,
                 momentum = mrate,
@@ -53,5 +55,6 @@ while mynet.ecrit_not_reached:
                 batch_size = batch_size,
                 checkpoint = 300,
                 permute = False)
+print(mynet.history['loss'])
 mynet.print_logdir()
 mynet.off()
