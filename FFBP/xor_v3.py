@@ -43,7 +43,6 @@ num_epochs = 300
 ecrit = 0.01
 error = errf.squared_error
 
-
 while mynet.ecrit_not_reached:
     mynet.test(batch_size = batch_size,
                eval = evalf.tss,
@@ -53,8 +52,9 @@ while mynet.ecrit_not_reached:
                 momentum = mrate,
                 loss = error,
                 batch_size = batch_size,
+                ecrit = 0.01,
                 checkpoint = 300,
                 permute = False)
-print(mynet.history['loss'])
+mynet.visualize()
 mynet.print_logdir()
 mynet.off()

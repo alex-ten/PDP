@@ -8,6 +8,7 @@ import FFBP.utilities.logdir as logdir
 import FFBP.utilities.store_hyper_params as shp
 from FFBP.utilities.restore_params import restore_xor
 from FFBP.utilities.init_rest import init_rest
+from FFBP.utilities.general_slider import slider_plot
 
 class Network(object):
     def __init__(self, model):
@@ -18,9 +19,10 @@ class Network(object):
         self.logpath = logdir.logdir()
         self.counter = 0
         self.loss = None
+        self.opt = None
         self.ecrit_not_reached = True
-        self._training = False
         self.history = {'loss': np.empty(shape=(0,2))}
+        self._train_settings = {'on': False}
 
     def init_weights(self):
         # Initialize weights and biases
@@ -31,26 +33,20 @@ class Network(object):
     def restore(self, path, xor=True):
         if xor: restore_xor(path, model=self.model)
 
-    def train(self,
-        num_epochs,
-        learning_rate,
-        momentum,
-        loss,
-        batch_size,
-        ecrit = 0.01,
-        checkpoint = 100,
-        permute = False):
+    def train(self, num_epochs, learning_rate, momentum,
+              loss, batch_size, ecrit = 0.01,
+              checkpoint = 100, permute = False):
 
-        if not self._training:
-            self._training = True
+        if not self._train_settings['on']:
+            self.train_init(learning_rate, momentum, loss)
             begin = input("\n>>> Hit 'enter' to begin training, or enter 'Q' to quit without training: ")
+            self._train_settings['on'] = True
             if begin=='Q':
                 self.ecrit_not_reached = False
                 return
         if not self.ecrit_not_reached:
             pass
         else:
-
             if num_epochs is None:
                 usr_inp = input('\n>>> Enter number of epochs to train: ')
                 num_epochs = int(usr_inp)
@@ -63,19 +59,6 @@ class Network(object):
                                 ('Permuted mode:', permute)]
             shp.store_hyper_params(collections.OrderedDict(hyper_parameters), self.logpath)
 
-            self.loss = loss(self.model['labels'], self.model['network'][-1].activations)
-            opt = tf.train.MomentumOptimizer(learning_rate, momentum)
-            learn = opt.minimize(self.loss)
-            error_measure_summary = tf.scalar_summary(self.loss.name, self.loss)
-            summary_op = tf.merge_all_summaries()
-
-            saver = tf.train.Saver()
-
-            summary_writer = tf.train.SummaryWriter(self.logpath + '/events', self.sess.graph)
-
-            init = init_rest()
-            self.sess.run(init)
-
             t0 = self.counter
             t1 = t0 + num_epochs
             global_start = time.time()
@@ -85,18 +68,23 @@ class Network(object):
                 if permute: self.dataset.permute()
 
                 train_dict = self.feed_dict(batch_size)
-                _, loss_val, summary_str = self.sess.run([learn, self.loss, summary_op], feed_dict=train_dict)
+                _, loss_val, summary_str = self.sess.run([self._train_settings['learn'],
+                                                          self.loss,
+                                                          self._train_settings['summary_op']
+                                                          ],
+                                                         feed_dict=train_dict
+                                                         )
 
                 step_duration = time.time() - step_start
 
                 # Collect stats (note that loss is measured before the gradients are applied):
                 self.history['loss'] = np.append(self.history['loss'], [[self.counter, loss_val]], axis=0)
-                summary_writer.add_summary(summary_str, step)
-                summary_writer.flush()
+                self._train_settings['summary_writer'].add_summary(summary_str, step)
+                self._train_settings['summary_writer'].flush()
 
                 # Save a checkpoint periodically.
                 if (self.counter + 1) % checkpoint == 0 or (self.counter + 1) == t1:
-                    saver.save(self.sess, self.logpath + '/params/graph_vars_epoch-{}.ckpt'.format(self.counter))
+                    self._train_settings['saver'].save(self.sess, self.logpath + '/params/graph_vars_epoch-{}.ckpt'.format(self.counter))
 
                 # Print something to stdout
                 print('Running epoch {}, loss: {}'.format(self.counter, loss_val)) #todo probably delete later
@@ -111,6 +99,17 @@ class Network(object):
                     break
 
                 self.counter += 1
+
+    def train_init(self, learning_rate, momentum, loss):
+        self.loss = loss(self.model['labels'], self.model['network'][-1].activations)
+        self.opt = tf.train.MomentumOptimizer(learning_rate, momentum)
+        self._train_settings['learn'] = self.opt.minimize(self.loss)
+        self._train_settings['error_measure_summary'] = tf.scalar_summary(self.loss.name, self.loss)
+        self._train_settings['summary_op'] = tf.merge_all_summaries()
+        self._train_settings['saver'] = tf.train.Saver()
+        self._train_settings['summary_writer'] = tf.train.SummaryWriter(self.logpath + '/events', self.sess.graph)
+        init = init_rest()
+        self.sess.run(init)
 
     def test(self, batch_size, eval, loss):
         np.set_printoptions(precision=5,suppress=True)
@@ -140,17 +139,21 @@ class Network(object):
         print('Partial derivatives w.r.t. weights:\n', W)
         print('Partial derivatives w.r.t. biases:\n', b)
 
-        if self._training:
+        if self._train_settings['on']:
             go_on = input('\n>>> Continue training? [y/n]: ')
             while go_on != 'y' or go_on != 'n':
                 if go_on == 'y':
-                    break
+                    return
                 elif go_on == 'n':
                     self.ecrit_not_reached = False
                     break
                 else:
                     go_on = input("\n>>> Please enter 'y' if you wish to proceed, or 'n' to terminate [y/n]:" )
 
+    def visualize(self):
+        def get_y(y_vec, x):
+            return y_vec[x]
+        slider_plot(self.history['loss'], get_y, 'epoch', 'loss', 'loss')
     def feed_dict(self, batch_size):
         # Fill a feed dictionary with the actual set of images and labels
         # for current training step.
