@@ -12,8 +12,10 @@ from FFBP.utilities.model import model
 
 DS = load_data('ex_XOR/f_XOR.txt')
 
-image = tf.placeholder(tf.float32, shape=[None,2], name='input') # image / img_pat
-label = tf.placeholder(tf.float32, shape=[None,1], name='target') # label / lbl_pat
+# ----------------------------- BUILD -----------------------------
+
+image = tf.placeholder(tf.float32, shape=[None,2], name='input')
+label = tf.placeholder(tf.float32, shape=[None,1], name='target')
 
 hidden1 = Layer(input_tensor = image,
                 size = 2,
@@ -30,11 +32,9 @@ output =  Layer(input_tensor = hidden1.activations,
                 seed = 2)
 
 xor = model([image], [hidden1, output], label)
-
 mynet = Network(xor)
-mynet.dataset = DS
-mynet.init_weights()
-mynet.restore('ex_XOR/xor_params.ckpt')
+
+# ----------------------------- SETUP -----------------------------
 
 batch_size = 4
 lrate = 0.5
@@ -43,14 +43,18 @@ num_epochs = 300
 ecrit = 0.01
 error = errf.squared_error
 
-while mynet.ecrit_not_reached:
+mynet.dataset = DS
+mynet.init_weights()
+mynet.restore('ex_XOR/xor_params.ckpt')
+mynet.configure(learning_rate = lrate,
+                momentum = mrate,
+                loss = error)
+
+while mynet._below_ecrit:
     mynet.test(batch_size = batch_size,
                eval = evalf.tss,
                loss = error)
     mynet.train(num_epochs = None,
-                learning_rate = lrate,
-                momentum = mrate,
-                loss = error,
                 batch_size = batch_size,
                 ecrit = 0.01,
                 checkpoint = 300,
