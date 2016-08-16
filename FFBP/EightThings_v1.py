@@ -1,28 +1,25 @@
 import tensorflow as tf
 import FFBP.utilities.evaluation_functions as evalf
-import FFBP.utilities.activation_functions as af
-import FFBP.utilities.error_functions as ef
-import FFBP.utilities.train as train
+import FFBP.utilities.activation_functions as actf
+import FFBP.utilities.error_functions as errf
 from FFBP.classes.DataSet import load_data
 from FFBP.classes.Layer import Layer
+from FFBP.classes.Network import Network
 from FFBP.utilities.model import model
+
+# ----------------------------- BUILD -----------------------------
 
 ET = load_data('ex_EightThings/f_EightThings.txt')
 
-batch_size = 16
-lrate = 0.05
-mrate = 0.9
-num_epochs = 5000
-
-item = tf.placeholder(tf.float32, shape=[batch_size,8], name='item')
-relation = tf.placeholder(tf.float32, shape=[batch_size,4], name='relation')
-labels = tf.placeholder(tf.float32, shape=[batch_size,36], name='labels')
+item = tf.placeholder(tf.float32, shape=[None,8], name='item')
+relation = tf.placeholder(tf.float32, shape=[None,4], name='relation')
+labels = tf.placeholder(tf.float32, shape=[None,36], name='labels')
 
 representation = Layer(
     input_tensor=item,
     size=8,
     wrange=[-1, 1],
-    act=af.sigmoid,
+    act=actf.sigmoid,
     layer_name='representation',
     seed=1)
 
@@ -30,7 +27,7 @@ hidden = Layer(
     input_tensor=tf.concat(1,[representation.activations, relation]), # concatenate representation.activations and relation'
     size=12,
     wrange=[-1, 1],
-    act=af.sigmoid,
+    act=actf.sigmoid,
     layer_name='hidden',
     seed=2)
 
@@ -38,21 +35,38 @@ attribute = Layer(
     input_tensor=hidden.activations,
     size=36,
     wrange=[-1, 1],
-    act=af.sigmoid,
+    act=actf.sigmoid,
     layer_name='attribute',
     seed=3)
 
-eight_things = model([item, relation] ,[representation, hidden, attribute], labels)
+eight_things = model([item, relation], [representation, hidden, attribute], labels)
+et_model = Network(eight_things)
 
-with tf.Session() as sess:
-    train.SGD(model = eight_things,
-              dataset = ET,
-              num_epochs = num_epochs,
-              learning_rate = lrate,
-              momentum = mrate,
-              error = ef.cross_entropy,
-              batch_size = batch_size,
-              evaluation = evalf.tss,
-              checkpoint = 300,
-              permute = False,
-              _restore_XOR = False)
+# ----------------------------- SETUP -----------------------------
+
+batch_size = 1
+lrate = 0.001
+mrate = 0.95
+num_epochs = 5000
+ecrit = 0.01
+error = errf.cross_entropy
+
+et_model.dataset = ET
+et_model.init_weights()
+et_model.configure(learning_rate = lrate,
+                   momentum = mrate,
+                   loss = error)
+
+# ----------------------------- TRAIN ------------------------------
+while et_model._below_ecrit:
+    et_model.test(batch_size = batch_size,
+                  eval = evalf.tss,
+                  loss = error)
+    et_model.train(num_epochs = num_epochs,
+                   batch_size = batch_size,
+                   ecrit = 0.01,
+                   checkpoint = 3000,
+                   permute = True)
+et_model.visualize()
+# eight_things.print_logdir()
+et_model.off()

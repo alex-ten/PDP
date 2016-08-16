@@ -4,7 +4,6 @@ import tensorflow as tf
 import FFBP.utilities.evaluation_functions as evalf
 import FFBP.utilities.activation_functions as actf
 import FFBP.utilities.error_functions as errf
-import FFBP.utilities.train as train
 from FFBP.classes.DataSet import load_data
 from FFBP.classes.Network import Network
 from FFBP.classes.Layer import Layer
