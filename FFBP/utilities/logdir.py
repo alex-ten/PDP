@@ -11,11 +11,13 @@ def logdir():
         dir_path = logdir_dir + '/' + sess_name
         os.mkdir(dir_path)
         os.mkdir(dir_path + '/params')
-        os.mkdir(dir_path + '/events')
+        os.mkdir(dir_path + '/mpl_data')
+        os.mkdir(dir_path + '/TFEvents')
     except FileExistsError:
         sess_name = 'Sess_'+dt.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         dir_path = logdir_dir + '/' + sess_name
         os.mkdir(dir_path)
         os.mkdir(dir_path + '/params')
-        os.mkdir(dir_path + '/events')
+        os.mkdir(dir_path + '/mpl_data')
+        os.mkdir(dir_path + '/TFEvents')
     return dir_path
