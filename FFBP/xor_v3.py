@@ -50,6 +50,7 @@ mynet.configure(learning_rate = lrate,
                 momentum = mrate,
                 loss = error)
 
+# ----------------------------- TRAIN ------------------------------
 while mynet._below_ecrit:
     mynet.test(batch_size = batch_size,
                eval = evalf.tss,

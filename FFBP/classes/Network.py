@@ -1,14 +1,15 @@
-import tensorflow as tf
-from tensorflow.python.ops.variables import report_uninitialized_variables
-import time
-import math
 import collections
+import time
+
 import numpy as np
+import tensorflow as tf
+
 import FFBP.utilities.logdir as logdir
 import FFBP.utilities.store_hyper_params as shp
-from FFBP.utilities.restore_params import restore_xor
+from FFBP.artist.slider_plot import slider_plot
 from FFBP.utilities.init_rest import init_rest
-from FFBP.utilities.general_slider import slider_plot
+from FFBP.utilities.restore_params import restore_xor
+
 
 class Network(object):
     def __init__(self, model):
@@ -157,9 +158,10 @@ class Network(object):
 
     def visualize(self):
         if self.counter > 0:
-            def get_y(y_vec, x):
+            def getybyx(y_vec, x):
                 return y_vec[x]
-            slider_plot(self._history['loss'], get_y, 'epoch', 'loss', 'loss')
+            slider_plot(self._history['loss'], getybyx, 'epoch', 'loss', 'loss')
+
     def feed_dict(self, batch_size):
         # Fill a feed dictionary with the actual set of images and labels
         # for current training step.
