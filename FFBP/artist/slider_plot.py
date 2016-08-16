@@ -5,9 +5,9 @@ from matplotlib.widgets import Slider, Button
 from FFBP.artist import fancy_annotation as fann
 
 
-def slider_plot(data, func, xlab, ylab, note,):
+def sum_figure(data, func, xlab, ylab, note, style_script='ggplot'):
     # CREATE FIGURE, AXES, AND PLOT SOME DATA
-    matplotlib.style.use('ggplot')
+    matplotlib.style.use(style_script)
     fig, ax = plt.subplots()  # create a figure and axis (i.e. subplot) instances
     plt.subplots_adjust(left=0.25, bottom=0.25) # adjust subplot position
 
