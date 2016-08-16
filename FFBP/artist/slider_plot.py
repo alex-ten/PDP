@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button
+from FFBP.artist import fancy_annotation as fann
 
 
 def slider_plot(data, func, xlab, ylab, note,):
@@ -22,35 +23,7 @@ def slider_plot(data, func, xlab, ylab, note,):
 
     # DEFINE AND INITIALIZE THE DYNAMIC OBJECTS
 
-    # Orthogonal lines at last values of x and y
-    hor = plt.axhline(y[-1], c='black', lw='0.8', ls=':') # add horizontal line
-    ver = plt.axvline(x[-1], c='black', lw='0.8', ls=':') # add vertical line
-
-    # Annotate the last point (x, y)
-    ann = ax.annotate('{}: {}'.format(note, np.around(y[-1],5)),  # annotation string
-                      # annotation coordinates:
-                      xy=(x[-1], y[-1]),  # position of element to annotate
-                      xycoords='data',  # use xy to define the position in the coordinate system being annotated
-                      xytext=(28, 26),  # position of the annotation
-                      textcoords='offset points',  # specify an offset from the xy coordinates
-                      # text properties
-                      size=12,  # size in points
-                      verticalalignment="center",  # position of text along the vertical axis of the box [aka va]
-                      horizontalalignment="center",  # position of text along the horizontal axis of the box [aka ha]
-                      bbox=dict(boxstyle="round",  # box shape (alt. square)
-                                facecolor="#66B8FF",
-                                edgecolor="none",
-                                alpha=0.5),
-                      arrowprops=dict(arrowstyle="wedge, tail_width=0.3, shrink_factor=1",
-                                      # if arrowstyle key is present FancyArrowPatch prop dict is used
-                                      fc="#66B8FF",
-                                      ec="none",
-                                      alpha=0.3,
-                                      patchA=None,
-                                      patchB=None,
-                                      relpos=(0.5, 0.00),
-                                      )
-                      )
+    ann, hline, vline = fann.fancy_annotation(ax, x[-1], y[-1], note)
 
     # DEFINE AND INITIALIZE SLIDER
 
@@ -84,8 +57,8 @@ def slider_plot(data, func, xlab, ylab, note,):
         ann.xy = (_x,_y) # set annotation xy to new values
         ann.set_text('{}: {}'.format(note, np.around(_y,5))) # change text accordingly
         # change positions of straight lines
-        hor.set_ydata(_y)
-        ver.set_xdata(_x)
+        hline.set_ydata(_y)
+        vline.set_xdata(_x)
         fig.canvas.draw_idle() # draw 2D line
 
     def slide_plus(val):
