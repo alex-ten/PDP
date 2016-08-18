@@ -4,7 +4,7 @@ import tensorflow as tf
 import time
 import math
 import collections
-import FFBP.utilities.logdir as logdir
+import FFBP.utilities.logger as logger
 import FFBP.utilities.store_hyper_params as shp
 from FFBP.utilities.restore_params import restore_xor
 
@@ -21,7 +21,7 @@ def SGD(model,
         _restore_XOR = False):
 
     # Create log directory to store hyperparameters, model parameters and events, return directory's path to dir_path
-    dir_path = logdir.logdir()
+    dir_path = logger.logdir()
     # Store hyperparameters in dir_path
     hyper_parameters = [('Number of epochs:', num_epochs),
                         ('Learning rate:', learning_rate),

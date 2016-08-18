@@ -40,10 +40,7 @@ class Network(object):
         self._loss = loss(self.model['labels'], self.model['network'][-1].activations)
         self._opt = tf.train.MomentumOptimizer(learning_rate, momentum)
         self._settings['opt_task'] = self._opt.minimize(self._loss)
-        self._settings['error_measure_summary'] = tf.scalar_summary(self._loss.name, self._loss)
-        self._settings['summary_op'] = tf.merge_all_summaries()
         self._settings['saver'] = tf.train.Saver()
-        self._settings['summary_writer'] = tf.train.SummaryWriter(self.logpath + '/TFEvents', self.sess.graph)
         self._settings['lrate'] = learning_rate
         self._settings['mrate'] = momentum
         self._settings['loss_func'] = loss
@@ -99,21 +96,17 @@ class Network(object):
                 if permute: self.dataset.permute()
 
                 train_dict = self.feed_dict(batch_size)
-                _, loss_val, summary_str = self.sess.run([self._settings['opt_task'],
-                                                          self._loss,
-                                                          self._settings['summary_op']],
-                                                         feed_dict=train_dict)
+                _, loss_val = self.sess.run([self._settings['opt_task'], self._loss],
+                                            feed_dict=train_dict)
 
                 step_duration = time.time() - step_start
 
                 # Collect stats (note that loss is measured before the gradients are applied):
                 self._lossHistory = np.append(self._lossHistory, [[self.counter, loss_val]], axis=0)
-                self._settings['summary_writer'].add_summary(summary_str, self.counter)
-                self._settings['summary_writer'].flush()
 
                 # Save a checkpoint periodically.
                 if (self.counter + 1) % tfcheckpoint == 0 or (self.counter + 1) == t1:
-                    self._settings['saver'].save(self.sess, self.logpath + '/params/graph_vars_epoch-{}.ckpt'.format(self.counter))
+                    self._settings['saver'].save(self.sess, self.logpath + '/tf_params/graph_vars_epoch-{}.ckpt'.format(self.counter))
 
                 # Print something to stdout
                 #print('Running epoch {}, loss: {}'.format(self.counter, loss_val)) #todo probably delete later
@@ -178,12 +171,12 @@ class Network(object):
             new_snap[l.layer_name] = inner_dict
             new_snap['error'] = np.array([[self.counter, test_measure]])
         if not self._training:
-            pickle.dump(new_snap, open(self.logpath + '/mpl_data/network_snapshot.pkl', 'wb'))
+            pickle.dump(new_snap, open(self.logpath + '/mpl_data/snapshot_log.pkl', 'wb'))
         else:
-            with open(self.logpath + '/mpl_data/network_snapshot.pkl', 'rb') as opened_file:
+            with open(self.logpath + '/mpl_data/snapshot_log.pkl', 'rb') as opened_file:
                 old_snap = pickle.load(opened_file)
             appended = logger.append_snapshot(old_snap, new_snap)
-            pickle.dump(appended, open(self.logpath + '/mpl_data/network_snapshot.pkl', 'wb'))
+            pickle.dump(appended, open(self.logpath + '/mpl_data/snapshot_log.pkl', 'wb'))
 
     def visualize_loss(self):
         if self.counter > 0:
@@ -213,10 +206,6 @@ class Network(object):
         for attribute in scope:
             basket.append(getattr(layer, attribute))
         return basket
-
-    def print_logdir(self):
-        if self.counter > 0:
-            print('\ntensorboard --logdir={}/events'.format(self.logpath))
 
     def off(self):
         self.sess.close()
