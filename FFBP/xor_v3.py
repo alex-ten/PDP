@@ -52,13 +52,14 @@ mynet.configure(learning_rate = lrate,
 # ----------------------------- TRAIN ------------------------------
 while mynet._below_ecrit:
     mynet.test(batch_size = batch_size,
-               eval = evalf.tss,
-               loss = error)
+               evalfunc = evalf.tss,
+               snapshot = True,
+               scope = 'all')
     mynet.train(num_epochs = None,
                 batch_size = batch_size,
                 ecrit = 0.01,
-                checkpoint = 300,
+                tfcheckpoint= 300,
                 permute = False)
-mynet.visualize()
+#mynet.visualize_loss()
 mynet.print_logdir()
 mynet.off()
