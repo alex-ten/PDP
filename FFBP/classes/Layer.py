@@ -27,6 +27,10 @@ class Layer(object):
                 tf.histogram_summary(layer_name + '/pre_activations', self.netinp)
             self.activations = act(self.netinp, 'activation')
             tf.histogram_summary(layer_name + '/activations', self.activations)
+            self.ded_netinp = None
+            self.ded_activations = None
+            self.ded_W = None
+            self.ded_b = None
 
     def __str__(self):
         return '<Layer object>'
