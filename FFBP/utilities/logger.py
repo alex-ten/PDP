@@ -1,3 +1,4 @@
+import numpy as np
 import datetime as dt
 import os
 
@@ -21,3 +22,20 @@ def logdir():
         os.mkdir(dir_path + '/mpl_data')
         os.mkdir(dir_path + '/TFEvents')
     return dir_path
+
+def unroll(ar, index):
+    if type(ar) is list: ar = ar[0]
+    strip1D = np.insert(ar.flatten(), 0, [index] + list(ar.shape))
+    return np.reshape(strip1D, (1,strip1D.size))
+
+def rollup(strip):
+    pass
+
+def append_snapshot(old, new):
+    for KEY in old.keys():
+        if KEY == 'error':
+            old[KEY] = np.append(old[KEY], new[KEY], axis=0)
+        else:
+            for key in old[KEY].keys():
+                old[KEY][key] = np.append(old[KEY][key], new[KEY][key], axis=0)
+    return old

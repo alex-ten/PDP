@@ -60,13 +60,13 @@ et_model.configure(learning_rate = lrate,
 # ----------------------------- TRAIN ------------------------------
 while et_model._below_ecrit:
     et_model.test(batch_size = batch_size,
-                  eval = evalf.tss,
+                  evalfunc= evalf.tss,
                   loss = error)
     et_model.train(num_epochs = num_epochs,
                    batch_size = batch_size,
                    ecrit = 0.01,
-                   checkpoint = 3000,
+                   tfcheckpoint= 3000,
                    permute = True)
-et_model.visualize()
+et_model.visualize_loss()
 # eight_things.print_logdir()
 et_model.off()
