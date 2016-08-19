@@ -18,15 +18,11 @@ class Layer(object):
                 init_b = tf.random_uniform((1, self.size), minval=self.wrange[0], maxval=self.wrange[1], seed=self.rand_seed+1)
             with tf.name_scope('weights'):
                 self.W = tf.Variable(init_W, dtype=tf.float32, collections=['Wb'])
-                self.variable_summaries(self.W, layer_name + '/weights')
             with tf.name_scope('biases'):
                 self.b = tf.Variable(init_b, dtype=tf.float32, collections=['Wb'])
-                self.variable_summaries(self.b, layer_name + '/biases')
             with tf.name_scope('netinp'):
                 self.netinp = tf.matmul(input_tensor, self.W, transpose_b=True) + self.b
-                tf.histogram_summary(layer_name + '/pre_activations', self.netinp)
             self.activations = act(self.netinp, 'activation')
-            tf.histogram_summary(layer_name + '/activations', self.activations)
             self.ded_netinp = None
             self.ded_activations = None
             self.ded_W = None

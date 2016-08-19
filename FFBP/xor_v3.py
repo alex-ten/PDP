@@ -60,6 +60,5 @@ while mynet._below_ecrit:
                 ecrit = 0.01,
                 tfcheckpoint= 300,
                 permute = False)
-#mynet.visualize_loss()
-mynet.print_logdir()
+# mynet.visualize_loss()
 mynet.off()
