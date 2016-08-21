@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button
-from FFBP.artist import fancy_annotation as fann
+from FFBP.netartist import fancy_annotation as fann
 
 
 def sum_figure(data, func, xlab, ylab, note, style_script='ggplot'):

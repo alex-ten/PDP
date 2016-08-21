@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 import FFBP.utilities.logger as logger
 import FFBP.utilities.store_hyper_params as shp
-from FFBP.artist.slider_plot import sum_figure
+from FFBP.netartist.slider_plot import sum_figure
 from FFBP.utilities.init_rest import init_rest
 from FFBP.utilities.restore_params import restore_xor
 
