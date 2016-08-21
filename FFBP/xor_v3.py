@@ -9,7 +9,8 @@ from FFBP.classes.Network import Network
 from FFBP.classes.Layer import Layer
 from FFBP.utilities.model import model
 
-DS = load_data('ex_XOR/f_XOR.txt')
+trainSet = load_data('ex_XOR/f_XOR.txt')
+testSet = load_data('ex_XOR/f_XOR.txt')
 
 # ----------------------------- BUILD -----------------------------
 
@@ -31,7 +32,7 @@ output =  Layer(input_tensor = hidden1.activations,
                 seed = 2)
 
 xor = model([image], [hidden1, output], label)
-mynet = Network(xor)
+mynet = Network(xor, name='XOR Network')
 
 # ----------------------------- SETUP -----------------------------
 
@@ -42,23 +43,18 @@ num_epochs = 300
 ecrit = 0.01
 error = errf.squared_error
 
-mynet.dataset = DS
 mynet.init_weights()
 mynet.restore('ex_XOR/xor_params.ckpt')
-mynet.configure(learning_rate = lrate,
-                momentum = mrate,
-                loss = error)
-
-# ----------------------------- TRAIN ------------------------------
-while mynet._below_ecrit:
-    mynet.test(batch_size = batch_size,
-               evalfunc = evalf.tss,
-               snapshot = True,
-               scope = 'all')
-    mynet.train(num_epochs = None,
+mynet.configure(loss = error,
                 batch_size = batch_size,
-                ecrit = 0.01,
-                tfcheckpoint= 300,
-                permute = False)
+                learning_rate = lrate,
+                momentum = mrate,
+                test_func = evalf.tss,
+                test_scope = 'all')
+
+# --------------------------- INTERACT -----------------------------
+
+mynet.tnt(300, train_set = trainSet, test_set = testSet, train_batch_size =  4, test_batch_size = 4, snp_checkpoint=50)
+# mynet.interact(DS, ts)
 # mynet.visualize_loss()
 mynet.off()
