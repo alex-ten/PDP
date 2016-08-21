@@ -55,18 +55,9 @@ et_model.dataset = ET
 et_model.init_weights()
 et_model.configure(learning_rate = lrate,
                    momentum = mrate,
-                   loss = error)
+                   loss = error,
+                   test_scope='all')
 
-# ----------------------------- TRAIN ------------------------------
-while et_model._below_ecrit:
-    et_model.test(batch_size = batch_size,
-                  evalfunc= evalf.tss,
-                  loss = error)
-    et_model.train(num_epochs = num_epochs,
-                   batch_size = batch_size,
-                   ecrit = 0.01,
-                   tfcheckpoint= 3000,
-                   permute = True)
+et_model.interact()
 et_model.visualize_loss()
-# eight_things.print_logdir()
 et_model.off()
