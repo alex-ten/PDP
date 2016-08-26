@@ -36,25 +36,18 @@ mynet = Network(xor, name='XOR Network')
 
 # ----------------------------- SETUP -----------------------------
 
-batch_size = 4
-lrate = 0.5
-mrate = 0.9
-num_epochs = 300
-ecrit = 0.01
-error = errf.squared_error
-
 mynet.init_weights()
 mynet.restore('ex_XOR/xor_params.ckpt')
-mynet.configure(loss = error,
-                batch_size = batch_size,
-                learning_rate = lrate,
-                momentum = mrate,
+mynet.configure(loss = errf.squared_error,
+                batch_size = 4,
+                learning_rate = 0.5,
+                momentum = 0.9,
                 test_func = evalf.tss,
                 test_scope = 'all')
 
 # --------------------------- INTERACT -----------------------------
 
-mynet.tnt(300, train_set = trainSet, test_set = testSet, train_batch_size =  4, test_batch_size = 4, snp_checkpoint=50)
+mynet.tnt(330, train_set = trainSet, test_set = testSet, train_batch_size =  4, test_batch_size = 4, snp_checkpoint=30)
 # mynet.interact(DS, ts)
 # mynet.visualize_loss()
 mynet.off()

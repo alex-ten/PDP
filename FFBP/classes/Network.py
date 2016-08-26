@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 import FFBP.utilities.logger as logger
 import FFBP.utilities.store_hyper_params as shp
-from FFBP.netartist.slider_plot import sum_figure
+from FFBP.netartist.visual_error import sum_figure
 from FFBP.utilities.init_rest import init_rest
 from FFBP.utilities.restore_params import restore_xor
 
@@ -45,6 +45,8 @@ class Network(object):
                   momentum=0.9,
                   test_func=None,
                   test_scope='all'):
+        if test_scope != 'all':
+            raise UserWarning("snapshot_plotter will not be able to show test data correctly. Set test_scope='all' to visualize snapshots")
         self._loss = loss(self.model['labels'], self.model['network'][-1].activations)
         self._opt = tf.train.MomentumOptimizer(learning_rate, momentum)
         self._settings['loss_func'] = loss
@@ -146,10 +148,11 @@ class Network(object):
             score, _, __ = self.test(test_set, test_batch_size, evalfunc=self._settings['test_func'])
             print('[{}] epoch {}: {}'.format(self.name, self.counter, score))
             self.run_training(snp_checkpoint, train_set, train_batch_size, ecrit=ecrit, permute=permute)
-        if self._terminate:
-            self.test(test_set, test_batch_size, evalfunc=self._settings['test_func'])
-            self.off()
-            print('[{}] Process terminated.'.format(self.name))
+            if self._terminate:
+                self.test(test_set, test_batch_size, evalfunc=self._settings['test_func'])
+                self.off()
+                print('[{}] Process terminated.'.format(self.name))
+                break
 
     def run_training(self, num_epochs, dataset, batch_size, ecrit = 0.01, tf_checkpoint = 100, permute = False):
         if not self._training:
@@ -188,7 +191,7 @@ class Network(object):
                     self._settings['saver'].save(self.sess, self.logpath + '/tf_params/graph_vars_epoch-{}.ckpt'.format(self.counter))
 
                 if loss_val < ecrit:
-                    self.show('[{}] Reached critical loss value on epoch {}'.format(self.name, self.counter))
+                    print('[{}] Reached critical loss value on epoch {}'.format(self.name, self.counter))
                     self._terminate = True
                     break
 
@@ -211,11 +214,11 @@ class Network(object):
         test_result = test.eval(feed_dict = test_dict)
 
         if self._settings['scope']=='all':
-            self._settings['scope'] = ['netinp', 'activations', 'W', 'b', 'ded_netinp', 'ded_activations', 'ded_W', 'ded_b']
+            self._settings['scope'] = ('inp', 'netinp', 'activations', 'W', 'b', 'ded_netinp', 'ded_activations', 'ded_W', 'ded_b')
 
         # Take a self-snapshot against a given input batch
         if snapshot:
-            self.snapshot(self._settings['scope'], test_dict, test_result) # todo include error measure to the snapshot
+            self.snapshot(self._settings['scope'], test_dict, test_result)
 
         # Stdout
         if self._training: # . . . During training
@@ -228,7 +231,7 @@ class Network(object):
 
     def snapshot(self, variables, batch, test_measure):
         # Create container for overall snapshot
-        new_snap = {}
+        new_snap = collections.OrderedDict()
         for l in self.model['network']:
             # Create a container with pairs of keys and values for the inner dict
             metrix = zip(variables, self.sess.run(self.fetch(l, variables), feed_dict=batch))

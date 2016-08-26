@@ -22,11 +22,10 @@ class Layer(object):
                 self.b = tf.Variable(init_b, dtype=tf.float32, collections=['Wb'])
             with tf.name_scope('netinp'):
                 self.netinp = tf.matmul(input_tensor, self.W, transpose_b=True) + self.b
-            self.activations = act(self.netinp, 'activation')
-            self.ded_netinp = None
-            self.ded_activations = None
-            self.ded_W = None
-            self.ded_b = None
+            with tf.name_scope('activations'):
+                self.activations = act(self.netinp, 'activations')
+            with tf.name_scope('input'):
+                self.inp = tf.add(input_tensor, 0)
 
     def __str__(self):
         return '<Layer object>'
