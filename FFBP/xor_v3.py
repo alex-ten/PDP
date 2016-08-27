@@ -1,5 +1,4 @@
 import numpy
-
 import tensorflow as tf
 import FFBP.utilities.evaluation_functions as evalf
 import FFBP.utilities.activation_functions as actf
@@ -10,7 +9,7 @@ from FFBP.classes.Layer import Layer
 from FFBP.utilities.model import model
 
 trainSet = load_data('ex_XOR/f_XOR.txt')
-testSet = load_data('ex_XOR/f_XOR.txt')
+testSet = trainSet
 
 # ----------------------------- BUILD -----------------------------
 
@@ -39,7 +38,8 @@ mynet = Network(xor, name='XOR Network')
 mynet.init_weights()
 mynet.restore('ex_XOR/xor_params.ckpt')
 mynet.configure(loss = errf.squared_error,
-                batch_size = 4,
+                train_batch_size = 4,
+                test_batch_size = 4,
                 learning_rate = 0.5,
                 momentum = 0.9,
                 test_func = evalf.tss,
@@ -47,7 +47,7 @@ mynet.configure(loss = errf.squared_error,
 
 # --------------------------- INTERACT -----------------------------
 
-mynet.tnt(330, train_set = trainSet, test_set = testSet, train_batch_size =  4, test_batch_size = 4, snp_checkpoint=30)
-# mynet.interact(DS, ts)
-# mynet.visualize_loss()
+# mynet.tnt(330, train_set = trainSet, test_set = testSet, train_batch_size =  4, test_batch_size = 4, snp_checkpoint=30)
+mynet.interact(train_set=trainSet, test_set=testSet)
+mynet.visualize_loss()
 mynet.off()

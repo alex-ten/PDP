@@ -5,9 +5,10 @@ import numpy as np
 import tensorflow as tf
 import FFBP.utilities.logger as logger
 import FFBP.utilities.store_hyper_params as shp
-from FFBP.netartist.visual_error import sum_figure
 from FFBP.utilities.init_rest import init_rest
 from FFBP.utilities.restore_params import restore_xor
+from FFBP.netartist.visual_error import sum_figure
+import FFBP.netartist.VisClasses as vc
 
 
 
@@ -40,7 +41,8 @@ class Network(object):
 
     def configure(self,
                   loss,
-                  batch_size,
+                  train_batch_size,
+                  test_batch_size,
                   learning_rate=0.5,
                   momentum=0.9,
                   test_func=None,
@@ -50,7 +52,8 @@ class Network(object):
         self._loss = loss(self.model['labels'], self.model['network'][-1].activations)
         self._opt = tf.train.MomentumOptimizer(learning_rate, momentum)
         self._settings['loss_func'] = loss
-        self._settings['batch_size'] = batch_size
+        self._settings['train_batch'] = train_batch_size
+        self._settings['test_batch'] = test_batch_size
         self._settings['lrate'] = learning_rate
         self._settings['mrate'] = momentum
         self._settings['test_func'] = test_func
@@ -74,7 +77,7 @@ class Network(object):
         if xor: restore_xor(path, model=self.model)
 
     def interact(self, train_set, test_set, take_snapshots=True):
-        self.interactive = True
+        self._interactive = True
         fill = len(self.name)
         print('\n[{}] Now in interactive mode...'.format(self.name))
         print('[{}] Input your next action:'.format(self.name))
@@ -89,57 +92,66 @@ class Network(object):
                 self.off()
                 print('[{}] Process terminated.'.format(self.name))
                 break
-            else:
-                try:
-                    usr_inp = int(action)
-                    self.run_training(num_epochs = usr_inp,
-                                      dataset = train_set,
-                                      batch_size = self._settings['batch_size'])
-                    if self._terminate:
-                        print('[{}] Would you like to test before terminating the process?'.format(self.name))
-                        action = input('y/n -> ')
-                        if action=='y':
-                            self.test(dataset = test_set,
-                                      batch_size = self._settings['batch_size'],
-                                      evalfunc = self._settings['test_func'],
-                                      snapshot = take_snapshots)
-                            self.off()
-                            print('[{}] Process terminated.'.format(self.name))
-                            break
-                        else:
-                            self.off()
-                            print('[{}] Process terminated.'.format(self.name))
-                            break
-                    print('[{}] Input your next action:'.format(self.name))
-                    action = input('#/t/c/q -> ')
-                except ValueError:
-                    if action=='t':
+            try:
+                usr_inp = int(action)
+                self.run_training(num_epochs = usr_inp,
+                                  dataset = train_set,
+                                  batch_size = self._settings['train_batch'])
+                if self._terminate:
+                    print('[{}] Would you like to test before terminating the process?'.format(self.name))
+                    action = input('y/n -> ')
+                    while not any([action=='y', action=='n']):
+                        print("[{}] Choose one of the folloing options:".format(self.name))
+                        action = input('y/n ->')
+                    if action=='y':
                         self.test(dataset = test_set,
-                                  batch_size = self._settings['batch_size'],
+                                  batch_size = self._settings['test_batch'],
                                   evalfunc = self._settings['test_func'],
                                   snapshot = take_snapshots)
-                        print('[{}] Input your next action:'.format(self.name))
-                        action = input('#/t/c/q -> ')
-                    elif action=='c':
-                        self.run_training(num_epochs =1000 ** 2,
-                                          dataset = train_set,
-                                          batch_size = self._settings['batch_size'])
-                    if self._terminate:
-                        print('[{}] Would you like to test before terminating the process?'.format(self.name))
-                        action = input('y/n -> ')
-                        if action == 'y':
-                            print('preparing for test')
-                            self.test(dataset = test_set,
-                                      batch_size = self._settings['batch_size'],
-                                      evalfunc = self._settings['test_func'],
-                                      snapshot = take_snapshots)
-                            self.off()
-                            print('[{}] Process terminated.'.format(self.name))
-                            break
-                        else:
-                            self.off()
-                            print('[{}] Process terminated.'.format(self.name))
-                            break
+                        self.off()
+                        print('[{}] Process terminated.'.format(self.name))
+                        break
+                    elif action=='n':
+                        self.off()
+                        print('[{}] Process terminated.'.format(self.name))
+                        break
+                print('[{}] Input your next action:'.format(self.name))
+                action = input('#/t/c/q -> ')
+            except ValueError:
+                if action=='t':
+                    self.test(dataset = test_set,
+                              batch_size = self._settings['test_batch'],
+                              evalfunc = self._settings['test_func'],
+                              snapshot = take_snapshots)
+                    print('[{}] Input your next action:'.format(self.name))
+                    action = input('#/t/c/q -> ')
+                elif action=='c':
+                    self.run_training(num_epochs =1000 ** 2,
+                                      dataset = train_set,
+                                      batch_size = self._settings['train_batch'])
+
+                else:
+                    print("[{}] Choose one of the following options:".format(self.name))
+                    action = input('#/t/c/q -> ')
+
+                if self._terminate:
+                    print('[{}] Would you like to test before terminating the process?'.format(self.name))
+                    action = input('y/n -> ')
+                    while not any([action == 'y', action == 'n']):
+                        print("[{}] Choose one of the folloing options:".format(self.name))
+                        action = input('y/n ->')
+                    if action == 'y':
+                        self.test(dataset = test_set,
+                                  batch_size = self._settings['test_batch'],
+                                  evalfun = self._settings['test_func'],
+                                  snapshot=take_snapshots)
+                        self.off()
+                        print('[{}] Process terminated.'.format(self.name))
+                        break
+                    elif action == 'n':
+                        self.off()
+                        print('[{}] Process terminated.'.format(self.name))
+                        break
         self._interactive = False
 
     def tnt(self, max_epochs, train_set, test_set, train_batch_size, test_batch_size, ecrit = 0.01, snp_checkpoint=100, tf_checkpoint = 100, permute = False):
@@ -147,12 +159,28 @@ class Network(object):
         while self.counter < max_epochs:
             score, _, __ = self.test(test_set, test_batch_size, evalfunc=self._settings['test_func'])
             print('[{}] epoch {}: {}'.format(self.name, self.counter, score))
-            self.run_training(snp_checkpoint, train_set, train_batch_size, ecrit=ecrit, permute=permute)
+            self.run_training(snp_checkpoint, train_set, train_batch_size, ecrit=ecrit, tf_checkpoint=tf_checkpoint, permute=permute)
             if self._terminate:
-                self.test(test_set, test_batch_size, evalfunc=self._settings['test_func'])
+                score, _, __ = self.test(test_set, test_batch_size, evalfunc=self._settings['test_func'])
+                print('[{}] epoch {}: {}'.format(self.name, self.counter, score))
+                print('[{}] Reached max epochs. Process terminated.'.format(self.name))
                 self.off()
-                print('[{}] Process terminated.'.format(self.name))
                 break
+        # if self.counter == max_epochs:
+        #     score, _, __ = self.test(test_set, test_batch_size, evalfunc=self._settings['test_func'])
+        #     self.off()
+        #     print('[{}] epoch {}: {}'.format(self.name, self.counter, score))
+        #     print('[{}] Reached max epochs. Would you like to continue?'.format(self.name))
+        #     action = input('y/n -> ')
+        #     while not any([action=='y', action=='n']):
+        #     if action == 'y':
+        #         print('[{}] Choose one of the following options'.format(self.name))
+        #         print('[{}] How many epochs would you like to train and test for?'.format(self.name))
+        #          = input('# -> ')
+        #
+        #     elif action == 'n':
+        #         self.off()
+        #         print('[{}] Process terminated.'.format(self.name))
 
     def run_training(self, num_epochs, dataset, batch_size, ecrit = 0.01, tf_checkpoint = 100, permute = False):
         if not self._training:
@@ -212,7 +240,6 @@ class Network(object):
 
         # Evaluate test measure
         test_result = test.eval(feed_dict = test_dict)
-
         if self._settings['scope']=='all':
             self._settings['scope'] = ('inp', 'netinp', 'activations', 'W', 'b', 'ded_netinp', 'ded_activations', 'ded_W', 'ded_b')
 
@@ -227,6 +254,7 @@ class Network(object):
         else: #. . . . . . . . . . Before training
             self.show('[{}] Initial test...'.format(self.name))
             self.show('[{}] Error tensor [{}] = {}'.format(self.name, test.name, test_result))
+        # self.visualize_layers()
         return test_result, self._settings['scope'], test_dict
 
     def snapshot(self, variables, batch, test_measure):
@@ -255,6 +283,14 @@ class Network(object):
             def getybyx(y_vec, x):
                 return y_vec[x]
             sum_figure(self._lossHistory, getybyx, 'epoch', 'loss', 'loss')
+
+    def visualize_layers(self, pattern=0):
+        snap = vc.NetworkData(self.logpath+'/mpl_data/snapshot_log.pkl')
+        plot = vc.Artist(style_sheet='seaborn-dark')
+        plot.fields_for_data(snap)
+        plot.draw(snap, self.counter, c='coolwarm', pattern=pattern)
+        plot.remove_ticklabels()
+        plot.show()
 
     def feed_dict(self, dataset, batch_size):
         # Fill a feed dictionary with the actual set of images and labels
