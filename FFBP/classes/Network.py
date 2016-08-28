@@ -8,7 +8,7 @@ import FFBP.utilities.store_hyper_params as shp
 from FFBP.utilities.init_rest import init_rest
 from FFBP.utilities.restore_params import restore_xor
 from FFBP.netartist.visual_error import sum_figure
-import FFBP.netartist.VisClasses as vc
+import FFBP.netartist.Artist as vc
 
 
 
@@ -287,8 +287,8 @@ class Network(object):
     def visualize_layers(self, pattern=0):
         snap = vc.NetworkData(self.logpath+'/mpl_data/snapshot_log.pkl')
         plot = vc.Artist(style_sheet='seaborn-dark')
-        plot.fields_for_data(snap)
-        plot.draw(snap, self.counter, c='coolwarm', pattern=pattern)
+        plot.outline_all(snap)
+        plot.fill_axes(snap, self.counter, c='coolwarm', pattern=pattern)
         plot.remove_ticklabels()
         plot.show()
 

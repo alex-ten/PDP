@@ -1,13 +1,14 @@
-import FFBP.netartist.VisClasses as vc
 import time
+from FFBP.netartist.Artist import Artist
+from FFBP.netartist.NetworkData import NetworkData
 
 start=time.time()
 
-xor = vc.NetworkData('example_snap.pkl')
-xorplot = vc.NetPlot(style_sheet='seaborn-dark')
-xorplot.fields_for_data(xor)
+xor = NetworkData('example_snap.pkl')
+xorplot = Artist(style_sheet='seaborn-dark')
+xorplot.outline_all(xor)
 
-xorplot.draw(xor, 0, c='coolwarm', pattern=3)
-xorplot.make_ticklabels_invisible()
+xorplot.fill_axes(xor, 0, c='coolwarm', pattern=3)
+xorplot.remove_ticklabels()
 print('Process time: {}'.format(time.time()-start))
 xorplot.show()
