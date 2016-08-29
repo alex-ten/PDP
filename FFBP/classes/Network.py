@@ -5,10 +5,11 @@ import numpy as np
 import tensorflow as tf
 import FFBP.utilities.logger as logger
 import FFBP.utilities.store_hyper_params as shp
+from FFBP.classes.LayerLog import LayerLog
 from FFBP.utilities.init_rest import init_rest
 from FFBP.utilities.restore_params import restore_xor
-from FFBP.netartist.visual_error import sum_figure
-import FFBP.netartist.Artist as vc
+from FFBP.visualization.visual_error import sum_figure
+import FFBP.visualization.Artist as vc
 
 
 
@@ -257,26 +258,30 @@ class Network(object):
         # self.visualize_layers()
         return test_result, self._settings['scope'], test_dict
 
-    def snapshot(self, variables, batch, test_measure):
-        # Create container for overall snapshot
-        new_snap = collections.OrderedDict()
-        for l in self.model['network']:
-            # Create a container with pairs of keys and values for the inner dict
-            metrix = zip(variables, self.sess.run(self.fetch(l, variables), feed_dict=batch))
-            inner_dict = {}
-            # Fill out the inner dict with keys and values
-            for key, value in metrix:
-                inner_dict[key] = logger.unroll(value, self.counter)
-            # Label the inner dict with layer_name inside the snapshot
-            new_snap[l.layer_name] = inner_dict
-            new_snap['error'] = np.array([[self.counter, test_measure]])
+    def snapshot(self, attributes, batch, test_measure):
         try:
-            with open(self.logpath + '/mpl_data/snapshot_log.pkl', 'rb') as opened_file:
-                old_snap = pickle.load(opened_file)
-            appended = logger.append_snapshot(old_snap, new_snap)
-            pickle.dump(appended, open(self.logpath + '/mpl_data/snapshot_log.pkl', 'wb'))
+            with open(self.logpath + '/mpl_data/snapshot_log.pkl', 'rb') as file:
+                snap = pickle.load(file)
+            snap['checkpoints'] = np.append(snap['checkpoints'], [self.counter], axis=0)
+            snap['error'] = np.append(snap['error'], [self.counter], axis=0)
+            for l in self.model['network']:
+                state = zip(attributes, self.sess.run(self.fetch(l, attributes), feed_dict=batch))
+                snap[l.layer_name].append(state)
+            pickle.dump(snap, open(self.logpath + '/mpl_data/snapshot_log.pkl', 'wb'))
         except FileNotFoundError:
+            new_snap = {'checkpoints': np.array([self.counter], dtype=int),
+                        'error': np.array([test_measure], dtype=float)}
+            for l in self.model['network']:
+                log = LayerLog(l)
+                state = zip(attributes, self.sess.run(self.fetch(l, attributes), feed_dict=batch))
+                log.append(state)
+                new_snap[l.layer_name] = log
             pickle.dump(new_snap, open(self.logpath + '/mpl_data/snapshot_log.pkl', 'wb'))
+
+
+
+
+
 
     def visualize_loss(self):
         if self.counter > 0:
