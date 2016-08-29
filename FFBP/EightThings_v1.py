@@ -53,6 +53,8 @@ et_model.configure(train_batch_size = 16,
                    test_func = evalf.tss,
                    test_scope='all')
 
+# ------------------------------- RUN ------------------------------
+
 et_model.tnt(5000, ET, ET, 16, 16, 1, 500, 5000, True)
 # et_model.interact(train_set=ET, test_set=ET)
 et_model.visualize_loss()

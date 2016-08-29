@@ -1,6 +1,6 @@
 import pickle
 import numpy as np
-from FFBP.netartist import visfuncs as vf
+from FFBP.visualization import visfuncs as vf
 
 class NetworkData(object):
     def __init__(self, path):

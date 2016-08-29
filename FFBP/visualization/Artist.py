@@ -2,8 +2,7 @@ import collections
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-import FFBP.netartist.visfuncs as myfuncs
-from FFBP.netartist.NetworkData import NetworkData
+import FFBP.visualization.visfuncs as myfuncs
 from matplotlib import style
 
 class Artist(object):
@@ -25,7 +24,7 @@ class Artist(object):
         elif network.size == 2:
             a, b = 2, 1
         elif network.size == 3:
-            a, b = 3, 1
+            a, b = 8+12+36, 1
         elif network.size == 4:
             a, b = 2, 2
         elif network.size > 4 and network.size <= 6:
@@ -37,6 +36,7 @@ class Artist(object):
         else:
             a, b = 4, 4
         self.superfields = gridspec.GridSpecFromSubplotSpec(a, b, subplot_spec=self.hyperfields[1])
+        print('1...')
 
     def outline_subfields(self, network):
         # divide each superfield by 2 subfields
@@ -60,7 +60,7 @@ class Artist(object):
         self.outline_subfields(network)
         self.place_axes(network)
 
-    def fill_axes(self, network, epoch, pattern=0, c ='coolwarm'):
+    def fill_axes(self, network, epoch, pattern=0, c ='coolwarm', grid=True):
         pattern = int(pattern)
         for layer, subfields in self.sub.items():
             for subfield, vals in subfields.items():
@@ -78,7 +78,8 @@ class Artist(object):
                     cax = ax.matshow(img, extent=[0,cols,0,rows], interpolation='nearest', cmap=c, vmin=-1, vmax=1)
                     ax.set(adjustable='box-forced', aspect='equal')
                     ax.set_axis_bgcolor('#F7F7F7')
-                    ax.grid(True, linewidth=3, color='#F7F7F7')
+                    if grid:
+                        ax.grid(True, linewidth=3, color='#F7F7F7')
 
     def remove_ticklabels(self, mark_axes=False):
         for i, ax in enumerate(self.fig.axes):
