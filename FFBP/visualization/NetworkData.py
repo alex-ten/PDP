@@ -7,25 +7,23 @@ class NetworkData(object):
         with open(path, 'rb') as opened_file:
             snapshot = pickle.load(opened_file)
         self.error = snapshot['error']
+        self.checkpoints = snapshot['checkpoints']
+        self.attributes = snapshot['attributes']
         del snapshot['error']
+        del snapshot['checkpoints']
+        del snapshot['attributes']
         self.main = snapshot
-        self.size = len(self.main)
-        self.lnames = self.main.keys()
-        self.checkpoints = self.error[:,0].astype(int)
-
-    def get(self, l, var, epoch):
-        row_ind = int(np.where(self.checkpoints == epoch)[0][0])
-        strip = self.main[l][var][row_ind, :]
-        rollup = vf.rollup(strip)
-        return rollup
+        self.network_size = len(self.main)
+        self.layer_names = self.main.keys()
 
     def stdout(self):
         np.set_printoptions(precision=3, suppress=True, linewidth=200)
         print('Error:')
         print(self.error, end='\n\n')
-        for keys, subdicts in self.main.items():
-            print('>>> ' + keys + ':')
-            for k, v in subdicts.items():
+        for layer, log in self.main.items():
+            print('>>> ' + layer + ':')
+            for k, v in log.__dict__.items():
+                if k=='name' or k=='size' or k=='targ': continue
                 print('    ' + k + ':')
-                print(v)
+                print('        '+'{} snaps of {} array'.format(len(v), np.shape(v[0])))
             print('===' * 50, end='\n\n')

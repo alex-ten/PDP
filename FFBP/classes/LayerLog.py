@@ -18,5 +18,5 @@ class LayerLog(object):
 
     def append(self, state):
         assert type(state) is zip, 'state parameter must be a zip object'
-        for a, value in state:
-            self.__getattribute__(a).append(value)
+        for attr, value in state:
+            self.__getattribute__(attr).append(np.squeeze(value))

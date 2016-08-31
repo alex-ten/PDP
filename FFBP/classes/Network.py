@@ -46,6 +46,8 @@ class Network(object):
                   test_batch_size,
                   learning_rate=0.5,
                   momentum=0.9,
+                  permute=False,
+                  ecrit=0.01,
                   test_func=None,
                   test_scope='all'):
         if test_scope != 'all':
@@ -57,6 +59,8 @@ class Network(object):
         self._settings['test_batch'] = test_batch_size
         self._settings['lrate'] = learning_rate
         self._settings['mrate'] = momentum
+        self._settings['permute'] = permute
+        self._settings['ecrit'] = ecrit
         self._settings['test_func'] = test_func
         self._settings['scope'] = test_scope
         self._settings['opt_task'] = self._opt.minimize(self._loss)
@@ -155,35 +159,20 @@ class Network(object):
                         break
         self._interactive = False
 
-    def tnt(self, max_epochs, train_set, test_set, train_batch_size, test_batch_size, ecrit = 0.01, snp_checkpoint=100, tf_checkpoint = 100, permute = False):
+    def tnt(self, max_epochs, train_set, test_set, snp_checkpoint=100, tf_checkpoint = 100):
         print('[{}] Now in train and test mode...'.format(self.name))
         while self.counter < max_epochs:
-            score, _, __ = self.test(test_set, test_batch_size, evalfunc=self._settings['test_func'])
+            score, _, __ = self.test(test_set, self._settings['test_batch'], evalfunc=self._settings['test_func'])
             print('[{}] epoch {}: {}'.format(self.name, self.counter, score))
-            self.run_training(snp_checkpoint, train_set, train_batch_size, ecrit=ecrit, tf_checkpoint=tf_checkpoint, permute=permute)
+            self.run_training(snp_checkpoint, train_set, self._settings['train_batch'], ecrit=self._settings['ecrit'], tf_checkpoint=tf_checkpoint)
             if self._terminate:
-                score, _, __ = self.test(test_set, test_batch_size, evalfunc=self._settings['test_func'])
-                print('[{}] epoch {}: {}'.format(self.name, self.counter, score))
-                print('[{}] Reached max epochs. Process terminated.'.format(self.name))
+                score, _, __ = self.test(test_set, self._settings['test_batch'], evalfunc=self._settings['test_func'])
+                print('[{}] Final error: {}'.format(self.name, score))
+                print('[{}] Process terminated.'.format(self.name))
                 self.off()
                 break
-        # if self.counter == max_epochs:
-        #     score, _, __ = self.test(test_set, test_batch_size, evalfunc=self._settings['test_func'])
-        #     self.off()
-        #     print('[{}] epoch {}: {}'.format(self.name, self.counter, score))
-        #     print('[{}] Reached max epochs. Would you like to continue?'.format(self.name))
-        #     action = input('y/n -> ')
-        #     while not any([action=='y', action=='n']):
-        #     if action == 'y':
-        #         print('[{}] Choose one of the following options'.format(self.name))
-        #         print('[{}] How many epochs would you like to train and test for?'.format(self.name))
-        #          = input('# -> ')
-        #
-        #     elif action == 'n':
-        #         self.off()
-        #         print('[{}] Process terminated.'.format(self.name))
 
-    def run_training(self, num_epochs, dataset, batch_size, ecrit = 0.01, tf_checkpoint = 100, permute = False):
+    def run_training(self, num_epochs, dataset, batch_size, ecrit = 0.01, tf_checkpoint = 100):
         if not self._training:
             # perform on the first epoch
             self._training = True
@@ -192,7 +181,7 @@ class Network(object):
                                 ('Momentum rate:', self._settings['mrate']),
                                 ('Error:', self._settings['loss_func']),
                                 ('Batch size:', batch_size),
-                                ('Permuted mode:', permute)]
+                                ('Permuted mode:', self._settings['permute'])]
             shp.store_hyper_params(collections.OrderedDict(hyper_parameters), self.logpath)
         if self._terminate:
             return
@@ -204,7 +193,7 @@ class Network(object):
 
             for step in range(t0,t1):
                 step_start = time.time()
-                if permute: dataset.permute()
+                if self._settings['permute']==True: dataset.permute()
 
                 train_dict = self.feed_dict(dataset, batch_size)
                 _, loss_val = self.sess.run([self._settings['opt_task'], self._loss],
@@ -263,14 +252,14 @@ class Network(object):
             with open(self.logpath + '/mpl_data/snapshot_log.pkl', 'rb') as file:
                 snap = pickle.load(file)
             snap['checkpoints'] = np.append(snap['checkpoints'], [self.counter], axis=0)
-            snap['error'] = np.append(snap['error'], [self.counter], axis=0)
+            snap['error'] = np.append(snap['error'], [test_measure], axis=0)
             for l in self.model['network']:
                 state = zip(attributes, self.sess.run(self.fetch(l, attributes), feed_dict=batch))
                 snap[l.layer_name].append(state)
             pickle.dump(snap, open(self.logpath + '/mpl_data/snapshot_log.pkl', 'wb'))
         except FileNotFoundError:
-            new_snap = {'checkpoints': np.array([self.counter], dtype=int),
-                        'error': np.array([test_measure], dtype=float)}
+            new_snap = collections.OrderedDict({'checkpoints': np.array([self.counter], dtype=int),
+                        'error': np.array([test_measure], dtype=float), 'attributes': attributes})
             for l in self.model['network']:
                 log = LayerLog(l)
                 state = zip(attributes, self.sess.run(self.fetch(l, attributes), feed_dict=batch))
