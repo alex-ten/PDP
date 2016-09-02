@@ -3,9 +3,9 @@ import tensorflow as tf
 import FFBP.utilities.evaluation_functions as evalf
 import FFBP.utilities.activation_functions as actf
 import FFBP.utilities.error_functions as errf
-from FFBP.classes.DataSet import load_data
-from FFBP.classes.Network import Network
-from FFBP.classes.Layer import Layer
+from FFBP.constructors.DataSet import load_data
+from FFBP.constructors.Network import Network
+from FFBP.constructors.Layer import Layer
 from FFBP.utilities.model import model
 
 trainSet = load_data('ex_XOR/f_XOR.txt')
@@ -23,7 +23,7 @@ hidden1 = Layer(input_tensor = image,
                 layer_name = 'hidden1',
                 seed = 9)
 
-output =  Layer(input_tensor = hidden1.activations,
+output =  Layer(input_tensor = hidden1.act,
                 size = 1,
                 wrange = [-1,1],
                 act = actf.sigmoid,
@@ -46,8 +46,8 @@ mynet.configure(loss = errf.squared_error,
                 test_scope = 'all')
 
 # --------------------------- INTERACT -----------------------------
-
-# mynet.tnt(330, train_set = trainSet, test_set = testSet, train_batch_size =  4, test_batch_size = 4, snp_checkpoint=30)
-mynet.interact(train_set=trainSet, test_set=testSet)
+# mynet.test(dataset=testSet,batch_size=4,evalfunc=evalf.tss,snapshot=True)
+mynet.tnt(330, trainSet, testSet, 30, 330)
+# mynet.interact(train_set=trainSet, test_set=testSet)
 mynet.visualize_loss()
 mynet.off()

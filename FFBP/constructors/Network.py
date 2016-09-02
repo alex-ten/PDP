@@ -5,11 +5,10 @@ import numpy as np
 import tensorflow as tf
 import FFBP.utilities.logger as logger
 import FFBP.utilities.store_hyper_params as shp
-from FFBP.classes.LayerLog import LayerLog
 from FFBP.utilities.init_rest import init_rest
 from FFBP.utilities.restore_params import restore_xor
+from FFBP.visualization.NetworkData import NetworkData
 from FFBP.visualization.visual_error import sum_figure
-import FFBP.visualization.Artist as vc
 
 
 
@@ -17,15 +16,14 @@ class Network(object):
     def __init__(self, model, name='NN'):
         self.name = name
         self.model = model
-        self.dataset = None # todo feed dataset externally
         self.sess = tf.InteractiveSession()
         self.graph = tf.get_default_graph()
         self.logpath = logger.logdir()
         self.counter = 0
         self._loss = None
         self._opt = None
-        self._lossHistory = np.empty(shape=(0, 2))
         self._settings = {}
+        self._lossHistory = np.empty(shape=(0, 2))
         self._interactive = False
         self._training = False
         self._terminate = False
@@ -52,7 +50,7 @@ class Network(object):
                   test_scope='all'):
         if test_scope != 'all':
             raise UserWarning("snapshot_plotter will not be able to show test data correctly. Set test_scope='all' to visualize snapshots")
-        self._loss = loss(self.model['labels'], self.model['network'][-1].activations)
+        self._loss = loss(self.model['labels'], self.model['network'][-1].act)
         self._opt = tf.train.MomentumOptimizer(learning_rate, momentum)
         self._settings['loss_func'] = loss
         self._settings['train_batch'] = train_batch_size
@@ -66,12 +64,12 @@ class Network(object):
         self._settings['opt_task'] = self._opt.minimize(self._loss)
         self._settings['saver'] = tf.train.Saver()
         for l in self.model['network']:
-            # When run in current session tf.gradients returns numpy arrays with
+            # When run in current session tf.gradients returns a list of numpy arrays with
             # batch_size number of rows and Layer.size number of columns.
             # That is, the rows of the returned arrays contain partial derivatives of loss with respect
             # to the argument tensor (here the loss tensor) of each unit in the layer given a particular input
-            l.ded_netinp = tf.gradients(self._loss, l.netinp)
-            l.ded_activations = tf.gradients(self._loss, l.activations)
+            l.ded_net = tf.gradients(self._loss, l.net)
+            l.ded_act = tf.gradients(self._loss, l.act)
             l.ded_W = tf.gradients(self._loss, l.W)
             l.ded_b = tf.gradients(self._loss, l.b)
         init = init_rest()
@@ -165,9 +163,9 @@ class Network(object):
             score, _, __ = self.test(test_set, self._settings['test_batch'], evalfunc=self._settings['test_func'])
             print('[{}] epoch {}: {}'.format(self.name, self.counter, score))
             self.run_training(snp_checkpoint, train_set, self._settings['train_batch'], ecrit=self._settings['ecrit'], tf_checkpoint=tf_checkpoint)
-            if self._terminate:
+            if self._terminate or self.counter == max_epochs:
                 score, _, __ = self.test(test_set, self._settings['test_batch'], evalfunc=self._settings['test_func'])
-                print('[{}] Final error: {}'.format(self.name, score))
+                print('[{}] Final error (epoch {}): {}'.format(self.counter, self.name, score))
                 print('[{}] Process terminated.'.format(self.name))
                 self.off()
                 break
@@ -226,12 +224,12 @@ class Network(object):
         # Evaluate error defined by the user
         # Return values are parameters for self.snapshot() methods
         test_dict = self.feed_dict(dataset, batch_size)
-        test = evalfunc(self.model['labels'], self.model['network'][-1].activations)
+        test = evalfunc(self.model['labels'], self.model['network'][-1].act)
 
         # Evaluate test measure
         test_result = test.eval(feed_dict = test_dict)
         if self._settings['scope']=='all':
-            self._settings['scope'] = ('inp', 'netinp', 'activations', 'W', 'b', 'ded_netinp', 'ded_activations', 'ded_W', 'ded_b')
+            self._settings['scope'] = ('inp', 'net', 'act', 'W', 'b', 'ded_net', 'ded_act', 'ded_W', 'ded_b')
 
         # Take a self-snapshot against a given input batch
         if snapshot:
@@ -261,16 +259,11 @@ class Network(object):
             new_snap = collections.OrderedDict({'checkpoints': np.array([self.counter], dtype=int),
                         'error': np.array([test_measure], dtype=float), 'attributes': attributes})
             for l in self.model['network']:
-                log = LayerLog(l)
+                log = logger.LayerLog(l)
                 state = zip(attributes, self.sess.run(self.fetch(l, attributes), feed_dict=batch))
                 log.append(state)
                 new_snap[l.layer_name] = log
             pickle.dump(new_snap, open(self.logpath + '/mpl_data/snapshot_log.pkl', 'wb'))
-
-
-
-
-
 
     def visualize_loss(self):
         if self.counter > 0:
@@ -279,7 +272,7 @@ class Network(object):
             sum_figure(self._lossHistory, getybyx, 'epoch', 'loss', 'loss')
 
     def visualize_layers(self, pattern=0):
-        snap = vc.NetworkData(self.logpath+'/mpl_data/snapshot_log.pkl')
+        snap = NetworkData(self.logpath+'/mpl_data/snapshot_log.pkl')
         plot = vc.Artist(style_sheet='seaborn-dark')
         plot.outline_all(snap)
         plot.fill_axes(snap, self.counter, c='coolwarm', pattern=pattern)

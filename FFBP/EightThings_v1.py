@@ -2,9 +2,9 @@ import tensorflow as tf
 import FFBP.utilities.evaluation_functions as evalf
 import FFBP.utilities.activation_functions as actf
 import FFBP.utilities.error_functions as errf
-from FFBP.classes.DataSet import load_data
-from FFBP.classes.Layer import Layer
-from FFBP.classes.Network import Network
+from FFBP.constructors.DataSet import load_data
+from FFBP.constructors.Layer import Layer
+from FFBP.constructors.Network import Network
 from FFBP.utilities.model import model
 
 # ----------------------------- BUILD -----------------------------
@@ -24,7 +24,8 @@ representation = Layer(
     seed=1)
 
 hidden = Layer(
-    input_tensor=tf.concat(1,[representation.activations, relation]), # concatenate representation.activations and relation'
+    # concatenate representation.activations and relation (name properly for neat visualization)
+    input_tensor=tf.concat(1,[representation.act, relation], name='representation + relation'),
     size=12,
     wrange=[-.45, .45],
     act=actf.sigmoid,
@@ -32,7 +33,7 @@ hidden = Layer(
     seed=2)
 
 attribute = Layer(
-    input_tensor=hidden.activations,
+    input_tensor=hidden.act,
     size=36,
     wrange=[-.45, .45],
     act=actf.sigmoid,
