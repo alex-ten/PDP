@@ -2,12 +2,11 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button
-from FFBP.artist import fancy_annotation as fann
+from FFBP.visualization import fancy_annotation as fann
 
-
-def sum_figure(data, func, xlab, ylab, note, style_script='ggplot'):
+def sum_figure(data, func, xlab, ylab, note, style_sheet='ggplot'):
     # CREATE FIGURE, AXES, AND PLOT SOME DATA
-    matplotlib.style.use(style_script)
+    matplotlib.style.use(style_sheet)
     fig, ax = plt.subplots()  # create a figure and axis (i.e. subplot) instances
     plt.subplots_adjust(left=0.25, bottom=0.25) # adjust subplot position
 
@@ -54,7 +53,8 @@ def sum_figure(data, func, xlab, ylab, note, style_script='ggplot'):
     def update(val):
         _x = int(slide.val) # assign value of the slider to _x (the dynamic value of x)
         _y = func(y_vec,_x) # dynamic value of _y is defined my the same relationship function
-        ann.xy = (_x,_y) # set annotation xy to new values
+        ann.xy = (_x,_y) # set annotation x
+        # y to new values
         ann.set_text('{}: {}'.format(note, np.around(_y,5))) # change text accordingly
         # change positions of straight lines
         hline.set_ydata(_y)
