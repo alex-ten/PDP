@@ -26,8 +26,7 @@ def prep_figure(data, cpi=5):
     width = 9
     height = (data.num_units + 8 * data.num_layers) / cpi + (2 / cpi)
     ratio = height / width
-    cell_size = 1 / (
-    height * cpi)  # cell size as fraction of plot height and width == this would accommodate up to 50 x 50
+    cell_size = 1 / (height * cpi)  # cell size as fraction of plot height and width == this would accommodate up to 50 x 50
 
     # Create the figure
     fig = plt.figure(num=None, figsize=(width, height), dpi=100)
@@ -132,7 +131,6 @@ def fill_axes_pair(fig, ax1, ax2, layer, epoch, pattern):
     cgrid(grid_b_x, 4, ax2, np.reshape(layer.b[epoch], (layer.size, 1)))
     cgrid(grid_net_x, 4, ax2, np.reshape(layer.ded_net[epoch][pattern], (layer.size, 1)))
     cgrid(grid_a_x, 4, ax2, np.reshape(layer.ded_act[epoch][pattern], (layer.size, 1)))
-
 
 def draw_all_layers(fig, logs, axes, epoch, pattern):
     for l, ax in zip(logs, axes):

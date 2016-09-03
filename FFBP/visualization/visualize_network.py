@@ -17,5 +17,3 @@ fig, figure_map = vf.prep_figure(net_data, cpi = 4)
 axs = vf.prep_all_axes(fig, figure_map, net_data)
 
 vf.draw_all_layers(fig, logs, axs, 0, 0)
-
-plt.show()

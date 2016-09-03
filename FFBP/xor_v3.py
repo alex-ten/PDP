@@ -30,24 +30,22 @@ output =  Layer(input_tensor = hidden1.act,
                 layer_name = 'output',
                 seed = 2)
 
-xor = model([image], [hidden1, output], label)
-mynet = Network(xor, name='XOR Network')
+xor_model = model([image], [hidden1, output], label)
+xor_net = Network(xor_model, name='XOR Network')
 
 # ----------------------------- SETUP -----------------------------
 
-mynet.init_weights()
-mynet.restore('ex_XOR/xor_params.ckpt')
-mynet.configure(loss = errf.squared_error,
-                train_batch_size = 4,
-                test_batch_size = 4,
-                learning_rate = 0.5,
-                momentum = 0.9,
-                test_func = evalf.tss,
-                test_scope = 'all')
+xor_net.train_set, xor_net.test_set = trainSet, testSet
+xor_net.init_weights()
+xor_net.restore('ex_XOR/xor_params.ckpt')
+xor_net.configure(loss = errf.squared_error,
+                  train_batch_size = 4,
+                  test_batch_size = 4,
+                  learning_rate = 0.5,
+                  momentum = 0.9,
+                  test_func = evalf.tss,
+                  test_scope = 'all')
 
 # --------------------------- INTERACT -----------------------------
-# mynet.test(dataset=testSet,batch_size=4,evalfunc=evalf.tss,snapshot=True)
-mynet.tnt(330, trainSet, testSet, 30, 330)
-# mynet.interact(train_set=trainSet, test_set=testSet)
-mynet.visualize_loss()
-mynet.off()
+
+xor_net.interact(trainSet, testSet, False)
