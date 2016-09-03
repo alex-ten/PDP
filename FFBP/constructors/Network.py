@@ -1,14 +1,16 @@
 import collections
+import threading
 import time
 import pickle
 import numpy as np
 import tensorflow as tf
 import FFBP.utilities.logger as logger
-import FFBP.utilities.store_hyper_params as shp
+from FFBP.utilities.store_configurations import store
 from FFBP.utilities.init_rest import init_rest
 from FFBP.utilities.restore_params import restore_xor
-from FFBP.netartist.visual_error import sum_figure
-import FFBP.netartist.Artist as vc
+from FFBP.utilities.printProgress import printProgress
+from FFBP.visualization.NetworkData import NetworkData
+from FFBP.visualization.visual_error import sum_figure
 
 
 
@@ -16,15 +18,16 @@ class Network(object):
     def __init__(self, model, name='NN'):
         self.name = name
         self.model = model
-        self.dataset = None # todo feed dataset externally
         self.sess = tf.InteractiveSession()
         self.graph = tf.get_default_graph()
         self.logpath = logger.logdir()
         self.counter = 0
+        self.train_set = None
+        self.test_set = None
         self._loss = None
         self._opt = None
-        self._lossHistory = np.empty(shape=(0, 2))
         self._settings = {}
+        self._lossHistory = np.empty(shape=(0, 2))
         self._interactive = False
         self._training = False
         self._terminate = False
@@ -45,30 +48,41 @@ class Network(object):
                   test_batch_size,
                   learning_rate=0.5,
                   momentum=0.9,
+                  permute=False,
+                  ecrit=0.01,
                   test_func=None,
                   test_scope='all'):
         if test_scope != 'all':
-            raise UserWarning("snapshot_plotter will not be able to show test data correctly. Set test_scope='all' to visualize snapshots")
-        self._loss = loss(self.model['labels'], self.model['network'][-1].activations)
+            raise UserWarning("current visualizer will not be able to show test data correctly. Set test_scope='all' to visualize snapshots")
+        self._loss = loss(self.model['labels'], self.model['network'][-1].act)
         self._opt = tf.train.MomentumOptimizer(learning_rate, momentum)
         self._settings['loss_func'] = loss
         self._settings['train_batch'] = train_batch_size
         self._settings['test_batch'] = test_batch_size
         self._settings['lrate'] = learning_rate
         self._settings['mrate'] = momentum
+        self._settings['permute'] = permute
+        self._settings['ecrit'] = ecrit
         self._settings['test_func'] = test_func
         self._settings['scope'] = test_scope
         self._settings['opt_task'] = self._opt.minimize(self._loss)
         self._settings['saver'] = tf.train.Saver()
         for l in self.model['network']:
-            # When run in current session tf.gradients returns numpy arrays with
+            # When run in current session tf.gradients returns a list of numpy arrays with
             # batch_size number of rows and Layer.size number of columns.
             # That is, the rows of the returned arrays contain partial derivatives of loss with respect
             # to the argument tensor (here the loss tensor) of each unit in the layer given a particular input
-            l.ded_netinp = tf.gradients(self._loss, l.netinp)
-            l.ded_activations = tf.gradients(self._loss, l.activations)
+            l.ded_net = tf.gradients(self._loss, l.net)
+            l.ded_act = tf.gradients(self._loss, l.act)
             l.ded_W = tf.gradients(self._loss, l.W)
             l.ded_b = tf.gradients(self._loss, l.b)
+        hyper_parameters = [('Learning rate:', self._settings['lrate']),
+                            ('Momentum rate:', self._settings['mrate']),
+                            ('Error:', self._settings['loss_func']),
+                            ('Batch size:', self._settings['train_batch']),
+                            ('Permuted mode:', self._settings['permute']),
+                            ('Ecrit:', self._settings['ecrit'])]
+        store(collections.OrderedDict(hyper_parameters), self.logpath)
         init = init_rest()
         self.sess.run(init)
 
@@ -89,7 +103,7 @@ class Network(object):
         while not self._terminate:
             if action == 'q':
                 self._terminate = True
-                self.off()
+                # self.off()
                 print('[{}] Process terminated.'.format(self.name))
                 break
             try:
@@ -108,11 +122,11 @@ class Network(object):
                                   batch_size = self._settings['test_batch'],
                                   evalfunc = self._settings['test_func'],
                                   snapshot = take_snapshots)
-                        self.off()
+                        # self.off() 
                         print('[{}] Process terminated.'.format(self.name))
                         break
                     elif action=='n':
-                        self.off()
+                        # self.off()
                         print('[{}] Process terminated.'.format(self.name))
                         break
                 print('[{}] Input your next action:'.format(self.name))
@@ -154,56 +168,31 @@ class Network(object):
                         break
         self._interactive = False
 
-    def tnt(self, max_epochs, train_set, test_set, train_batch_size, test_batch_size, ecrit = 0.01, snp_checkpoint=100, tf_checkpoint = 100, permute = False):
+    def tnt(self, max_epochs, train_set, test_set, snp_checkpoint=100, tf_checkpoint = 100):
         print('[{}] Now in train and test mode...'.format(self.name))
         while self.counter < max_epochs:
-            score, _, __ = self.test(test_set, test_batch_size, evalfunc=self._settings['test_func'])
+            score, _, __ = self.test(test_set, self._settings['test_batch'], evalfunc=self._settings['test_func'])
             print('[{}] epoch {}: {}'.format(self.name, self.counter, score))
-            self.run_training(snp_checkpoint, train_set, train_batch_size, ecrit=ecrit, tf_checkpoint=tf_checkpoint, permute=permute)
-            if self._terminate:
-                score, _, __ = self.test(test_set, test_batch_size, evalfunc=self._settings['test_func'])
-                print('[{}] epoch {}: {}'.format(self.name, self.counter, score))
-                print('[{}] Reached max epochs. Process terminated.'.format(self.name))
-                self.off()
+            self.run_training(snp_checkpoint, train_set, self._settings['train_batch'], ecrit=self._settings['ecrit'], tf_checkpoint=tf_checkpoint)
+            if self._terminate or self.counter == max_epochs:
+                score, _, __ = self.test(test_set, self._settings['test_batch'], evalfunc=self._settings['test_func'])
+                print('[{}] Final error (epoch {}): {}'.format(self.name, self.counter, score))
+                print('[{}] Process terminated.'.format(self.name))
+                # self.off()
                 break
-        # if self.counter == max_epochs:
-        #     score, _, __ = self.test(test_set, test_batch_size, evalfunc=self._settings['test_func'])
-        #     self.off()
-        #     print('[{}] epoch {}: {}'.format(self.name, self.counter, score))
-        #     print('[{}] Reached max epochs. Would you like to continue?'.format(self.name))
-        #     action = input('y/n -> ')
-        #     while not any([action=='y', action=='n']):
-        #     if action == 'y':
-        #         print('[{}] Choose one of the following options'.format(self.name))
-        #         print('[{}] How many epochs would you like to train and test for?'.format(self.name))
-        #          = input('# -> ')
-        #
-        #     elif action == 'n':
-        #         self.off()
-        #         print('[{}] Process terminated.'.format(self.name))
 
-    def run_training(self, num_epochs, dataset, batch_size, ecrit = 0.01, tf_checkpoint = 100, permute = False):
-        if not self._training:
-            # perform on the first epoch
-            self._training = True
-            hyper_parameters = [('Number of epochs:', num_epochs),
-                                ('Learning rate:', self._settings['lrate']),
-                                ('Momentum rate:', self._settings['mrate']),
-                                ('Error:', self._settings['loss_func']),
-                                ('Batch size:', batch_size),
-                                ('Permuted mode:', permute)]
-            shp.store_hyper_params(collections.OrderedDict(hyper_parameters), self.logpath)
-        if self._terminate:
-            return
+    def run_training(self, num_epochs, dataset, batch_size, ecrit = 0.01, tf_checkpoint = 100):
+        if not self._training: self._training = True
+        if self._terminate: return
         else:
-            self.show('[{}] Now training...'.format(self.name))
+            self._inBar(self.counter, num_epochs)
             t0 = self.counter
             t1 = t0 + num_epochs
             global_start = time.time()
-
             for step in range(t0,t1):
+                self._inBar(step, t1-1)
                 step_start = time.time()
-                if permute: dataset.permute()
+                if self._settings['permute']==True: dataset.permute()
 
                 train_dict = self.feed_dict(dataset, batch_size)
                 _, loss_val = self.sess.run([self._settings['opt_task'], self._loss],
@@ -215,10 +204,12 @@ class Network(object):
                 self._lossHistory = np.append(self._lossHistory, [[self.counter, loss_val]], axis=0)
 
                 # Save a checkpoint periodically.
-                if (self.counter + 1) % tf_checkpoint == 0 or (self.counter + 1) == t1:
-                    self._settings['saver'].save(self.sess, self.logpath + '/tf_params/graph_vars_epoch-{}.ckpt'.format(self.counter))
+                if tf_checkpoint:
+                    if (self.counter + 1) % tf_checkpoint == 0 or (self.counter + 1) == t1:
+                        self._settings['saver'].save(self.sess, self.logpath + '/tf_params/graph_vars_epoch-{}.ckpt'.format(self.counter))
 
                 if loss_val < ecrit:
+                    self._inBar(1, 1)
                     print('[{}] Reached critical loss value on epoch {}'.format(self.name, self.counter))
                     self._terminate = True
                     break
@@ -226,22 +217,22 @@ class Network(object):
                 # Print something to stdout
                 if (step + 1) == t1:
                     training_duration = time.time() - global_start
-                    self.show('[{}] Done training for {}/{} epochs ({} seconds)'.format(self.name,
-                                                                                    num_epochs,
-                                                                                    (self.counter + 1),
-                                                                                    round(training_duration, 3)))
+                    if self._interactive: ('[{}] Done training for {}/{} epochs ({} seconds)'.format(self.name,
+                                                                                                     num_epochs,
+                                                                                                     (self.counter + 1),
+                                                                                                     round(training_duration, 3)))
                 self.counter += 1
 
     def test(self, dataset, batch_size, evalfunc, snapshot=True):
         # Evaluate error defined by the user
         # Return values are parameters for self.snapshot() methods
         test_dict = self.feed_dict(dataset, batch_size)
-        test = evalfunc(self.model['labels'], self.model['network'][-1].activations)
+        test = evalfunc(self.model['labels'], self.model['network'][-1].act)
 
         # Evaluate test measure
         test_result = test.eval(feed_dict = test_dict)
         if self._settings['scope']=='all':
-            self._settings['scope'] = ('inp', 'netinp', 'activations', 'W', 'b', 'ded_netinp', 'ded_activations', 'ded_W', 'ded_b')
+            self._settings['scope'] = ('inp', 'net', 'act', 'W', 'b', 'ded_net', 'ded_act', 'ded_W', 'ded_b')
 
         # Take a self-snapshot against a given input batch
         if snapshot:
@@ -249,33 +240,47 @@ class Network(object):
 
         # Stdout
         if self._training: # . . . During training
-            self.show('[{}] Test after epoch {}:'.format(self.name, self.counter))
-            self.show('[{}] Error tensor |{}| = {}'.format(self.name, test.name, test_result))
+            self._inPrint('[{}] Test after epoch {}:'.format(self.name, self.counter))
+            self._inPrint('[{}] Error tensor |{}| = {}'.format(self.name, test.name, test_result))
         else: #. . . . . . . . . . Before training
-            self.show('[{}] Initial test...'.format(self.name))
-            self.show('[{}] Error tensor [{}] = {}'.format(self.name, test.name, test_result))
+            self._inPrint('[{}] Initial test...'.format(self.name))
+            self._inPrint('[{}] Error tensor [{}] = {}'.format(self.name, test.name, test_result))
         # self.visualize_layers()
         return test_result, self._settings['scope'], test_dict
 
-    def snapshot(self, variables, batch, test_measure):
-        # Create container for overall snapshot
-        new_snap = collections.OrderedDict()
-        for l in self.model['network']:
-            # Create a container with pairs of keys and values for the inner dict
-            metrix = zip(variables, self.sess.run(self.fetch(l, variables), feed_dict=batch))
-            inner_dict = {}
-            # Fill out the inner dict with keys and values
-            for key, value in metrix:
-                inner_dict[key] = logger.unroll(value, self.counter)
-            # Label the inner dict with layer_name inside the snapshot
-            new_snap[l.layer_name] = inner_dict
-            new_snap['error'] = np.array([[self.counter, test_measure]])
+    def do_train(self, num_epochs, tf_checkpoint=False):
+        self._interactive = True
+        if tf_checkpoint:
+            freq = tf_checkpoint
+            assert freq is int, ValueError('Expected an integer, got {}'.format(type(freq)))
+        self.run_training(num_epochs,
+                          self.train_set,
+                          self._settings['train_batch'],
+                          self._settings['ecrit'],
+                          tf_checkpoint)
+        self._interactive = False
+
+
+    def do_test(self): pass
+
+    def snapshot(self, attributes, batch, test_measure):
         try:
-            with open(self.logpath + '/mpl_data/snapshot_log.pkl', 'rb') as opened_file:
-                old_snap = pickle.load(opened_file)
-            appended = logger.append_snapshot(old_snap, new_snap)
-            pickle.dump(appended, open(self.logpath + '/mpl_data/snapshot_log.pkl', 'wb'))
+            with open(self.logpath + '/mpl_data/snapshot_log.pkl', 'rb') as file:
+                snap = pickle.load(file)
+            snap['checkpoints'] = np.append(snap['checkpoints'], [self.counter], axis=0)
+            snap['error'] = np.append(snap['error'], [test_measure], axis=0)
+            for l in self.model['network']:
+                state = zip(attributes, self.sess.run(self.fetch(l, attributes), feed_dict=batch))
+                snap[l.layer_name].append(state)
+            pickle.dump(snap, open(self.logpath + '/mpl_data/snapshot_log.pkl', 'wb'))
         except FileNotFoundError:
+            new_snap = collections.OrderedDict({'checkpoints': np.array([self.counter], dtype=int),
+                        'error': np.array([test_measure], dtype=float), 'attributes': attributes})
+            for l in self.model['network']:
+                log = logger.LayerLog(l)
+                state = zip(attributes, self.sess.run(self.fetch(l, attributes), feed_dict=batch))
+                log.append(state)
+                new_snap[l.layer_name] = log
             pickle.dump(new_snap, open(self.logpath + '/mpl_data/snapshot_log.pkl', 'wb'))
 
     def visualize_loss(self):
@@ -285,12 +290,12 @@ class Network(object):
             sum_figure(self._lossHistory, getybyx, 'epoch', 'loss', 'loss')
 
     def visualize_layers(self, pattern=0):
-        snap = vc.NetworkData(self.logpath+'/mpl_data/snapshot_log.pkl')
-        plot = vc.Artist(style_sheet='seaborn-dark')
-        plot.outline_all(snap)
-        plot.fill_axes(snap, self.counter, c='coolwarm', pattern=pattern)
-        plot.remove_ticklabels()
-        plot.show()
+        snap = NetworkData(self.logpath+'/mpl_data/snapshot_log.pkl')
+        # plot = vc.Artist(style_sheet='seaborn-dark')
+        # plot.outline_all(snap)
+        # plot.fill_axes(snap, self.counter, c='coolwarm', pattern=pattern)
+        # plot.remove_ticklabels()
+        # plot.show()
 
     def feed_dict(self, dataset, batch_size):
         # Fill a feed dictionary with the actual set of images and labels
@@ -315,9 +320,12 @@ class Network(object):
             basket.append(getattr(layer, attribute))
         return basket
 
-    def show(self, string):
+    def _inBar(self, i, l):
         if self._interactive:
-            print(string)
+            printProgress(i, l, prefix='[{}] Training:'.format(self.name), barLength=15)
+
+    def _inPrint(self, s):
+        if self._interactive: print(s)
 
     def off(self):
         self.sess.close()

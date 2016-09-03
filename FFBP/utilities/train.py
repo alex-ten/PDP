@@ -5,7 +5,7 @@ import time
 import math
 import collections
 import FFBP.utilities.logger as logger
-import FFBP.utilities.store_hyper_params as shp
+import FFBP.utilities.store_configurations as shp
 from FFBP.utilities.restore_params import restore_xor
 
 def SGD(model,
@@ -29,7 +29,7 @@ def SGD(model,
                         ('Error:', error),
                         ('Batch size:', batch_size),
                         ('Permuted mode:', permute)]
-    shp.store_hyper_params(collections.OrderedDict(hyper_parameters), dir_path)
+    shp.store(collections.OrderedDict(hyper_parameters), dir_path)
 
     # Tell TensorFlow that the model will be built into the default Graph.
     #with tf.Graph().as_default(): TODO what difference does this make?

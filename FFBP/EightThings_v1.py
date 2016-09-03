@@ -2,9 +2,9 @@ import tensorflow as tf
 import FFBP.utilities.evaluation_functions as evalf
 import FFBP.utilities.activation_functions as actf
 import FFBP.utilities.error_functions as errf
-from FFBP.classes.DataSet import load_data
-from FFBP.classes.Layer import Layer
-from FFBP.classes.Network import Network
+from FFBP.constructors.DataSet import load_data
+from FFBP.constructors.Layer import Layer
+from FFBP.constructors.Network import Network
 from FFBP.utilities.model import model
 
 # ----------------------------- BUILD -----------------------------
@@ -18,23 +18,24 @@ labels = tf.placeholder(tf.float32, shape=[None,36], name='labels')
 representation = Layer(
     input_tensor=item,
     size=8,
-    wrange=[-1, 1],
+    wrange=[-.45, .45],
     act=actf.sigmoid,
     layer_name='representation',
     seed=1)
 
 hidden = Layer(
-    input_tensor=tf.concat(1,[representation.activations, relation]), # concatenate representation.activations and relation'
+    # concatenate representation.activations and relation (name properly for neat visualization)
+    input_tensor=tf.concat(1,[representation.act, relation], name='representation + relation'),
     size=12,
-    wrange=[-1, 1],
+    wrange=[-.45, .45],
     act=actf.sigmoid,
     layer_name='hidden',
     seed=2)
 
 attribute = Layer(
-    input_tensor=hidden.activations,
+    input_tensor=hidden.act,
     size=36,
-    wrange=[-1, 1],
+    wrange=[-.45, .45],
     act=actf.sigmoid,
     layer_name='attribute',
     seed=3)
@@ -44,15 +45,20 @@ et_model = Network(eight_things)
 
 # ----------------------------- SETUP -----------------------------
 
-et_model.init_weights()
-et_model.configure(train_batch_size = 16,
-                   test_batch_size = 16,
-                   learning_rate = 0.0005,
-                   momentum = 0.8,
+et_model.configure(train_batch_size = 8,
+                   test_batch_size = 8,
+                   learning_rate = 0.1,
+                   momentum = 0,
+                   permute = True,
+                   ecrit = 2.5,
                    loss = errf.squared_error,
                    test_func = evalf.tss,
-                   test_scope='all')
+                   test_scope='all',
+                   )
+et_model.init_weights()
 
-et_model.tnt(5000, ET, ET, 16, 16, 1, 500, 5000, True)
+# ------------------------------- RUN ------------------------------
+
+et_model.tnt(2000, ET, ET, 200, 2000)
 # et_model.interact(train_set=ET, test_set=ET)
 et_model.visualize_loss()
