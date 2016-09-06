@@ -8,7 +8,7 @@ def feed_dict(train):
         xs, ys = mnist.train.next_batch(100, fake_data=FLAGS.fake_data)
         k = FLAGS.dropout
     else:
-        xs, ys = mnist.test.images, mnist.test.labels
+        xs, ys = mnist._test.images, mnist._test.labels
         k = 1.0
     return {x: xs, y_: ys, keep_prob: k}
 

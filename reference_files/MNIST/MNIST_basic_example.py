@@ -40,4 +40,4 @@ correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(y_,1)) # Gives a list of
 
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32)) # Convert the list of booleans to accuracy percentage (True/True+False)
 
-print(sess.run(accuracy, feed_dict={x: mnist.test.images, y_: mnist.test.labels}))
+print(sess.run(accuracy, feed_dict={x: mnist._test.images, y_: mnist._test.labels}))

@@ -194,7 +194,7 @@ def run_training():
                 eval_correct,
                 images_placeholder,
                 labels_placeholder,
-                data_sets.test)
+                data_sets._test)
 
 
 def main(_):

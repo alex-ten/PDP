@@ -1,4 +1,3 @@
-import numpy
 import tensorflow as tf
 import FFBP.utilities.evaluation_functions as evalf
 import FFBP.utilities.activation_functions as actf
@@ -46,6 +45,8 @@ xor_net.configure(loss = errf.squared_error,
                   test_func = evalf.tss,
                   test_scope = 'all')
 
-# --------------------------- INTERACT -----------------------------
+def main():
+    xor_net.interact(trainSet,testSet)
 
-xor_net.interact(trainSet, testSet, False)
+if __name__=="__main__":  main()
+
