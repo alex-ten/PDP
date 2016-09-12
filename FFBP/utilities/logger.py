@@ -16,6 +16,7 @@ class LayerLog(object):
         self.ded_b = []
         self.ded_net = []
         self.ded_act = []
+        self.t = []
 
     def append(self, state):
         assert type(state) is zip, 'state parameter must be a zip object'

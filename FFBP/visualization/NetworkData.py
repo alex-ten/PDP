@@ -6,24 +6,43 @@ class NetworkData(object):
         with open(path, 'rb') as opened_file:
             snapshot = pickle.load(opened_file)
         self.error = snapshot['error']
-        self.checkpoints = snapshot['checkpoints']
+        self.epochs = snapshot['epochs']
         self.attributes = snapshot['attributes']
+        self.inp_names = snapshot['inp_names']
         del snapshot['error']
-        del snapshot['checkpoints']
+        del snapshot['epochs']
         del snapshot['attributes']
+        del snapshot['inp_names']
         self.main = snapshot
         self.layer_names = self.main.keys()
         self.num_layers = len(self.main)
         self.num_units = sum([x.size for x in self.main.values()])
 
     def stdout(self):
+        print('')
         np.set_printoptions(precision=3, suppress=True, linewidth=200)
-        print('Error:')
-        print(self.error, end='\n\n')
+        print('==' * 10 + ' SNAPSHOT SUMMARY ' + '==' * 10, end='\n\n')
+        print('>>> Error:')
+        print('    {}'.format(self.error), end='\n\n')
         for layer, log in self.main.items():
-            print('>>> ' + layer + ':')
+            print('>>> ' + layer + ':', end='\n\n')
             for k, v in log.__dict__.items():
-                if k=='name' or k=='size' or k=='targ' or k=='sender_size': continue
+                if k=='name' or k=='size' or k=='sender' or len(v)==0: continue
                 a = len(k)
-                print('    ' + '{}:'.format(k) + ' '*(20-a) + '{} snaps of {} array'.format(len(v), np.shape(v[0])))
-            print('===' * 50, end='\n\n')
+                print('    ' + '{}:'.format(k) +
+                      ' '*(20-a) +
+                      '{} states of {}x{} array'.format(len(v),
+                                                        np.shape(v[0])[0],
+                                                        np.shape(v[0])[1]))
+            print('\n')
+        print('===' * 20, '')
+
+def main():
+    path = input('Enter path to snapshot: ')
+    data = NetworkData(path)
+    print(data.epochs)
+    print(data.error)
+    print(data.inp_names)
+    # data.stdout()
+
+if __name__=='__main__': main()
