@@ -7,7 +7,7 @@ def extract(s):
     return s
 
 class Layer(object):
-    def __init__(self, input_tensor, size, wrange, act, layer_name, seed=None):
+    def __init__(self, input_tensor, size, wrange, act, layer_name, seed=None, layer_type='nd'):
         self.input_tensor = input_tensor
         self.sender_size = int(input_tensor.get_shape()[1])
         self.sender_name = extract(input_tensor.name)
@@ -32,6 +32,7 @@ class Layer(object):
                 self.act = act(self.net)
             with tf.name_scope('input'):
                 self.inp = tf.add(input_tensor, 0)
+        self.layer_type = layer_type
 
     def __str__(self):
         return '<Layer object>'

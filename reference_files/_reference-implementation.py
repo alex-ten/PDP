@@ -249,7 +249,7 @@ class Network(object):
 
     def update_network(self, e, a, o):
         for projection in self.connections:
-            projection.update(epsilon=e, alpha=a, omega=o)
+            projection.onUpdate(epsilon=e, alpha=a, omega=o)
         for bias_unit in self.biases:
             bias_unit.update_weights(epsilon=e, alpha=a, omega=o)
 

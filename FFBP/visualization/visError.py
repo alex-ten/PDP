@@ -1,7 +1,5 @@
 import numpy as np
-import matplotlib as mpl
 import matplotlib.pyplot as plt
-if mpl.get_backend() != 'Qt4Agg': plt.switch_backend('qt4agg')
 from matplotlib.widgets import Slider, Button
 
 def fancy_annotation(ax, x, y, note, l_color='black', l_width=0.8, l_style=':'):
@@ -37,11 +35,17 @@ def fancy_annotation(ax, x, y, note, l_color='black', l_width=0.8, l_style=':'):
                       )
     return ann, hor, ver
 
-def error_figure(fig, data, xlab, ylab, note):
+def fancy_line(y, xlab, ylab, note):
+    ax = plt.subplot(111)
+    plt.subplots_adjust(left=0.25, bottom=0.25, top=0.70, right=0.75)  # adjust subplot position
+    ann, hline, vline = fancy_annotation(ax, y.index(y[-1]), y[-1], note)
+    return
+
+def error_figure(data, xlab, ylab, note):
     # CREATE AXES, AND PLOT SOME DATA
     plt.clf()
     ax = plt.subplot(111)
-    plt.subplots_adjust(left=0.25, bottom=0.25) # adjust subplot position
+    plt.subplots_adjust(left = 0.25, bottom = 0.25, top = 0.70, right = 0.75 ) # adjust subplot position
 
     # Arange data for internal use
     y = np.array(data, dtype=float)
@@ -109,9 +113,6 @@ def error_figure(fig, data, xlab, ylab, note):
     slide.on_changed(drag_slider) # when the slider value is changed, call update function with the new slider position
     right_button.on_clicked(slide_plus) # on button click, call slide_plus
     left_button.on_clicked(slide_minus) # on button click, call slide_minus
-
-    fig.canvas.draw()
-    plt.pause(0.001)
 
 
 def demo():
