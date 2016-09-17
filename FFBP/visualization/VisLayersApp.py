@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from FFBP.visualization import visLayers as vl
@@ -8,7 +9,8 @@ from FFBP.visualization.NetworkData import NetworkData
 
 
 class VisLayersApp():
-    def __init__(self, master, fig, snap, ppc):
+    def __init__(self, master, fig, snap, ppc, colors='coolwarm'):
+        self.colors = colors
         self.master = master
         self.master.title('Network Visualization')
         # =========================== Figure preparation ===========================
@@ -70,8 +72,8 @@ class VisLayersApp():
         # --------------------------- Window parameteres ---------------------------
         controlsWidth = 230
         controlsHeight = 340
-        tlx = max([30, figWidth - controlsWidth - 30])
-        tly = max([30, figHeight - controlsHeight - 30])
+        tlx = max([0, w - controlsWidth - 30])
+        tly = max([0, h - controlsHeight - 30])
         self.controlsWindow = tk.Toplevel(master)
         self.controlsWindow.title('Controls')
         self.controlsWindow.lift(master)
@@ -119,7 +121,7 @@ class VisLayersApp():
         # Selectors:
         self.patternSelector = ttk.Combobox(self.selectorFrame,
                                             textvariable = self.patternVar,
-                                            values = snap.inp_names)
+                                            values = list(snap.inp_names.keys()))
         self.patternSelector.current(0)
 
         self.epochSlider = ttk.Scale(self.selectorFrame,
@@ -213,6 +215,7 @@ class VisLayersApp():
         # Progress Bar
         self.progressFrame.pack(fill = tk.BOTH, expand = True)
         self.progBar.place(relx = 0.5, rely = 0.5, anchor = tk.CENTER)
+        self.progBar.config(mode='indeterminate')
 
         # ============================ Initial Figure ============================
         self._label_groups = vl.annotate(self.snap, self.panelBoard, self.bfs)
@@ -223,12 +226,17 @@ class VisLayersApp():
 
     def onUpdate(self):
         epoch_ind = int(self.epochSlider.get())
-        print(type(self.patternSelector.get()))#, self.patternSelector.get().vect)
-        try:
-            pattern_ind = self.snap.inp_names.index(self.patternSelector.get())
-            vl.draw_all_layers(self.snap, self.panelBoard, epoch_ind, pattern_ind)
+        key = self.patternSelector.get()
+        if key in self.snap.inp_names.keys():
+            self.progBar.start()
+            self.panelBoard.clear()
+            ind_map = self.snap.inp_vects[epoch_ind]
+            pattern_ind = np.where(np.all(ind_map == self.snap.inp_names[key], axis=1))[0][0]
+            vl.draw_all_layers(self.snap, self.panelBoard, epoch_ind, pattern_ind, colmap=self.colors)
+            self._label_groups = vl.annotate(self.snap, self.panelBoard, self.bfs)
             self.figureRenderer.draw()
-        except ValueError:
+            self.progBar.stop()
+        else:
             messagebox.showinfo(title='Wrong selection',
                                 message='No such pattern. Please select a pattern from the list')
 
@@ -261,7 +269,7 @@ class VisLayersApp():
         rc = 'r: {} | c: {}'.format(r,c)
         self.cellCoords.config(text = rc)
         self.cellWeight.config(text = weight)
-        self.tinyFig.set_facecolor(vl.v2c(value, 'coolwarm'))
+        self.tinyFig.set_facecolor(vl.v2c(value, self.colors))
         self.tinyRenderer.draw()
 
     def onSlide(self, val):

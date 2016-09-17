@@ -14,13 +14,13 @@ class NetCell(Rectangle):
     def get_inds(self):
         return self.inds
 
-def v2c(x, colormap_string='coolwarm'):
+def v2c(x, colormap_string):
     my_cmap = cm = mpl.cm.get_cmap(colormap_string)
     cNorm  = colors.Normalize(vmin=-1, vmax=1)
     scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=my_cmap)
     return scalarMap.to_rgba(x)
 
-def cgrid(xc, yc, ax, M, colmap = 'coolwarm', t=False):
+def cgrid(xc, yc, ax, M, colmap, t=False):
     nrows = np.shape(M)[0]
     for (x, y), w in np.ndenumerate(np.flipud(M).T):
         color = v2c(w, colmap)
@@ -99,7 +99,6 @@ def annotate_layer(origin, ax, layer, base_font_size):
     labels.append(ax.text(text_net_x, text_y, r'$net$', ha='center', fontsize=base_font_size))
     labels.append(ax.text(text_a_x, text_y, r'$a$', ha='center', fontsize=base_font_size))
     labels.append(ax.text(1, text_inp_y, r'${}$'.format(sender_name), ha='left', va='top', fontsize=base_font_size-base_font_size*0.1))
-    # More special treatment for a layer with a target vector
     if targ:
         labels.append(ax.text(sender_size + 8.5, text_y, r'$t$', ha='center', fontsize=base_font_size))
 
@@ -132,7 +131,7 @@ def labels_off(label_groups):
         for label in group:
             label.remove()
 
-def layer_image(origin, ax, layer, epoch, pattern):
+def layer_image(origin, ax, layer, epoch, pattern, colmap):
     targ = False
     num_attributes = 3
     sender_name, sender_size = layer.sender
@@ -155,14 +154,14 @@ def layer_image(origin, ax, layer, epoch, pattern):
     grid_inp_y = origin + 2
 
     # Drawing
-    cgrid(grid_W_x, grid_l_y, ax, layer.W[epoch])
-    cgrid(grid_b_x, grid_l_y, ax, np.reshape(layer.b[epoch], (layer.size, 1)))
-    cgrid(grid_net_x, grid_l_y, ax, np.reshape(layer.net[epoch][pattern], (layer.size, 1)))
-    cgrid(grid_a_x, grid_l_y, ax, np.reshape(layer.act[epoch][pattern], (layer.size, 1)))
-    cgrid(grid_W_x, grid_inp_y, ax, np.reshape(layer.inp[epoch][pattern], (1, sender_size)))
+    cgrid(grid_W_x, grid_l_y, ax, layer.W[epoch], colmap)
+    cgrid(grid_b_x, grid_l_y, ax, np.reshape(layer.b[epoch], (layer.size, 1)), colmap)
+    cgrid(grid_net_x, grid_l_y, ax, np.reshape(layer.net[epoch][pattern], (layer.size, 1)), colmap)
+    cgrid(grid_a_x, grid_l_y, ax, np.reshape(layer.act[epoch][pattern], (layer.size, 1)), colmap)
+    cgrid(grid_W_x, grid_inp_y, ax, np.reshape(layer.inp[epoch][pattern], (1, sender_size)), colmap)
     # More special treatment for a layer with a target vector
     if targ:
-        cgrid(sender_size + 8, grid_l_y, ax, np.reshape(layer.t[epoch][pattern], (layer.size, 1)), t=True)
+        cgrid(sender_size + 8, grid_l_y, ax, np.reshape(layer.t[epoch][pattern], (layer.size, 1)), colmap, t=True)
 
     # BP (right) panel
     # Placement
@@ -172,16 +171,16 @@ def layer_image(origin, ax, layer, epoch, pattern):
     grid_a_x += subpanel_width
 
     # Drawing
-    cgrid(grid_W_x, grid_l_y, ax, layer.ded_W[epoch])
-    cgrid(grid_b_x, grid_l_y, ax, np.reshape(layer.b[epoch], (layer.size, 1)))
-    cgrid(grid_net_x, grid_l_y, ax, np.reshape(layer.ded_net[epoch][pattern], (layer.size, 1)))
-    cgrid(grid_a_x, grid_l_y, ax, np.reshape(layer.ded_act[epoch][pattern], (layer.size, 1)))
+    cgrid(grid_W_x, grid_l_y, ax, layer.ded_W[epoch], colmap)
+    cgrid(grid_b_x, grid_l_y, ax, np.reshape(layer.b[epoch], (layer.size, 1)), colmap)
+    cgrid(grid_net_x, grid_l_y, ax, np.reshape(layer.ded_net[epoch][pattern], (layer.size, 1)), colmap)
+    cgrid(grid_a_x, grid_l_y, ax, np.reshape(layer.ded_act[epoch][pattern], (layer.size, 1)), colmap)
 
     origin += subpanel_height
 
     return origin
 
-def draw_all_layers(snap, ax, epoch, pattern):
+def draw_all_layers(snap, ax, epoch, pattern, colmap='coolwarm'):
     origin = 0
     for l in snap.main.values():
-        origin = layer_image(origin, ax, l, epoch, pattern)
+        origin = layer_image(origin, ax, l, epoch, pattern, colmap)

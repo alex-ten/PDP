@@ -1,4 +1,4 @@
-from importlib import reload
+import code
 import tensorflow as tf
 import FFBP.utilities.evaluation_functions as evalf
 import FFBP.utilities.activation_functions as actf
@@ -49,6 +49,8 @@ xor_net.configure(loss = errf.squared_error,
                   momentum = 0.9,
                   test_func = evalf.tss,
                   test_scope = 'all')
+
+code.interact(local = locals())
 
 def demo():
     for i in range(3):

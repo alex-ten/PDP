@@ -38,9 +38,19 @@ class Network(object):
         self._vis_app_settings = {'ppc': 30,
                                   'dpi': 96}
 
-    def init_and_configure(self, learning_rate, momentum, loss):
+    def init_and_configure(self,
+                  loss,
+                  train_batch_size,
+                  test_batch_size,
+                  learning_rate=0.5,
+                  momentum=0.9,
+                  permute=False,
+                  ecrit=0.01,
+                  test_func=None,
+                  test_scope='all'):
         self.init_weights()
-        self.configure(learning_rate, momentum, loss)
+        self.configure(loss,train_batch_size,test_batch_size,
+                       learning_rate, momentum, permute, ecrit, test_func)
 
     def init_weights(self):
         # Initialize weights and biases
@@ -172,7 +182,11 @@ class Network(object):
                         break
         self._interactive = False
 
-    def tnt(self, max_epochs, train_set, test_set, test_freq=100, ckpt_freq = 100):
+    def tnt(self, max_epochs, test_freq=100, ckpt_freq = 100, **kwargs):
+        if 'train_set' in kwargs: train_set = kwargs['train_set']
+        else: train_set = self.train_set
+        if 'test_set' in kwargs: test_set = kwargs['test_set']
+        else: test_set = self.test_set
         print('[{}] Now in train and test mode...'.format(self.name))
         while self.counter < max_epochs:
             score, _, __ = self._test(test_set, self._settings['test_batch'], evalfunc=self._settings['test_func'])
@@ -215,7 +229,7 @@ class Network(object):
     def visualize_error(self, error_name = 'error'):
         if self._errVisApp is None:
             root1 = tk.Tk()
-            figure = plt.figure(1, facecolor='w', dpi=96)
+            figure = plt.figure(1, facecolor='w', dpi=self._vis_app_settings['dpi'])
             self._errVisApp = VisErrorApp(root1,
                                           figure,
                                           self._lossHistory,
@@ -271,7 +285,7 @@ class Network(object):
                 self._inBar(step, t1 - 1)
                 if self._settings['permute'] == True: dataset.permute()
 
-                train_dict = self._feed_dict(dataset, batch_size)
+                train_dict, _ = self._feed_dict(dataset, batch_size)
                 _, loss_val = self.sess.run([self._settings['opt_task'], self._loss],
                                             feed_dict=train_dict)
 
@@ -301,11 +315,10 @@ class Network(object):
                 self.counter += 1
 
     def _test(self, dataset, batch_size, evalfunc, snapshot=True):
-        # Evaluate error defined by the user
-        # Return values are parameters for self.snapshot() methods
-        test_dict = self._feed_dict(dataset, batch_size)
-        inp_names = dataset.get_name(dataset.get_batch(np.arange(batch_size)))
+        test_dict, inp_vects = self._feed_dict(dataset, batch_size)
+        inp_names = dataset.names
         test = evalfunc(self.model['labels'], self.model['network'][-1].act)
+
         # Evaluate test measure
         test_result = test.eval(feed_dict=test_dict)
         if self._settings['scope'] == 'all':
@@ -313,7 +326,7 @@ class Network(object):
 
         # Take a self-snapshot against a given input batch
         if snapshot:
-            self._snapshot(self._settings['scope'], test_dict, test_result, inp_names)
+            self._snapshot(self._settings['scope'], test_dict, test_result, inp_vects, inp_names)
 
         # Stdout
         if self._training:  # . . . During training
@@ -324,11 +337,12 @@ class Network(object):
             self._inPrint('[{}] Error tensor [{}] = {}'.format(self.name, test.name, test_result))
         return test_result, self._settings['scope'], test_dict
 
-    def _snapshot(self, attributes, batch, test_measure, inp_names):
+    def _snapshot(self, attributes, batch, test_measure, inp_vects, inp_names):
         t = []
         try:
             with open(self.logpath + '/mpl_data/snapshot_log.pkl', 'rb') as file:
                 snap = pickle.load(file)
+            snap['inp_vects'].append(inp_vects)
             snap['epochs'] = np.append(snap['epochs'], [self.counter], axis=0)
             snap['error'] = np.append(snap['error'], [test_measure], axis=0)
             for l in self.model['network']:
@@ -343,6 +357,7 @@ class Network(object):
             new_snap = collections.OrderedDict({'epochs': np.array([self.counter], dtype=int),
                                                 'error': np.array([test_measure], dtype=float),
                                                 'attributes': attributes,
+                                                'inp_vects': [inp_vects],
                                                 'inp_names': inp_names})
             for l in self.model['network']:
                 log = logger.LayerLog(l)
@@ -369,7 +384,7 @@ class Network(object):
             feed_dict[inp_placeholder] = batch_xs[:, start:end]
             start += end
         feed_dict[self.model['labels']] = batch_ys
-        return feed_dict
+        return feed_dict, batch_xs
 
     def _fetch(self, layer, scope):
         # Takes a layer object and returns a list of requested attributes

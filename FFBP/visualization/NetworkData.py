@@ -9,10 +9,12 @@ class NetworkData(object):
         self.epochs = snapshot['epochs']
         self.attributes = snapshot['attributes']
         self.inp_names = snapshot['inp_names']
+        self.inp_vects = snapshot['inp_vects']
         del snapshot['error']
         del snapshot['epochs']
         del snapshot['attributes']
         del snapshot['inp_names']
+        del snapshot['inp_vects']
         self.main = snapshot
         self.layer_names = self.main.keys()
         self.num_layers = len(self.main)

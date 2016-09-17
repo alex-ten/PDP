@@ -1,4 +1,4 @@
-from importlib import reload
+import code
 import tensorflow as tf
 import FFBP.utilities.evaluation_functions as evalf
 import FFBP.utilities.activation_functions as actf
@@ -11,8 +11,10 @@ from FFBP.utilities.model import model
 
 
 # ----------------------------- BUILD -----------------------------
-
-ET = DataSet('exercises/ex_EightThings/f_EightThings.txt')
+try:
+    ET = DataSet('exercises/ex_EightThings/f_EightThings.txt')
+except FileNotFoundError:
+    ET = DataSet('ex_EightThings/f_EightThings.txt')
 
 item = tf.placeholder(tf.float32, shape=[None,8], name='item')
 relation = tf.placeholder(tf.float32, shape=[None,4], name='relation')
@@ -65,12 +67,15 @@ et_net.configure(train_batch_size = 32,
                  )
 et_net.init_weights()
 
+code.interact(local=locals())
+
 # ------------------------------- RUN ------------------------------
 
 def main():
-    for i in range(10):
-        if et_net._terminate: continue
-        et_net.test()
-        et_net.train(200, vis=True, ckpt_freq=False)
+    et_net.test(vis=True)
+    # for i in range(10):
+    #     if et_net._terminate: continue
+    #     et_net.test(vis=True)
+    #     et_net.train(200, vis=True, ckpt_freq=False)
 
 if __name__=="__main__":  main()

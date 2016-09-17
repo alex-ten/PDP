@@ -1,5 +1,6 @@
 # CPR
 import numpy as np
+from collections import OrderedDict
 from numpy import ndarray
 
 class DataSet(object):
@@ -51,7 +52,7 @@ class DataSet(object):
     def _load_txt(self, filename):
         imgs = []
         lbls = []
-        names = []
+        names = OrderedDict()
         for numline, line in enumerate(open(filename)):
             if len(line) <= 1: continue
             if numline == 0:
@@ -59,15 +60,14 @@ class DataSet(object):
             else:
                 l = line.split(sep=',')
                 imgs.append([int(x) for x in l[1].split()])
-                names.append(Pattern(l[0].split()[0], imgs[-1]))
+                names[l[0].split()[0]] = imgs[-1]
                 lbls.append([int(x) for x in l[2].split()])
         imgs_np_array = np.array(imgs)
         lbls_np_array = np.array(lbls)
         return imgs_np_array, lbls_np_array, names
 
-class Pattern():
-    def __init__(self, name, vect):
-        self.name = name
-        self.vect = vect
-    def __str__(self):
-        return self.name
+def main():
+    x = DataSet('../exercises/ex_EightThings/f_EightThings.txt')
+    for k,v in x.names.items(): print(k,v)
+
+if __name__=='__main__': main()
