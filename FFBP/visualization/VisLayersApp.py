@@ -9,18 +9,19 @@ from FFBP.visualization.NetworkData import NetworkData
 
 
 class VisLayersApp():
-    def __init__(self, master, fig, snap, ppc, colors='coolwarm'):
-        self.colors = colors
+    def __init__(self, master, snap, ppc, dpi, colors='coolwarm'):
+
         self.master = master
         self.master.title('Network Visualization')
         # =========================== Figure preparation ===========================
+        self.colors = colors
+        self._ppc = ppc
+        self._dpi = dpi
         self.bfs = ppc * 0.4
         self.snap = snap
-        self.panelBoard = vl.prep_figure(self.snap, fig)
-        figSize = fig.get_size_inches() * fig.dpi
-
-        # ================================= Style ==================================
-
+        self.figure = self.create_fig()
+        self.panelBoard = vl.prep_figure(self.snap, self.figure)
+        figSize = self.figure.get_size_inches() * self._dpi
 
         # ============================= Parent Windows =============================
         # ---------------------- Figure and window parameteres----------------------
@@ -58,7 +59,7 @@ class VisLayersApp():
         self.backCanvas.config(xscrollcommand=self.xScroll.set,
                                yscrollcommand=self.yScroll.set)
 
-        self.figureRenderer = FigureCanvasTkAgg(fig, self.backCanvas)
+        self.figureRenderer = FigureCanvasTkAgg(self.figure, self.backCanvas)
         self.mplCanvasWidget = self.figureRenderer.get_tk_widget()
         self.mplCanvasWidget.grid(sticky = 'nsew')
         # -------------------------------- Geometry --------------------------------
@@ -72,18 +73,14 @@ class VisLayersApp():
         # --------------------------- Window parameteres ---------------------------
         controlsWidth = 230
         controlsHeight = 340
-        tlx = max([0, w - controlsWidth - 30])
-        tly = max([0, h - controlsHeight - 30])
         self.controlsWindow = tk.Toplevel(master)
         self.controlsWindow.title('Controls')
         self.controlsWindow.lift(master)
         self.controlsWindow.resizable('False','False')
         self.controlsWindow.geometry(
-            '{}x{}+{}+{}'.format(
+            '{}x{}+0+0'.format(
                 controlsWidth,
-                controlsHeight,
-                tlx,
-                tly
+                controlsHeight
             )
         )
         # --------------------------------- Frames ---------------------------------
@@ -145,9 +142,6 @@ class VisLayersApp():
         self.continueButton = ttk.Button(self.buttonFrame,
                                          text='Continue',
                                          command=self.onContinue)
-        self.quitButton = ttk.Button(self.buttonFrame,
-                                     text = 'Quit',
-                                     command = self.onQuit)
 
         # Labels:
         #   epoch info
@@ -210,7 +204,6 @@ class VisLayersApp():
         self.labelsButton.pack(fill = tk.X, padx = 10)
         self.updateButton.pack(fill = tk.X, padx = 10)
         self.continueButton.pack(fill = tk.X, padx = 10)
-        self.quitButton.pack(fill = tk.X, padx = 10)
 
         # Progress Bar
         self.progressFrame.pack(fill = tk.BOTH, expand = True)
@@ -223,6 +216,20 @@ class VisLayersApp():
         self._plotLatest()
 
         self.master.mainloop()
+
+    def create_fig(self):
+        # Create a figure
+        max_width = max([l.sender[1] for l in self.snap.main.values()])
+        width_cells = ((max_width + 9) * 2)
+        width_pixels = width_cells * self._ppc
+        width_inches = width_pixels / self._dpi
+
+        network_size = self.snap.num_units
+        height_cells = network_size + (6 * self.snap.num_layers)
+        height_pixels = height_cells * self._ppc
+        height_inches = height_pixels / self._dpi
+        fig = plt.figure(2, figsize=(width_inches, height_inches), facecolor='w', dpi=self._dpi)
+        return fig
 
     def onUpdate(self):
         epoch_ind = int(self.epochSlider.get())
@@ -254,12 +261,6 @@ class VisLayersApp():
 
     def onContinue(self):
         self._sleep()
-
-    def onQuit(self):
-        self.controlsWindow.destroy()
-        self.master.destroy()
-        self.master.quit()
-
 
     def onPick(self, event):
         thiscell = event.artist
@@ -316,39 +317,9 @@ def main(ppc = 20, screen_dpi = 96):
     # Get network data
     snap = NetworkData(path)
 
-    # Create a figure
-    max_width = max([l.sender[1] for l in snap.main.values()])
-    width_cells = ((max_width + 9) * 2)
-    width_pixels =  width_cells * ppc
-    width_inches = width_pixels  / screen_dpi
-
-    network_size = snap.num_units
-    height_cells = network_size + (6 * snap.num_layers)
-    height_pixels = height_cells * ppc
-    height_inches = height_pixels / screen_dpi
-
-    print('''
-Figure dimensions (ppc = {} | dpi = {}):
--------------------------------
- Units:    width x height
--------------------------------
- Cells:    {} x {}
- Pixels:   {} x {}
- Inches:   {} x {}
--------------------------------
-    '''.format(
-        ppc, screen_dpi,
-        width_cells, height_cells,
-        width_pixels, height_pixels,
-        round(width_inches, 3), round(height_inches, 3)
-        )
-    )
-
-    fig = plt.figure(2, figsize=(width_inches, height_inches), facecolor='w', dpi=screen_dpi)
-
     # Start the app
     root = tk.Tk()
-    app = VisLayersApp(root, fig, snap, 30)
+    app = VisLayersApp(root, snap, 30, 96)
     input('[VisApp.py] Hit enter to start a parallel process')
 
     import time
