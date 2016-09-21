@@ -44,19 +44,16 @@ xor_net.init_weights()
 xor_net.restore('exercises/ex_XOR/xor_params.ckpt')
 xor_net.configure(loss = errf.squared_error,
                   train_batch_size = 4,
-                  test_batch_size = 4,
                   learning_rate = 0.5,
                   momentum = 0.9,
                   test_func = evalf.tss,
                   test_scope = 'all')
 
-code.interact(local = locals())
+# code.interact(local = locals())
 
 def demo():
-    for i in range(3):
-        xor_net.test(vis=True)
-        input('hit me')
-        xor_net.train(30, vis=True, ckpt_freq=False)
+    xor_net.tnt(300,30,0)
+    xor_net.test(vis=True)
 
 if __name__=="__main__":  demo()
 
