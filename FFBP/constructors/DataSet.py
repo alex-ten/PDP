@@ -26,7 +26,10 @@ class DataSet(object):
             start = 0
             self._marker_index = batch_size
         end = self._marker_index
-        return(self.images[start:end], self.labels[start:end])
+        return (self.images[start:end], self.labels[start:end])
+
+    def big_batch(self):
+        return (self.images, self.labels)
 
     def get_batch(self, inds):
         return self.images[inds]

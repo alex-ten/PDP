@@ -30,6 +30,7 @@ class Network(object):
         self._opt = None
         self._settings = {}
         self._lossHistory = []
+        self._last_test = None
         self._interactive = False
         self._training = False
         self._terminate = False
@@ -41,7 +42,6 @@ class Network(object):
     def init_and_configure(self,
                   loss,
                   train_batch_size,
-                  test_batch_size,
                   learning_rate=0.5,
                   momentum=0.9,
                   permute=False,
@@ -49,8 +49,8 @@ class Network(object):
                   test_func=None,
                   test_scope='all'):
         self.init_weights()
-        self.configure(loss,train_batch_size,test_batch_size,
-                       learning_rate, momentum, permute, ecrit, test_func)
+        self.configure(loss,train_batch_size, learning_rate,
+                       momentum, permute, ecrit, test_func)
 
     def init_weights(self):
         # Initialize weights and biases
@@ -61,7 +61,6 @@ class Network(object):
     def configure(self,
                   loss,
                   train_batch_size,
-                  test_batch_size,
                   learning_rate=0.5,
                   momentum=0.9,
                   permute=False,
@@ -69,12 +68,12 @@ class Network(object):
                   test_func=None,
                   test_scope='all'):
         if test_scope != 'all':
-            raise UserWarning("current visualizer will not be able to show test data correctly. Set test_scope='all' to visualize snapshots")
+            input('''Warning: current visualizer will not be able to show test data correctly.
+Set test_scope='all' to visualize snapshots. If you want to continue, press enter.''')
         self._loss = loss(self.model['labels'], self.model['network'][-1].act)
         self._opt = tf.train.MomentumOptimizer(learning_rate, momentum)
         self._settings['loss_func'] = loss
         self._settings['train_batch'] = train_batch_size
-        self._settings['test_batch'] = test_batch_size
         self._settings['lrate'] = learning_rate
         self._settings['mrate'] = momentum
         self._settings['permute'] = permute
@@ -134,7 +133,6 @@ class Network(object):
                         action = input('y/n ->')
                     if action=='y':
                         self._test(dataset = test_set,
-                                   batch_size = self._settings['test_batch'],
                                    evalfunc = self._settings['test_func'],
                                    snapshot = take_snapshots)
                         self.visualize_error()
@@ -148,7 +146,6 @@ class Network(object):
             except ValueError:
                 if action=='t':
                     self._test(dataset = test_set,
-                               batch_size = self._settings['test_batch'],
                                evalfunc = self._settings['test_func'],
                                snapshot = take_snapshots)
                     self.visualize_error()
@@ -171,7 +168,6 @@ class Network(object):
                         action = input('y/n -> ')
                     if action == 'y':
                         self._test(dataset = test_set,
-                                   batch_size = self._settings['test_batch'],
                                    evalfunc = self._settings['test_func'],
                                    snapshot=take_snapshots)
                         self.visualize_error()
@@ -182,23 +178,24 @@ class Network(object):
                         break
         self._interactive = False
 
-    def tnt(self, max_epochs, test_freq=100, ckpt_freq = 100, **kwargs):
+    def tnt(self, max_epochs, test_freq=0, ckpt_freq = 0, **kwargs):
+        print(self._interactive)
         if 'train_set' in kwargs: train_set = kwargs['train_set']
         else: train_set = self.train_set
         if 'test_set' in kwargs: test_set = kwargs['test_set']
         else: test_set = self.test_set
         print('[{}] Now in train and test mode...'.format(self.name))
         while self.counter < max_epochs:
-            score, _, __ = self._test(test_set, self._settings['test_batch'], evalfunc=self._settings['test_func'])
-            print('[{}] epoch {}: {}'.format(self.name, self.counter, score))
+            result = self._test(test_set, evalfunc=self._settings['test_func'], snapshot=self._checkLastTest())
+            print('[{}] epoch {}: {}'.format(self.name, self.counter, result))
             self._train(test_freq, train_set, self._settings['train_batch'], ecrit=self._settings['ecrit'], ckpt_freq=ckpt_freq)
             if self._terminate or self.counter == max_epochs:
-                score, _, __ = self._test(test_set, self._settings['test_batch'], evalfunc=self._settings['test_func'])
-                print('[{}] Final error (epoch {}): {}'.format(self.name, self.counter, score))
+                result = self._test(test_set, evalfunc=self._settings['test_func'], snapshot=self._checkLastTest())
+                print('[{}] Final error (epoch {}): {}'.format(self.name, self.counter, result))
                 print('[{}] Process terminated.'.format(self.name))
                 break
 
-    def train(self, num_epochs, vis = False, ckpt_freq = False):
+    def train(self, num_epochs = 1, vis = False, ckpt_freq = False):
         self._interactive = True
         if ckpt_freq:
             freq = ckpt_freq
@@ -215,9 +212,8 @@ class Network(object):
     def test(self, vis = False):
         self._interactive = True
         self._test(dataset = self.test_set,
-                   batch_size = self._settings['test_batch'],
                    evalfunc = self._settings['test_func'],
-                   snapshot = True)
+                   snapshot = self._checkLastTest())
         if vis:
             try:
                 self.visualize_layers()
@@ -235,29 +231,15 @@ class Network(object):
                                           self._lossHistory,
                                           'epoch',
                                           error_name,
-                                          error_name,
-                                          'ggplot')
+                                          error_name)
         if self.counter > 0:
             self._errVisApp.catch_up(self._lossHistory)
 
     def visualize_layers(self):
         snap = NetworkData(self.logpath + '/mpl_data/snapshot_log.pkl')
         if self._layVisApp is None:
-            max_width = max([l.sender[1] for l in snap.main.values()])
-            width_cells = ((max_width + 9) * 2)
-            width_pixels = width_cells * self._vis_app_settings['ppc']
-            width_inches = width_pixels / self._vis_app_settings['dpi']
-
-            network_size = snap.num_units
-            height_cells = network_size + (6 * snap.num_layers)
-            height_pixels = height_cells * self._vis_app_settings['ppc']
-            height_inches = height_pixels / self._vis_app_settings['dpi']
-            fig2 = plt.figure(2,
-                              figsize=(width_inches, height_inches),
-                              facecolor='w',
-                              dpi=self._vis_app_settings['dpi'])
             root2 = tk.Tk()
-            self._layVisApp = VisLayersApp(root2, fig2, snap, self._vis_app_settings['ppc'])
+            self._layVisApp = VisLayersApp(root2, snap)
         else:
             self._layVisApp.catch_up(snap)
 
@@ -272,20 +254,21 @@ class Network(object):
         self._errVisApp = None
         self._layVisApp = None
 
-    def _train(self, num_epochs, dataset, batch_size, ecrit=0.01, ckpt_freq=100):
+    def _train(self, num_epochs, dataset, batch_size, ecrit=0.01, ckpt_freq=100, permute = False):
         if not self._training: self._training = True
         if self._terminate:
             return
         else:
+            if 'permute' in self._settings:
+                permute = self._settings['permute']
             t0 = self.counter
             t1 = t0 + num_epochs
             start = time.time()
             self._inBar(t0, t1)
             for step in range(t0, t1):
                 self._inBar(step, t1 - 1)
-                if self._settings['permute'] == True: dataset.permute()
-
-                train_dict, _ = self._feed_dict(dataset, batch_size)
+                if permute: dataset.permute()
+                train_dict, _ = self._feed_dict(dataset, batch_size=batch_size)
                 _, loss_val = self.sess.run([self._settings['opt_task'], self._loss],
                                             feed_dict=train_dict)
 
@@ -314,28 +297,33 @@ class Network(object):
                                                                                            round(training_duration,3)))
                 self.counter += 1
 
-    def _test(self, dataset, batch_size, evalfunc, snapshot=True):
-        test_dict, inp_vects = self._feed_dict(dataset, batch_size)
+    def _test(self, dataset, evalfunc, snapshot=False):
+        test_dict, inp_vects = self._feed_dict(dataset)
         inp_names = dataset.names
         test = evalfunc(self.model['labels'], self.model['network'][-1].act)
 
         # Evaluate test measure
         test_result = test.eval(feed_dict=test_dict)
-        if self._settings['scope'] == 'all':
-            self._settings['scope'] = ['inp', 'net', 'act', 'W', 'b', 'ded_net', 'ded_act', 'ded_W', 'ded_b']
+        if 'scope' in self._settings:
+            scope = self._settings['scope']
+        else: scope = snapshot
+        if scope == 'all':
+            scope = ['inp', 'net', 'act', 'W', 'b', 'ded_net', 'ded_act', 'ded_W', 'ded_b']
 
         # Take a self-snapshot against a given input batch
         if snapshot:
-            self._snapshot(self._settings['scope'], test_dict, test_result, inp_vects, inp_names)
+            self._snapshot(scope, test_dict, test_result, inp_vects, inp_names)
 
         # Stdout
+        testName = test.name.split(sep='_')[0].split(sep=':')[0]
         if self._training:  # . . . During training
             self._inPrint('[{}] Test after epoch {}:'.format(self.name, self.counter))
-            self._inPrint('[{}] Error tensor |{}| = {}'.format(self.name, test.name, test_result))
+            self._inPrint('[{}] Error tensor |{}| = {}'.format(self.name, testName, test_result))
         else:  # . . . . . . . . . . Before training
             self._inPrint('[{}] Initial test...'.format(self.name))
-            self._inPrint('[{}] Error tensor [{}] = {}'.format(self.name, test.name, test_result))
-        return test_result, self._settings['scope'], test_dict
+            self._inPrint('[{}] Error tensor [{}] = {}'.format(self.name, testName, test_result))
+        self._last_test = self.counter
+        return test_result
 
     def _snapshot(self, attributes, batch, test_measure, inp_vects, inp_names):
         t = []
@@ -370,12 +358,14 @@ class Network(object):
                 new_snap[l.layer_name] = log
             pickle.dump(new_snap, open(self.logpath + '/mpl_data/snapshot_log.pkl', 'wb'))
 
-    def _feed_dict(self, dataset, batch_size):
+    def _feed_dict(self, dataset, **kwargs):
         # Fill a feed dictionary with the actual set of images and labels
         # for current training step.
         # Takes attribute self.dataset as a default data set
-
-        batch_xs, batch_ys = dataset.next_batch(batch_size)
+        try:
+            batch_xs, batch_ys = dataset.next_batch(kwargs['batch_size'])
+        except KeyError:
+            batch_xs, batch_ys = dataset.big_batch()
         feed_dict = {}
         start = 0
         end = 0
@@ -399,6 +389,12 @@ class Network(object):
 
     def _inPrint(self, s):
         if self._interactive: print(s)
+
+    def _checkLastTest(self):
+        if self._last_test == self.counter:
+            return False
+        else:
+            return self._settings['scope']
 
     def off(self):
         self.sess.close()
