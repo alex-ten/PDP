@@ -1,20 +1,17 @@
 from FFBP.visualization import visError as ve
 import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib import style
 import tkinter as tk
 from tkinter import ttk
 
 class VisErrorApp():
     def __init__(self, master, figure, data,
-                 xlab = 'x', ylab = 'y', note = 'f(x)',
-                 figstyle='ggplot'):
+                 xlab = 'x', ylab = 'y', note = 'f(x)'):
         self.master = master
         self.figure = figure
         self.data = data
         self.note = note
 
-        style.use(figstyle)
         self.ax = figure.add_subplot(111)
         self.ax.set_xlabel(xlab)
         self.ax.set_ylabel(ylab)
