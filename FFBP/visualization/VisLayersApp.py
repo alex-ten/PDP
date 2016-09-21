@@ -9,7 +9,7 @@ from FFBP.visualization.NetworkData import NetworkData
 
 
 class VisLayersApp():
-    def __init__(self, master, snap, ppc, dpi, colors='coolwarm'):
+    def __init__(self, master, snap, ppc = 20, dpi = 96, colors='coolwarm'):
 
         self.master = master
         self.master.title('Network Visualization')
@@ -461,24 +461,16 @@ class VisLayersApp():
         return self._ppc * factor
 
 
-
-
 def main():
 
-    #path = input('[VisApp.py] Snapshot path: ')
+    # Prompt path to the snapshot
+    path = input('[VisLayersApp] Snapshot path: ')
 
     # Get network data
-    snap = NetworkData('/Users/alexten/Projects/PDP/FFBP/logdir/Sess_2016-09-17_16-44-47/mpl_data/snapshot_log.pkl')
+    snap = NetworkData(path)
 
     # Start the app
     root = tk.Tk()
     app = VisLayersApp(root, snap, 30, 96)
-    input('[VisApp.py] Hit enter to start a parallel process')
-
-    import time
-    for i in range(2):
-        print('[VisApp.py] Performing task {}'.format(i))
-        time.sleep(1)
-    app.catch_up(snap)
 
 if __name__=='__main__': main()
