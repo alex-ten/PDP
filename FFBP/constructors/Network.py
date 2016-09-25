@@ -36,7 +36,7 @@ class Network(object):
         self._terminate = False
         self._errVisApp = None
         self._layVisApp = None
-        self._vis_app_settings = {'ppc': 30,
+        self._vis_settings = {'ppc': 30,
                                   'dpi': 96}
 
     def init_and_configure(self,
@@ -50,7 +50,7 @@ class Network(object):
                   test_scope='all'):
         self.init_weights()
         self.configure(loss,train_batch_size, learning_rate,
-                       momentum, permute, ecrit, test_func)
+                       momentum, permute, ecrit, test_func, test_scope)
 
     def init_weights(self):
         # Initialize weights and biases
@@ -225,7 +225,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
     def visualize_error(self, error_name = 'error'):
         if self._errVisApp is None:
             root1 = tk.Tk()
-            figure = plt.figure(1, facecolor='w', dpi=self._vis_app_settings['dpi'])
+            figure = plt.figure(1, facecolor='w', dpi=self._vis_settings['dpi'])
             self._errVisApp = VisErrorApp(root1,
                                           figure,
                                           self._lossHistory,
