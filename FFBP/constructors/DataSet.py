@@ -1,7 +1,6 @@
 # CPR
 import numpy as np
 from collections import OrderedDict
-from numpy import ndarray
 
 class DataSet(object):
     def __init__(self, filename):
