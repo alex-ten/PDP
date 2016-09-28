@@ -12,6 +12,8 @@ data = DataSet('240.pkl')
 data.raw2onehot()
 
 item = tf.placeholder(tf.float32, shape = [None, len(data.unique)], name = 'item')
+targ = tf.placeholder(tf.float32, shape= [None, 1], name = 'target')
+
 context = tf.placeholder(tf.float32, shape = [None, 3], name = 'context')
 
 inp = tf.concat(1, [item,context], name = 'item:context')
@@ -31,3 +33,7 @@ output = Layer(input_tensor = hidden.act,
                layer_name = 'output',
                seed = 21,
                layer_type = 'output')
+
+srnModel = model(item, [hidden, output], targ)
+mySRN = Network(srnModel, name = 'Simple_RNN')
+

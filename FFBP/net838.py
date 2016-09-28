@@ -15,19 +15,17 @@ input_layer = tf.placeholder(tf.float32, shape=[None,8], name='input')
 targets = tf.placeholder(tf.float32, shape=[None,8], name='target')
 
 hidden = Layer(input_tensor = input_layer,
-	 	size = 3, 
-	 	wrange = [-1,1], 
+	 	size = 3,
+		init = [-1,1,1],
 		act = actf.sigmoid, 
 		layer_name = 'hidden', 
-		seed = 1, 
 		layer_type = 'hidden')
 
 output = Layer(input_tensor = hidden.act, 
 		size = 8, 
-		wrange = [-1,1], 
+		init = [-1,1,1],
 		act = actf.sigmoid, 
 		layer_name = 'output', 
-		seed = 1,
 		layer_type = 'output')
 
 model838 = model(input_layer, [hidden, output], targets)

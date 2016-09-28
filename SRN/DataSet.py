@@ -13,6 +13,7 @@ def make_oh_map(chars):
     map_['_length_'] = num_chars
     return map_
 
+
 def str2oh(raw, max_length, oh_map, NaN_fill = False):
     num_cols = oh_map['_length_']
     num_rows = max_length
@@ -28,6 +29,7 @@ def str2oh(raw, max_length, oh_map, NaN_fill = False):
         sequence_y[plane_ind,0:-1] = sequence_x[plane_ind,1:]
 
     return sequence_x, sequence_y
+
 
 class DataSet(object):
     def __init__(self, path):

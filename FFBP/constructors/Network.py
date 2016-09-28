@@ -36,18 +36,17 @@ class Network(object):
         self._terminate = False
         self._errVisApp = None
         self._layVisApp = None
-        self._vis_settings = {'ppc': 30,
-                                  'dpi': 96}
+        self._vis_settings = {'ppc': 30, 'dpi': 96}
 
     def init_and_configure(self,
-                  loss,
-                  train_batch_size,
-                  learning_rate=0.5,
-                  momentum=0.9,
-                  permute=False,
-                  ecrit=0.01,
-                  test_func=None,
-                  test_scope='all'):
+                           loss,
+                           train_batch_size,
+                           learning_rate = 0.5,
+                           momentum = 0.9,
+                           permute = False,
+                           ecrit = 0.01,
+                           test_func = None,
+                           test_scope = 'all'):
         self.init_weights()
         self.configure(loss,train_batch_size, learning_rate,
                        momentum, permute, ecrit, test_func, test_scope)
@@ -61,12 +60,12 @@ class Network(object):
     def configure(self,
                   loss,
                   train_batch_size,
-                  learning_rate=0.5,
-                  momentum=0.9,
-                  permute=False,
-                  ecrit=0.01,
-                  test_func=None,
-                  test_scope='all'):
+                  learning_rate = 0.5,
+                  momentum = 0.9,
+                  permute = False,
+                  ecrit = 0.01,
+                  test_func = None,
+                  test_scope = 'all'):
         if test_scope != 'all':
             input('''Warning: current visualizer will not be able to show test data correctly.
 Set test_scope='all' to visualize snapshots. If you want to continue, press enter.''')

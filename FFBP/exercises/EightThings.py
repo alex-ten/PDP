@@ -23,29 +23,26 @@ labels = tf.placeholder(tf.float32, shape=[None,36], name='labels')
 representation = Layer(
     input_tensor=item,
     size=8,
-    wrange=[-.45, .45],
+    init=[-.45, .45, 1],
     act=actf.sigmoid,
     layer_name='representation',
-    seed=1,
     layer_type='hidden')
 
 hidden = Layer(
     # concatenate representation.activations and relation (name properly for neat visualization)
     input_tensor=tf.concat(1,[representation.act, relation], name='representation/relation'),
     size=12,
-    wrange=[-.45, .45],
+    init=[-.45, .45, 2],
     act=actf.sigmoid,
     layer_name='hidden',
-    seed=2,
     layer_type='hidden')
 
 attribute = Layer(
     input_tensor=hidden.act,
     size=36,
-    wrange=[-.45, .45],
+    init=[-.45, .45, 3],
     act=actf.sigmoid,
     layer_name='attribute',
-    seed=3,
     layer_type='output')
 
 eight_things = model([item, relation], [representation, hidden, attribute], labels)
@@ -56,7 +53,6 @@ et_net = Network(eight_things, name = '8t_network')
 et_net.train_set = ET
 et_net.test_set = ET
 et_net.configure(train_batch_size = 32,
-                 test_batch_size = 32,
                  learning_rate = 0.1,
                  momentum = 0,
                  permute = True,
