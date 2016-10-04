@@ -21,6 +21,7 @@ hidden = Layer(input_tensor = input_layer,
 		layer_name = 'hidden', 
 		layer_type = 'hidden')
 
+
 output = Layer(input_tensor = hidden.act, 
 		size = 8, 
 		init = [-1,1,1],
