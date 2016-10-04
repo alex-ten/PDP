@@ -18,17 +18,19 @@ label = tf.placeholder(tf.float32, shape=[None,1], name='target')
 
 hidden1 = Layer(input_tensor = image,
                 size = 2,
-                init = [-1,1,2],
                 act = actf.sigmoid,
                 layer_name = 'hidden1',
-                layer_type = 'hidden')
+                layer_type = 'hidden',
+                stop_grad=True)
+hidden1.set_wrange([-1,1,2])
+
 
 output =  Layer(input_tensor = hidden1.act,
                 size = 1,
-                init = [-1,1,2],
                 act = actf.sigmoid,
                 layer_name = 'output',
                 layer_type = 'output')
+output.set_wrange([-1,1,2])
 
 xor_model = model([image], [hidden1, output], label)
 xor_net = Network(xor_model, name='XOR Network')
@@ -50,8 +52,11 @@ xor_net.configure(loss = errf.squared_error,
 # code.interact(local = locals())
 
 def demo():
-    xor_net.tnt(300,30,0)
-    xor_net.test(vis=True)
+    #xor_net.tnt(300,30,0)
+    #xor_net.test(vis=True)
+    print(xor_net.model['network'][0].W.eval())
+    xor_net.train(300,0,0)
+    print(xor_net.model['network'][0].W.eval())
 
 if __name__=="__main__":  demo()
 
