@@ -20,9 +20,20 @@ def orthogonal_initializer(scale = 1.1):
         return tf.constant(scale * q[:shape[0], :shape[1]], dtype=tf.float32)
     return _initializer
 
+def wrange_initializer(wrange):
+    if wrange == 0:
+        return tf.constant_initializer(0)
+    if len(wrange) == 3:
+        seed = wrange[-1]
+    else:
+        seed = None
+    return tf.random_uniform_initializer(minval = wrange[0],
+                                         maxval = wrange[1],
+                                         seed = seed)
+
 
 class Layer(object):
-    def __init__(self, input_tensor, size, init, act, layer_name, layer_type='nd', bias=True, bias_val=None):
+    def __init__(self, input_tensor, size, act, layer_name, layer_type='nd', bias=True, bias_val=None, stop_grad=False):
         self.input_tensor = input_tensor
         self.sender_size = int(input_tensor.get_shape()[1])
         self.sender_name = extract(input_tensor.name)
@@ -31,19 +42,17 @@ class Layer(object):
         self.layer_type = layer_type
         self.bias_on = bias
         self.bias_val = bias_val
-        self.init = init
         self.actf = act
-        if not callable(init):
-            if len(init) == 3: seed = init[-1]
-            else: seed = None
-            self.init_wrange(seed)
-        else: self.init_orthogonal()
+        self.stop_grad = stop_grad
+        self.W = self.b = None
 
-
-    def init_orthogonal(self):
+    def set_orthogonal(self, scope=1.1):
         with tf.variable_scope(self.layer_name, reuse=False):
-            self.W = tf.get_variable('weights', [self.sender_size, self.size], tf.float32, initializer = self.init)
-            self.net = tf.matmul(self.input_tensor, self.W, name = 'net')
+            self.W = tf.get_variable(name='weights',
+                                     shape=[self.size, self.sender_size],
+                                     dtype=tf.float32,
+                                     initializer=orthogonal_initializer(scope))
+            self.net = tf.matmul(self.input_tensor, self.W, transpose_b=True, name = 'net')
             if self.bias_on:
                 self.b = tf.get_variable('biases', [self.size], tf.float32)
                 if self.bias_val != None:
@@ -52,72 +61,88 @@ class Layer(object):
             if self.actf != None:
                 self.act = self.actf(self.net)
 
-    def init_wrange(self, rand_seed):
-        if self.init == 0:
-            init_W = tf.zeros((self.size, self.sender_size))
-            init_b = tf.zeros((1, self.size))
-        else:
-            init_W = tf.random_uniform((self.size, self.sender_size),
-                                       minval=self.init[0],
-                                       maxval=self.init[1],
-                                       seed=rand_seed)
-            init_b = tf.random_uniform((1, self.size),
-                                       minval=self.init[0],
-                                       maxval=self.init[1],
-                                       seed=rand_seed + 1)
-        with tf.name_scope('weights'):
-            self.W = tf.Variable(init_W, dtype=tf.float32)
-        with tf.name_scope('biases'):
-            self.b = tf.Variable(init_b, dtype=tf.float32)
+    def set_wrange(self, wrange=0):
+        with tf.variable_scope(self.layer_name, reuse=False, initializer = wrange_initializer(wrange)):
+            self.W = tf.get_variable(name = 'weights',
+                                     shape = [self.size, self.sender_size],
+                                     dtype = tf.float32)
+            self.b = tf.get_variable(name = 'biases',
+                                     shape = [1, self.size],
+                                     dtype = tf.float32)
         with tf.name_scope('net'):
             self.net = tf.matmul(self.input_tensor, self.W, transpose_b=True) + self.b
+            if self.stop_grad: self.net = tf.stop_gradient(self.net)
         with tf.name_scope('act'):
             self.act = self.actf(self.net)
-        with tf.name_scope('input'):
-            self.inp = tf.add(self.input_tensor, 0)
 
     def __str__(self):
         return '<Layer object>'
 
 
 class RecurrentLayer(object):
-    def __init__(self, input_tensor, size, wrange, act, layer_name, seed=None, layer_type='nd'):
+    def __init__(self, input_tensor, size, init_state, act, layer_name, layer_type='nd', bias=True, bias_val=None,
+                 stop_grad=False):
         self.input_tensor = input_tensor
         self.sender_size = int(input_tensor.get_shape()[1])
         self.sender_name = extract(input_tensor.name)
         self.size = size
         self.layer_name = layer_name
-        self.wrange = wrange
-        self.rand_seed = seed
-        with tf.name_scope(layer_name):
-            if wrange == 0:
-                init_W = tf.zeros((self.size, self.sender_size))
-                init_b = tf.zeros((1, self.size))
-                init_cW = tf.zeros((self.size, self.sender_size+self.size))
-            else:
-                init_W = tf.random_uniform((self.size, self.sender_size), minval=self.wrange[0],
-                                           maxval=self.wrange[1], seed=self.rand_seed)
-                init_b = tf.random_uniform((1, self.size), minval=self.wrange[0], maxval=self.wrange[1],
-                                           seed=self.rand_seed + 1)
-                init_cW = tf.random_uniform((self.size, self.sender_size + self.size), minval=self.wrange[0],
-                                           maxval=self.wrange[1], seed=self.rand_seed)
-            with tf.name_scope('weights'):
-                self.W = tf.Variable(init_W, dtype=tf.float32, collections=['Wb'])
-            with tf.name_scope('biases'):
-                self.b = tf.Variable(init_b, dtype=tf.float32, collections=['Wb'])
-            with tf.name_scope('net'):
-                self.net = tf.matmul(input_tensor, self.W, transpose_b=True) + self.b
-            with tf.name_scope('act'):
-                self.act = act(self.net)
-            with tf.name_scope('input'):
-                self.inp = tf.add(input_tensor, 0)
         self.layer_type = layer_type
-        self.context = tf.placeholder(tf.float32, [None, self.size], name = self.layer_name + ' context')
+        self.bias_on = bias
+        self.bias_val = bias_val
+        self.actf = act
+        self.stop_grad = stop_grad
+        self.W = self.rW = self.b = None
+        self.init_state = self.curr_state = init_state
+        self.inp = []
+
+    def update_state(self):
+        self.curr_state = self.act
+
+    def flush_state(self):
+        self.curr_state = self.init_state
+
+    def set_orthogonal(self, scope=1.1):
+        with tf.variable_scope(self.layer_name, reuse=False):
+            self.W = tf.get_variable(name = 'weights',
+                                     shape = [self.size, self.sender_size],
+                                     dtype = tf.float32,
+                                     initializer = orthogonal_initializer(scope))
+            self.rW = tf.get_variable(name = 'recurrent_weights',
+                                      shape = [self.size, self.size],
+                                      dtype = tf.float32,
+                                      initializer = orthogonal_initializer((scope)))
+            self.inp.append(tf.matmul(self.input_tensor, self.W, transpose_b=True, name='inp_curr'))
+            self.inp.append(tf.matmul(self.curr_state, self.rW, transpose_b=True, name='inp_prev'))
+            if self.stop_grad: self.inp[1] = tf.stop_gradient(self.inp[1])
+            self.net = self.inp[0] + self.inp[1]
+            if self.bias_on:
+                self.b = tf.get_variable('biases', [self.size], tf.float32)
+                if self.bias_val != None:
+                    self.b = self.b.assign(tf.constant(self.bias_val, shape=[self.size]))
+                self.net += self.b
+            if self.actf != None:
+                self.act = self.actf(self.net)
+
+    def set_wrange(self, wrange=0):
+        with tf.variable_scope(self.layer_name, reuse=False, initializer = wrange_initializer(wrange)):
+            self.W = tf.get_variable(name = 'weights',
+                                     shape = [self.size, self.sender_size],
+                                     dtype = tf.float32)
+            self.rW = tf.get_variable('recurrent_weights',
+                                      [self.size, self.size],
+                                      tf.float32)
+            self.b = tf.get_variable(name = 'biases',
+                                     shape = [1, self.size],
+                                     dtype = tf.float32)
+        with tf.name_scope('net'):
+            self.inp.append(tf.matmul(self.input_tensor, self.W, transpose_b=True))
+            self.inp.append(tf.matmul(self.curr_state, self.rW, transpose_b=True))
+            if self.stop_grad: self.inp[1] = tf.stop_gradient(self.inp[1])
+            self.net = self.inp[0] + self.inp[1] + self.b
+        with tf.name_scope('act'):
+            self.act = self.actf(self.net)
+
 
     def __str__(self):
-        return '<Layer object>'
-
-    def loop_on(self):
-        current_input_tensor = self.input_tensor
-        context = self.context
-        self.input_tensor = tf.concat(1, [current_input_tensor, context], name = '{}_with_context'.format(self.input_tensor.name)) #todo check if this gives correct name
+        return '<RecurrentLayer object>'
