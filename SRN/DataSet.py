@@ -76,21 +76,29 @@ class DataSet(object):
         self._current_batches = _x, _y
 
     def next_batch(self, batch_size):
-        if not self._batch_ind:
-            self._get_batches(batch_size)
-        assert self._current_batches_size % batch_size == 0, 'Batch size must divide the total ' \
-                                                             'number of sequences. Got {} % {} = {}'.format(self.max_length,
-                                                                                                            batch_size,
-                                                                                                            self.max_length % batch_size)
+        # if not self._batch_ind:
+        #     self._get_batches(batch_size)
+        # assert self._current_batches_size % batch_size == 0, 'Batch size must divide the total ' \
+        #                                                      'number of sequences. Got {} % {} = {}'.format(self.max_length,
+        #                                                                                                     batch_size,
+        #                                                                                                     self.max_length % batch_size)
+        # start = self._batch_ind
+        # self._batch_ind += batch_size
+        # if self._batch_ind > batch_size * self.max_length:
+        #     self._get_batches(batch_size)
+        #     start = 0
+        #     self._batch_ind = batch_size
+        # end = self._batch_ind
+        # xs, ys = self._current_batches
+        # return xs[start:end], ys[start:end]
+
         start = self._batch_ind
         self._batch_ind += batch_size
-        if self._batch_ind > batch_size * self.max_length:
-            self._get_batches(batch_size)
+        if self._batch_ind > self.num_seqs:
             start = 0
             self._batch_ind = batch_size
         end = self._batch_ind
-        xs, ys = self._current_batches
-        return xs[start:end], ys[start:end]
+        return self.inp_seqs[start:end,:,:], self.out_seqs[start:end,:,:]
 
     def all_seqs(self):
         return (self.inp_seqs, self.out_seqs)

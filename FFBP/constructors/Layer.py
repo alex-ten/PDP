@@ -49,10 +49,10 @@ class Layer(object):
     def set_orthogonal(self, scope=1.1):
         with tf.variable_scope(self.layer_name, reuse=False):
             self.W = tf.get_variable(name='weights',
-                                     shape=[self.size, self.sender_size],
+                                     shape=[self.sender_size, self.size],
                                      dtype=tf.float32,
                                      initializer=orthogonal_initializer(scope))
-            self.net = tf.matmul(self.input_tensor, self.W, transpose_b=True, name = 'net')
+            self.net = tf.matmul(self.input_tensor, self.W, name = 'net')
             if self.bias_on:
                 self.b = tf.get_variable('biases', [self.size], tf.float32)
                 if self.bias_val != None:
@@ -64,13 +64,13 @@ class Layer(object):
     def set_wrange(self, wrange=0):
         with tf.variable_scope(self.layer_name, reuse=False, initializer = wrange_initializer(wrange)):
             self.W = tf.get_variable(name = 'weights',
-                                     shape = [self.size, self.sender_size],
+                                     shape = [self.sender_size, self.size],
                                      dtype = tf.float32)
             self.b = tf.get_variable(name = 'biases',
                                      shape = [1, self.size],
                                      dtype = tf.float32)
         with tf.name_scope('net'):
-            self.net = tf.matmul(self.input_tensor, self.W, transpose_b=True) + self.b
+            self.net = tf.matmul(self.input_tensor, self.W) + self.b
             if self.stop_grad: self.net = tf.stop_gradient(self.net)
         with tf.name_scope('act'):
             self.act = self.actf(self.net)
@@ -105,15 +105,15 @@ class RecurrentLayer(object):
     def set_orthogonal(self, scope=1.1):
         with tf.variable_scope(self.layer_name, reuse=False):
             self.W = tf.get_variable(name = 'weights',
-                                     shape = [self.size, self.sender_size],
+                                     shape = [self.sender_size, self.size],
                                      dtype = tf.float32,
                                      initializer = orthogonal_initializer(scope))
             self.rW = tf.get_variable(name = 'recurrent_weights',
                                       shape = [self.size, self.size],
                                       dtype = tf.float32,
                                       initializer = orthogonal_initializer((scope)))
-            self.inp.append(tf.matmul(self.input_tensor, self.W, transpose_b=True, name='inp_curr'))
-            self.inp.append(tf.matmul(self.curr_state, self.rW, transpose_b=True, name='inp_prev'))
+            self.inp.append(tf.matmul(self.input_tensor, self.W, name='inp_curr'))
+            self.inp.append(tf.matmul(self.curr_state, self.rW, name='inp_prev'))
             if self.stop_grad: self.inp[1] = tf.stop_gradient(self.inp[1])
             self.net = self.inp[0] + self.inp[1]
             if self.bias_on:
@@ -127,7 +127,7 @@ class RecurrentLayer(object):
     def set_wrange(self, wrange=0):
         with tf.variable_scope(self.layer_name, reuse=False, initializer = wrange_initializer(wrange)):
             self.W = tf.get_variable(name = 'weights',
-                                     shape = [self.size, self.sender_size],
+                                     shape = [self.sender_size, self.size],
                                      dtype = tf.float32)
             self.rW = tf.get_variable('recurrent_weights',
                                       [self.size, self.size],
@@ -136,8 +136,8 @@ class RecurrentLayer(object):
                                      shape = [1, self.size],
                                      dtype = tf.float32)
         with tf.name_scope('net'):
-            self.inp.append(tf.matmul(self.input_tensor, self.W, transpose_b=True))
-            self.inp.append(tf.matmul(self.curr_state, self.rW, transpose_b=True))
+            self.inp.append(tf.matmul(self.input_tensor, self.W))
+            self.inp.append(tf.matmul(self.curr_state, self.rW))
             if self.stop_grad: self.inp[1] = tf.stop_gradient(self.inp[1])
             self.net = self.inp[0] + self.inp[1] + self.b
         with tf.name_scope('act'):
