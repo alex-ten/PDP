@@ -16,7 +16,7 @@ def make_oh_map(chars):
 
 def str2oh(raw, max_length, oh_map, NaN_fill = False):
     num_cols = oh_map['_length_']
-    num_rows = max_length
+    num_rows = max_length# - 1 #todo inserted -1
     num_planes = len(raw)
     sequence_x = np.zeros((num_planes, num_rows, num_cols))
     sequence_y = np.zeros((num_planes, num_rows, num_cols))
@@ -25,10 +25,11 @@ def str2oh(raw, max_length, oh_map, NaN_fill = False):
         sequence_y[:] = np.NaN
     for plane_ind, sequence in enumerate(raw):
         for row_ind, char in enumerate(sequence):
+            #if row_ind == num_rows: break #todo added this whole line
             sequence_x[plane_ind,row_ind] = oh_map[char]
         sequence_y[plane_ind,0:-1] = sequence_x[plane_ind,1:]
 
-    return sequence_x, sequence_y
+    return sequence_x[:,0:-1], sequence_y[:,0:-1]
 
 
 class DataSet(object):
