@@ -68,8 +68,10 @@ class FSM():
         self.in_state = self.states[0]
         self.composition = 'B'
 
+
 def store_random_chatter(log, path):
     pickle.dump(log, open(path, 'wb'))
+
 
 def make_states(l):
     return [IntState(s) for s in l]
@@ -97,7 +99,7 @@ def main():
 
     myFSM = FSM(states, transitions)
     chatter_log = myFSM.chatter(5,5)
-    store_random_chatter(chatter_log, '5x5.pkl')
+    # store_random_chatter(chatter_log, '5x5.pkl')
 
 if __name__=='__main__': main()
 

@@ -37,13 +37,15 @@ class DataSet(object):
     def __init__(self, path):
         with open(path, 'rb') as file:
             jar = pickle.load(file)
-            self.unique = jar.pop()
+            self.unique = sorted(jar.pop())
             self.raw = jar
         self.num_seqs = len(self.raw)
         self.oh_map = make_oh_map(self.unique)
         self.max_length = len(max(self.raw, key=len))
         self.inp_seqs = None
         self.out_seqs = None
+        self.inp_inds = None
+        self.out_inds = None
         self._current_batches = None
         self._current_batches_size = None
         self._batches_ind = 0
@@ -55,6 +57,14 @@ class DataSet(object):
                                               max_length = self.max_length,
                                               oh_map = self.oh_map,
                                               NaN_fill = NaN_fill)
+
+    def raw2inds(self):
+        self.inp_inds = np.zeros(shape = [self.num_seqs, self.max_length])
+        self.out_inds = np.zeros(shape = [self.num_seqs, self.max_length])
+        for ii, string in enumerate(self.raw):
+            for jj, char in enumerate(string):
+                self.inp_inds[ii, jj] = self.unique.index(char)
+                self.out_inds[ii, 0:-1] = self.inp_inds[ii, 1:]
 
     def _get_batches(self, num_seqs):
         assert self.num_seqs % num_seqs == 0, 'Number of batches must divide the total ' \
@@ -75,30 +85,24 @@ class DataSet(object):
         self._current_batches_size = num_seqs * self.max_length
         self._current_batches = _x, _y
 
-    def next_batch(self, batch_size):
-        # if not self._batch_ind:
-        #     self._get_batches(batch_size)
-        # assert self._current_batches_size % batch_size == 0, 'Batch size must divide the total ' \
-        #                                                      'number of sequences. Got {} % {} = {}'.format(self.max_length,
-        #                                                                                                     batch_size,
-        #                                                                                                     self.max_length % batch_size)
-        # start = self._batch_ind
-        # self._batch_ind += batch_size
-        # if self._batch_ind > batch_size * self.max_length:
-        #     self._get_batches(batch_size)
-        #     start = 0
-        #     self._batch_ind = batch_size
-        # end = self._batch_ind
-        # xs, ys = self._current_batches
-        # return xs[start:end], ys[start:end]
-
+    def next_batch(self, batch_size, ind_batch_X = False, ind_batch_Y = False, truncate=True):
         start = self._batch_ind
         self._batch_ind += batch_size
         if self._batch_ind > self.num_seqs:
             start = 0
             self._batch_ind = batch_size
         end = self._batch_ind
-        return self.inp_seqs[start:end,:,:], self.out_seqs[start:end,:,:]
+        _x, _y = self.inp_seqs[start:end,:,:], self.out_seqs[start:end,:,:]
+        if truncate:
+            _x = _x[:,:-1,:]
+            _y = _y[:,:-1,:]
+        if ind_batch_X:
+            _x = self.inp_inds[start:end].astype(int)
+            if truncate: _x = _x[:,:-1]
+        if ind_batch_Y:
+            _y = self.out_inds[start:end].astype(int)
+            if truncate: _y = _y[:,:-1]
+        return _x, _y
 
     def all_seqs(self):
         return (self.inp_seqs, self.out_seqs)
