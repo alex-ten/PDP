@@ -1,14 +1,14 @@
 import code
+
 import tensorflow as tf
-import FFBP.utilities.evaluation_functions as evalf
+from constructors.DataSet import DataSet
+from constructors.Network import Network
+
 import FFBP.utilities.activation_functions as actf
 import FFBP.utilities.error_functions as errf
-from FFBP.constructors.DataSet import DataSet
-from FFBP.constructors.Layer import Layer
-from FFBP.constructors.Network import Network
+import FFBP.utilities.evaluation_functions as evalf
 from FFBP.utilities.model import model
-
-
+from constructors.Layer import Layer
 
 # ----------------------------- BUILD -----------------------------
 try:
