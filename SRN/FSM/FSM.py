@@ -98,8 +98,8 @@ def main():
     transitions = make_transitions(td)
 
     myFSM = FSM(states, transitions)
-    chatter_log = myFSM.chatter(5,5)
-    # store_random_chatter(chatter_log, '5x5.pkl')
+    chatter_log = myFSM.chatter(240,50)
+    store_random_chatter(chatter_log, 'pickles/240x50.pkl')
 
 if __name__=='__main__': main()
 
