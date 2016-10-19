@@ -63,6 +63,8 @@ class DataSet(object):
 
 
     def next_batch(self, batch_size, ind_batch_X = False, ind_batch_Y = False):
+        if self.num_seqs % batch_size != 0:
+            raise ValueError('Batch size must divide the total number of sequences in the dataset')
         start = self._batch_ind
         self._batch_ind += batch_size
         if self._batch_ind > self.num_seqs:
@@ -70,11 +72,12 @@ class DataSet(object):
             self._batch_ind = batch_size
         end = self._batch_ind
         _x, _y = self.inp_seqs[start:end,:,:], self.out_seqs[start:end,:,:]
+        _l = self.seq_lengths[start:end]
         if ind_batch_X:
             _x = self.inp_inds[start:end].astype(int)
         if ind_batch_Y:
             _y = self.out_inds[start:end].astype(int)
-        return _x, _y
+        return _x, _y, _l
 
     def all_seqs(self):
         return (self.inp_seqs, self.out_seqs)
@@ -90,7 +93,7 @@ class DataSet(object):
             print(k, v)
 
 def main():
-    data = DataSet('/Users/alexten/Projects/PDP/SRN/pickles/a_to_x.pkl')
+    data = DataSet('/Users/alexten/Projects/PDP/SRN/pickles/a_through_x.pkl')
     data.raw2onehot()
     data.raw2inds()
 
@@ -105,10 +108,10 @@ def main():
             print('{0:4}  {1}'.format(i,s))
 
     data.show_oh_map()
-    for i in range(2):
-        x, y = data.next_batch(2, ind_batch_X=True, ind_batch_Y=True)
+    for i in range(1):
+        x, y = data.next_batch(2)
         print(x)
-        print(y)
+        # print(y)
 
 
 if __name__=='__main__': main()
