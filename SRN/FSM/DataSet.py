@@ -16,7 +16,7 @@ def make_oh_map(chars):
 
 def str2oh(raw, max_length, oh_map, NaN_fill = False):
     num_cols = oh_map['_length_']
-    num_rows = max_length# - 1 #todo inserted -1
+    num_rows = max_length
     num_planes = len(raw)
     sequence_x = np.zeros((num_planes, num_rows, num_cols))
     sequence_y = np.zeros((num_planes, num_rows, num_cols))
@@ -25,11 +25,9 @@ def str2oh(raw, max_length, oh_map, NaN_fill = False):
         sequence_y[:] = np.NaN
     for plane_ind, sequence in enumerate(raw):
         for row_ind, char in enumerate(sequence):
-            #if row_ind == num_rows: break #todo added this whole line
             sequence_x[plane_ind,row_ind] = oh_map[char]
         sequence_y[plane_ind,0:-1] = sequence_x[plane_ind,1:]
 
-    #return sequence_x[:, 0:-1], sequence_y[:, 0:-1]
     return sequence_x, sequence_y
 
 
@@ -42,6 +40,7 @@ class DataSet(object):
         self.num_seqs = len(self.raw)
         self.oh_map = make_oh_map(self.unique)
         self.max_length = len(max(self.raw, key=len))
+        self.seq_lengths = np.array([len(r) for r in self.raw])
         self.inp_seqs = None
         self.out_seqs = None
         self.inp_inds = None
@@ -50,7 +49,6 @@ class DataSet(object):
         self._current_batches_size = None
         self._batches_ind = 0
         self._batch_ind = 0
-
 
     def raw2onehot(self, NaN_fill = False):
         self.inp_seqs, self.out_seqs = str2oh(raw = self.raw,
@@ -93,6 +91,7 @@ class DataSet(object):
             self._batch_ind = batch_size
         end = self._batch_ind
         _x, _y = self.inp_seqs[start:end,:,:], self.out_seqs[start:end,:,:]
+        _l = self.seq_lengths[start:end]
         if truncate:
             _x = _x[:,:-1,:]
             _y = _y[:,:-1,:]
@@ -102,7 +101,10 @@ class DataSet(object):
         if ind_batch_Y:
             _y = self.out_inds[start:end].astype(int)
             if truncate: _y = _y[:,:-1]
-        return _x, _y
+        return _x, _y, _l
+
+    def get_oh(self, s):
+        return self.oh_map[s]
 
     def all_seqs(self):
         return (self.inp_seqs, self.out_seqs)
