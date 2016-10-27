@@ -1,14 +1,14 @@
 import code
 
-import tensorflow as tf
-from constructors.DataSet import DataSet
-from constructors.Network import Network
-
 import FFBP.utilities.activation_functions as actf
-import FFBP.utilities.error_functions as errf
 import FFBP.utilities.evaluation_functions as evalf
+import tensorflow as tf
 from FFBP.utilities.model import model
+
+import utilities.error_functions as errf
+from constructors.DataSet import DataSet
 from constructors.Layer import Layer
+from constructors.Network import Network
 
 trainSet = DataSet('f_net838.txt')
 testSet = trainSet

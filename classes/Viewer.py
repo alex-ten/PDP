@@ -4,12 +4,21 @@ from tkinter import messagebox
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from FFBP.visualization import visLayers as vl
-from FFBP.visualization.NetworkData import NetworkData
+from SRN.visualization import visRNN as vis
+from SRN.visualization.RNData import RNData
 
+def get_vecs(snap, pattern_ind, max_len):
+    a = int(pattern_ind * max_len)
+    b = int(a + snap['seq_lens'][pattern_ind] - 1)
+    inp_seq = snap['inp'][a:b]
+    hid_seq = snap['hid'][a:b]
+    init_hid = np.zeros(np.shape(snap['hid'])[1])
+    out_seq = snap['out'][a:b]
+    targ_seq = snap['targ'][a:b]
+    return inp_seq, hid_seq, init_hid, out_seq, targ_seq
 
-class VisLayersApp():
-    def __init__(self, master, snap, ppc = 20, dpi = 96, colors='coolwarm'):
+class ViewerApp():
+    def __init__(self, master, RNdata, ppc = 20, dpi = 96, colors='coolwarm'):
 
         self.master = master
         self.master.title('Network Visualization')
@@ -18,9 +27,12 @@ class VisLayersApp():
         self._ppc = ppc
         self._dpi = dpi
         self.bfs = self._set_bfs()
-        self.snap = snap
+        self.RNdata = RNdata
         self.figure = self.create_fig()
-        self.panelBoard = vl.prep_figure(self.snap, self.figure)
+        board = vis.prep_figure(self.RNdata, self.figure)
+        self.panelBoard = board[0]
+        self.boardWidth = board[1]
+        self.boardHeight = board[2]
         figSize = self.figure.get_size_inches() * self._dpi
 
         # ============================= Parent Windows =============================
@@ -28,7 +40,7 @@ class VisLayersApp():
 
         figWidth, figHeight = [int(x) for x in figSize]
         maxWindWidth = 900
-        maxWindHeight = 700
+        maxWindHeight = 600
         w = min(figWidth, maxWindWidth)
         h = min(figHeight, maxWindHeight)
         master.geometry(
@@ -130,19 +142,20 @@ class VisLayersApp():
         # -------------------------------- Widgets ---------------------------------
 
         # Selectors:
-        self.patternSelector = ttk.Combobox(self.selectorFrame,
-                                            textvariable = self.patternVar,
-                                            values = list(snap.inp_names.keys()))
-        self.patternSelector.current(0)
-
         self.epochSlider = ttk.Scale(self.selectorFrame,
                                      orient = tk.HORIZONTAL,
                                      length = 200,
-                                     value =len(snap.epochs) - 1,
+                                     value = self.RNdata.num_epochs - 1,
                                      from_ = 0,
-                                     to =len(snap.epochs) - 1)
+                                     to = self.RNdata.num_epochs - 1)
 
-        self.epochSlider.set(str(len(snap.epochs) - 1))
+        self.epochSlider.set(str(self.RNdata.num_epochs))
+
+        self.patternSelector = ttk.Combobox(self.selectorFrame,
+                                            textvariable = self.patternVar,
+                                            values = RNdata.main[int(self.epochSlider.get())]['strings'])
+        self.patternSelector.current(0)
+
 
         # Buttons
         self.updateButton = ttk.Button(self.buttonFrame,
@@ -290,7 +303,11 @@ class VisLayersApp():
         self.helpButton.grid(row = 3, column = 0, columnspan = 1, padx = 15, pady = 20, sticky = 'w')
 
         # ============================ Initial Figure ============================
-        self._label_groups = vl.annotate(self.snap, self.panelBoard, self._set_bfs())
+        self._label_groups = vis.annotate(self.panelBoard,
+                                          self.boardHeight,
+                                          self.RNdata.data_dim,
+                                          self.RNdata.hid_size,
+                                          self._set_bfs())
         self._labels_on = True
         self._plotLatest()
 
@@ -303,45 +320,38 @@ class VisLayersApp():
 
     def create_fig(self):
         # Create a figure
-        max_width = max([l.sender[1] for l in self.snap.main.values()])
-        width_cells = ((max_width + 9) * 2)
+        max_width = self.RNdata.hid_size + self.RNdata.data_dim * 2
+        width_cells = max_width + 5
         width_pixels = width_cells * self._ppc
         width_inches = width_pixels / self._dpi
 
-        network_size = self.snap.num_units
-        height_cells = network_size + (6 * self.snap.num_layers)
+        num_steps = self.RNdata.max_len
+        height_cells = 2 * num_steps + 2
         height_pixels = height_cells * self._ppc
         height_inches = height_pixels / self._dpi
-        fig = plt.figure(2, figsize=(width_inches, height_inches), facecolor='w', dpi=self._dpi)
+        fig = plt.figure(1, figsize=(width_inches, height_inches), facecolor='w', dpi=self._dpi)
         return fig
 
     def onUpdate(self):
         epoch_ind = int(self.epochSlider.get())
+        snap = self.RNdata.main[epoch_ind]
         key = self.patternSelector.get()
-        if key in self.snap.inp_names.keys():
+        if key in snap['strings']:
+            pattern_ind = snap['strings'].index(key)
             self.progBar.start()
             self.panelBoard.clear()
-            ind_map = self.snap.inp_vects[epoch_ind]
-            pattern_ind = np.where(np.all(ind_map == self.snap.inp_names[key], axis=1))[0][0]
-            vl.draw_all_layers(self.snap, self.panelBoard, epoch_ind, pattern_ind, colmap=self.colors)
-            self._label_groups = vl.annotate(self.snap, self.panelBoard, self.bfs)
+            inp_seq, hid_seq, init_hid, out_seq, targ_seq = get_vecs(snap, pattern_ind, self.RNdata.max_len)
+            vis.draw_epoch(self.panelBoard, self.boardHeight, inp_seq, hid_seq, init_hid, out_seq, targ_seq, self.colors, 1)
+            self._label_groups = vis.annotate(self.panelBoard,
+                                              self.boardHeight,
+                                              self.RNdata.data_dim,
+                                              self.RNdata.hid_size,
+                                              self._set_bfs())
             self.figureRenderer.draw()
             self.progBar.stop()
         else:
             messagebox.showinfo(title='Wrong selection',
                                 message='No such pattern. Please select a pattern from the list')
-
-    def onLabels(self):
-        if self._labels_on:
-            vl.labels_off(self._label_groups)
-            self._labels_on = False
-            self.labelsButton.config(text = 'Show labels')
-            self.figureRenderer.draw()
-        else:
-            self._label_groups = vl.annotate(self.snap, self.panelBoard, self._set_bfs())
-            self._labels_on = True
-            self.labelsButton.config(text='Hide labels')
-            self.figureRenderer.draw()
 
     def onContinue(self):
         self._sleep()
@@ -360,10 +370,12 @@ class VisLayersApp():
         self.backCanvas.itemconfigure(self.backCanvasWind, width=nW, height=nH)
         self.backCanvas.config(scrollregion=self.backCanvas.bbox(tk.ALL), width=nW, height=nH)
         self.checkPPC()
-        if self._labels_on:
-            vl.labels_off(self._label_groups)
-            self._label_groups = vl.annotate(self.snap, self.panelBoard, self._set_bfs())
-            self.figureRenderer.draw()
+        vis.deannotate(self._label_groups)
+        self._label_groups = vis.annotate(self.panelBoard,
+                                          self.boardHeight,
+                                          self.RNdata.data_dim,
+                                          self.RNdata.hid_size,
+                                          self._set_bfs())
         self.figure.canvas.draw()
 
     def checkPPC(self):
@@ -385,12 +397,14 @@ class VisLayersApp():
         rc = 'r: {} | c: {}'.format(r,c)
         self.cellCoords.config(text = rc)
         self.cellWeight.config(text = weight)
-        self.tinyFig.set_facecolor(vl.v2c(value, self.colors, 1))
+        self.tinyFig.set_facecolor(vis.v2c(value, self.colors, 1))
         self.tinyRenderer.draw()
 
     def onSlide(self, val):
         val = float(val)
         self.epochValLabel.config(text = str(self._get_epoch(val)))
+        self.patternSelector['values'] = self.RNdata[int(val)]['strings']
+        self.patternSelector.current(0)
 
     def onApply(self):
         print('Applying changes')
@@ -426,7 +440,7 @@ class VisLayersApp():
         self.colorsWindow.withdraw()
 
     def catch_up(self, snap):
-        self.snap = snap
+        self.RNdata = snap
         self._plotLatest()
         self.master.state('normal')
         self.controlsWindow.state('normal')
@@ -439,20 +453,19 @@ class VisLayersApp():
         self.master.quit()
 
     def _plotLatest(self):
-        latest_epoch_ind = len(self.snap.epochs) - 1
-        vl.draw_all_layers(self.snap,
-                           self.panelBoard,
-                           latest_epoch_ind,
-                           0)
+        latest_epoch_ind = self.RNdata.num_epochs - 1
+        latest_snap = self.RNdata[latest_epoch_ind]
+        inp_seq, hid_seq, prevhid_seq, out_seq, targ_seq = get_vecs(latest_snap, 0, self.RNdata.max_len)
+        vis.draw_epoch(self.panelBoard, self.boardHeight, inp_seq, hid_seq, prevhid_seq, out_seq, targ_seq, self.colors, 1)
         self.epochSlider.config(to = float(latest_epoch_ind))
         self.figureRenderer.draw()
 
     def _get_epoch(self, slider_value):
-        return self.snap.epochs[int(slider_value)]
+        return self.RNdata[int(slider_value)]['ep_num']
 
     def _get_pattern(self):
         try:
-            ind = self.snap.inp_names.index(self.patternVar.get())
+            ind = self.RNdata.inp_names.index(self.patternVar.get())
             print('You selected pattern {}'.format(ind))
         except ValueError:
             print('No such pattern')
@@ -460,17 +473,21 @@ class VisLayersApp():
     def _set_bfs(self, scale = 0.4):
         return self._ppc * scale
 
+    def onLabels(self):
+        pass
+
 
 def main():
 
     # Prompt path to the snapshot
-    path = input('[VisLayersApp] Snapshot path: ')
+    # path = input('[Viewer] Enter path to data: ')
+    path = '/Users/alexten/Projects/PDP/SRN/logdir/Sess_2016-10-25_14-31-21/mpl_data/snaplog--7-31-5.pkl'
 
     # Get network data
-    snap = NetworkData(path)
+    rndata = RNData(path)
 
     # Start the app
     root = tk.Tk()
-    app = VisLayersApp(root, snap, 30, 96)
+    app = ViewerApp(root, rndata, 40, 96, colors = 'coolwarm')
 
 if __name__=='__main__': main()

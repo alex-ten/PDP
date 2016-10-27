@@ -5,7 +5,7 @@ class NetworkData(object):
     def __init__(self, path):
         with open(path, 'rb') as opened_file:
             snapshot = pickle.load(opened_file)
-        self.error = snapshot['error']
+        self.error = snapshot['error'] # use dict.pop() instead of del dict[]
         self.epochs = snapshot['epochs']
         self.attributes = snapshot['attributes']
         self.inp_names = snapshot['inp_names']

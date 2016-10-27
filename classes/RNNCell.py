@@ -1,12 +1,12 @@
 import tensorflow as tf
-from constructors.Layer import orthogonal_initializer, wrange_initializer
+from classes.Layer import orthogonal_initializer, wrange_initializer
 
 initializer = wrange_initializer([-1,1,1])
 
 class RNNCell(object):
     def __init__(self, inp_size, size, actf, name='RNN'):
         self.state = None
-        self.nonlin = actf
+        self.actf = actf
         with tf.variable_scope(name):
             self.W = tf.get_variable(name='weights',
                                      shape=[inp_size + size, size],
@@ -22,6 +22,6 @@ class RNNCell(object):
 
     def step(self, x):
         # update the hidden state
-        self.state = self.nonlin(tf.matmul(tf.concat(1, [x, self.state]), self.W)) + self.b
+        self.state = self.actf(tf.matmul(tf.concat(1, [x, self.state]), self.W) + self.b)
         return self.state
 

@@ -1,12 +1,12 @@
+import utilities.activation_functions as actf
+import utilities.evaluation_functions as evalf
 import tensorflow as tf
-from constructors.DataSet import DataSet
-from constructors.Network import Network
+from utilities.model import model
 
-import FFBP.utilities.activation_functions as actf
-import FFBP.utilities.error_functions as errf
-import FFBP.utilities.evaluation_functions as evalf
-from FFBP.utilities.model import model
+import utilities.error_functions as errf
+from constructors.DataSet import DataSet
 from constructors.Layer import Layer
+from constructors.Network import Network
 
 trainSet = DataSet('exercises/ex_XOR/f_XOR.txt')
 testSet = trainSet

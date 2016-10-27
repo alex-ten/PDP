@@ -1,19 +1,20 @@
 import collections
-import time
 import pickle
-import numpy as np
-import tensorflow as tf
-import matplotlib.pyplot as plt
+import time
 import tkinter as tk
 
-import FFBP.utilities.logger as logger
-from FFBP.utilities.store_configurations import store
-from FFBP.utilities.init_rest import init_rest
-from FFBP.utilities.restore_params import restore_xor
-from FFBP.utilities.printProgress import printProgress
+import utilities.logger as logger
+import matplotlib.pyplot as plt
+import numpy as np
+import tensorflow as tf
+from utilities.init_rest import init_rest
+from utilities.restore_params import restore_xor
+from utilities.store_configurations import store
+
 from FFBP.visualization.NetworkData import NetworkData
 from FFBP.visualization.VisErrorApp import VisErrorApp
 from FFBP.visualization.VisLayersApp import VisLayersApp
+from utilities.printProgress import printProgress
 
 
 class Network(object):

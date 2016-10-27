@@ -1,7 +1,6 @@
-import tensorflow as tf
-import time
 import os
-from FFBP.utilities.activation_functions import *
+
+from utilities.activation_functions import *
 
 rw1 = tf.constant([[0.432171, 0.448781], [-0.038413, 0.036489]])
 rw2 = tf.constant([[0.272080, 0.081714]])

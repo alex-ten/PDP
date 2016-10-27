@@ -1,4 +1,5 @@
 
+
 def model(image_placeholders, network_layers, labels_placeholder):
     model_dict = {}
     if type(image_placeholders) is list or type(image_placeholders) is tuple:
