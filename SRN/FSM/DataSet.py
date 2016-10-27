@@ -73,11 +73,12 @@ class DataSet(object):
         end = self._batch_ind
         _x, _y = self.inp_seqs[start:end,:,:], self.out_seqs[start:end,:,:]
         _l = self.seq_lengths[start:end]
+        _s = self.raw[start:end]
         if ind_batch_X:
             _x = self.inp_inds[start:end].astype(int)
         if ind_batch_Y:
             _y = self.out_inds[start:end].astype(int)
-        return _x, _y, _l
+        return _x, _y, _l, _s
 
     def all_seqs(self):
         return (self.inp_seqs, self.out_seqs)
