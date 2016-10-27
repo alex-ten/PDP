@@ -1,14 +1,19 @@
-import tensorflow as tf
-import numpy as np
 import time
+import pickle
+import collections
+
 import matplotlib.pyplot as plt
+import numpy as np
+import tensorflow as tf
 from matplotlib import style
+
 style.use('ggplot')
 
 from SRN.FSM.DataSet import DataSet
-from SRN import mask
-from constructors.RNNCell import RNNCell
-from constructors.Layer import wrange_initializer
+import utilities.logger as logger
+from utilities import mask
+from classes.RNNCell import RNNCell
+from classes.Layer import wrange_initializer
 
 data = DataSet('pickles/240x50.pkl')
 data.raw2onehot()
@@ -17,27 +22,16 @@ test_data = data
 
 learning_rate = 0.1
 batch_size = 10
-hid_size = 3
-data_dim = len(data.unique) # The number of unique characters in the entire set = length of one-hot vectors
-seq_len = num_steps = data.max_length - 1
+hid_size = 5
+data_dim = len(data.unique) # The number of unique tokens in the entire set = length of one-hot vectors
+max_len = num_steps = data.max_length - 1
 hid_actf = tf.nn.sigmoid
 
-class RNN():
-    def __init__(self, inp, targ, rnn_cell, bptt=True):
-        self.inp = inp
-        self.targ = targ
-        self.cell = rnn_cell
-        self.bptt = bptt
-        self.train_data = None
-        self.test_data = None
-        self.sess = tf.InteractiveSession()
-        self.graph = tf.get_default_graph()
+BPTT = True
 
-BPTT = False
-
-train_inp = tf.placeholder(tf.float32, shape = [batch_size, seq_len, data_dim], name ='item')
-train_targ_vec = tf.placeholder(tf.float32, shape = [batch_size, seq_len, data_dim], name ='target')
-train_targ_ind = tf.placeholder(tf.int32, shape = [batch_size, seq_len], name ='target')
+train_inp = tf.placeholder(tf.float32, shape = [batch_size, max_len, data_dim], name ='item')
+train_targ_vec = tf.placeholder(tf.float32, shape = [batch_size, max_len, data_dim], name ='target')
+train_targ_ind = tf.placeholder(tf.int32, shape = [batch_size, max_len], name ='target')
 lengths_placeholder = tf.placeholder(tf.int32, shape = [batch_size])
 
 cell = RNNCell(data_dim, hid_size, hid_actf, 'RNN')
@@ -70,7 +64,7 @@ def fprop(inp, targ, use_mask = None, compute_loss = True):
     hid_states = tf.reshape(tf.concat(1, hid_states), [-1, hid_size])
     logits = tf.matmul(hid_states, W) + b
     if not compute_loss:
-        return tf.nn.sigmoid(logits)
+        return tf.nn.sigmoid(logits), hid_states
         # return tf.nn.softmax(logits)
     else:
         # ------------- SPARSE SOFTMAX CROSS ENTROPY WITH LOGITS ----------------
@@ -84,39 +78,41 @@ def fprop(inp, targ, use_mask = None, compute_loss = True):
         # ---------------- SIGMOID CROSS ENTROPY WITH LOGITS --------------------
         labels = tf.reshape(tf.concat(1, targ_list), [-1, data_dim])
         loss = tf.nn.sigmoid_cross_entropy_with_logits(logits, labels)
+        predictions = tf.nn.sigmoid(logits)
 
         # --------------------- MAYBE RETURN VARIABLES ---------------------------
         # inps = tf.reshape(tf.concat(1, inp_list), [-1, data_dim])
         # predictions = tf.nn.softmax(logits)
         # loss = tf.reduce_mean(-tf.reduce_sum(labels * tf.log(predictions), 1))
         if use_mask is not None:
-            # _mask = tf.expand_dims(use_mask, [1, batch_size])
             _mask = use_mask
-            return mask.mask(x = loss,
-                             seq_lengths = _mask,
-                             max_len = int(num_steps),
-                             batch_size = int(batch_size))
-        return loss
+            masked_loss = mask.mask(x=loss,
+                                    seq_lengths=_mask,
+                                    max_len=int(num_steps),
+                                    batch_size=int(batch_size))
+            return masked_loss, predictions, hid_states
+        return loss, predictions, hid_states
 
-loss  = fprop(inp = train_inp,
-              targ = train_targ_vec,
-              use_mask = lengths_placeholder,
-              compute_loss = True)
+loss, predictions, hid_states  = fprop(inp = train_inp,
+                                       targ = train_targ_vec,
+                                       use_mask = None,
+                                       compute_loss = True)
+
 sgd_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss)
 mom_step = tf.train.MomentumOptimizer(learning_rate, 0.9).minimize(loss)
 adam_step = tf.train.AdamOptimizer(learning_rate).minimize(loss)
 
 def simple_test(test_inp, dataset, test_batch_size):
     np.set_printoptions(precision = 2, suppress = True)
-    x, y, l = dataset.next_batch(test_batch_size)
+    x, y, l, _ = dataset.next_batch(test_batch_size)
     if batch_size == 1:
         print("Testing sequence {}: ".format(dataset.raw[dataset._batch_ind-1]))
     else:
         print("Testing sequences {}: ".format(
             dataset.raw[dataset._batch_ind - test_batch_size: dataset._batch_ind]))
-    out = fprop(inp = test_inp,
-                targ = train_targ_vec,
-                compute_loss = False)
+    out, __ = fprop(inp = test_inp,
+                    targ = train_targ_vec,
+                    compute_loss = False)
     np_out = out.eval(feed_dict = {test_inp: x})
     print("Test inputs: ")
     print(np.reshape(np.array(x), (-1, data_dim)))
@@ -125,12 +121,33 @@ def simple_test(test_inp, dataset, test_batch_size):
     print("Test outputs: ")
     print(np_out)
 
+def snapshot(logpath, **kwargs):
+    # kwargs: epoch, lengths inp, hid, out, targ
+    inp = np.reshape(kwargs['inp'], (-1, np.shape(kwargs['inp'])[2]))
+    targ = np.reshape(kwargs['targ'], (-1, np.shape(kwargs['targ'])[2]))
+    new_snap = {'ep_num': kwargs['epoch'],
+                'seq_lens': kwargs['lengths'],
+                'inp': inp,
+                'hid': kwargs['hid'],
+                'out': kwargs['out'],
+                'targ': targ,
+                'strings': kwargs['strings']}
+    try:
+        with open(logpath, 'rb') as file:
+            snaps = pickle.load(file)
+        snaps.append(new_snap)
+        pickle.dump(snaps, open(logpath, 'wb'))
+    except FileNotFoundError:
+        snaps = []
+        snaps.append(new_snap)
+        pickle.dump(snaps, open(logpath, 'wb'))
+
 
 def main():
     num_epochs = 1000
-    test_step = 1000
-    test_batch_size = 2
-    test_inp = tf.placeholder(tf.float32, shape=[test_batch_size, seq_len, data_dim], name='item')
+    test_step = 100
+    test_batch_size = 5
+    test_inp = tf.placeholder(tf.float32, shape=[test_batch_size, max_len, data_dim], name='item')
 
     sess = tf.InteractiveSession()
     sess.run(tf.initialize_all_variables())
@@ -138,20 +155,30 @@ def main():
     # simple_test(test_inp, test_data, test_batch_size)
 
     plot_data_mean = []
+    logdir = logger.logdir()
+
     global_start = time.time()
     for epoch in range(num_epochs):
         start = time.time()
-        batch_xs, batch_ys, l = data.next_batch(batch_size)
-        _, seq_loss = sess.run([adam_step, loss],
-                               feed_dict = {train_inp: batch_xs,
-                                            train_targ_vec: batch_ys,
-                                            lengths_placeholder: l})
-        average_loss = np.sum(seq_loss) / np.size(l)
+        batch_xs, batch_ys, l, s = data.next_batch(batch_size)
+        _, L, P, H = sess.run([adam_step, loss, predictions, hid_states],
+                              feed_dict = {train_inp: batch_xs,
+                                           train_targ_vec: batch_ys,
+                                           lengths_placeholder: l})
+        average_loss = np.sum(L) / np.size(l)
         plot_data_mean.append(average_loss)
         if epoch % test_step == 0 or epoch == num_epochs - 1:
+            snapshot(logdir + '/mpl_data/snaplog--{}-{}-{}.pkl'.format(data_dim, max_len, hid_size),
+                     epoch = epoch,
+                     lengths = l,
+                     inp = batch_xs,
+                     hid = H,
+                     out = P,
+                     targ = batch_ys,
+                     strings = s)
             np.set_printoptions(precision=2, suppress=True)
             print('epoch {}:'.format(epoch))
-            print('  sequence loss: {}'.format(seq_loss))
+            print('  sequence loss: {}'.format(L))
             print('  mean sequence loss: {}'.format(round(average_loss, 4)))
             print('  time: {} s'.format(round(time.time() - start, 4)))
     print('Total time: {}'.format(round(time.time()- global_start, 4)))
