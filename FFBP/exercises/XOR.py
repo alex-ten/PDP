@@ -1,14 +1,20 @@
+import os;
+print(os.getcwd())
 import utilities.activation_functions as actf
 import utilities.evaluation_functions as evalf
-import tensorflow as tf
 from utilities.model import model
-
 import utilities.error_functions as errf
-from constructors.DataSet import DataSet
-from constructors.Layer import Layer
-from constructors.Network import Network
+from classes.DataSet import DataSet
+from classes.Layer import Layer
+from classes.Network import Network
+import sys
+for i in sys.path: print(i)
 
-trainSet = DataSet('exercises/ex_XOR/f_XOR.txt')
+import tensorflow as tf
+
+
+
+trainSet = DataSet('FFBP/exercises/ex_XOR/f_XOR.txt')
 testSet = trainSet
 
 # ----------------------------- BUILD -----------------------------
@@ -21,7 +27,7 @@ hidden1 = Layer(input_tensor = image,
                 act = actf.sigmoid,
                 layer_name = 'hidden1',
                 layer_type = 'hidden',
-                stop_grad=True)
+                stop_grad=False)
 hidden1.set_wrange([-1,1,2])
 
 
@@ -30,7 +36,7 @@ output =  Layer(input_tensor = hidden1.act,
                 act = actf.sigmoid,
                 layer_name = 'output',
                 layer_type = 'output')
-output.set_wrange([-1,1,2])
+output.set_wrange([-1,1,1])
 
 xor_model = model([image], [hidden1, output], label)
 xor_net = Network(xor_model, name='XOR Network')
@@ -41,7 +47,7 @@ xor_net.train_set = trainSet
 xor_net.test_set = testSet
 
 xor_net.init_weights()
-xor_net.restore('exercises/ex_XOR/xor_params.ckpt')
+xor_net.restore('FFBP/exercises/ex_XOR/xor_params1.ckpt')
 xor_net.configure(loss = errf.squared_error,
                   train_batch_size = 4,
                   learning_rate = 0.5,
@@ -52,11 +58,8 @@ xor_net.configure(loss = errf.squared_error,
 # code.interact(local = locals())
 
 def demo():
-    #xor_net.tnt(300,30,0)
+    xor_net.tnt(330,30,0)
     #xor_net.test(vis=True)
-    print(xor_net.model['network'][0].W.eval())
-    xor_net.train(300,0,0)
-    print(xor_net.model['network'][0].W.eval())
 
 if __name__=="__main__":  demo()
 

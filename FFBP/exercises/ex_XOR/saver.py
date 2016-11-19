@@ -2,8 +2,8 @@ import os
 
 from utilities.activation_functions import *
 
-rw1 = tf.constant([[0.432171, 0.448781], [-0.038413, 0.036489]])
-rw2 = tf.constant([[0.272080, 0.081714]])
+rw1 = tf.transpose(tf.constant([[0.432171, 0.448781], [-0.038413, 0.036489]]))
+rw2 = tf.transpose(tf.constant([[0.272080, 0.081714]]))
 rb1 = tf.constant([[-0.27659, -0.40250]])
 rb2 = tf.constant([[0.27930]])
 
@@ -16,5 +16,5 @@ init = tf.initialize_all_variables()
 saver = tf.train.Saver({'w_1': w1, 'b_1': b1, 'w_2':w2, 'b_2':b2})
 with tf.Session() as sess:
     sess.run(init)
-    save_path = saver.save(sess, os.getcwd()+"/xor_params.ckpt")
-    print("Model saved in file: {}".format(save_path))
+    save_path = saver.save(sess, os.getcwd()+"/xor_params1.ckpt")
+    print("Parameters saved in file: {}".format(save_path))

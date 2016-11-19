@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 
-import FFBP.utilities.activation_functions as actf
+import utilities.activation_functions as actf
 from constructors.Layer import Layer, RecurrentLayer
 
 batch_size = 1

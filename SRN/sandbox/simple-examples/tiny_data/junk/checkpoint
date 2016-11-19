@@ -1,0 +1,2 @@
+model_checkpoint_path: "/Users/alexten/Projects/PDP/SRN/sandbox/simple-examples/tiny_data/junk/model.ckpt-0"
+all_model_checkpoint_paths: "/Users/alexten/Projects/PDP/SRN/sandbox/simple-examples/tiny_data/junk/model.ckpt-0"

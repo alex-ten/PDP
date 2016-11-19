@@ -34,7 +34,7 @@ def wrange_initializer(wrange):
 
 class Layer(object):
     def __init__(self, input_tensor, size, act, layer_name, layer_type='nd', bias=True, bias_val=None, stop_grad=False):
-        self.input_tensor = input_tensor
+        self.inp = input_tensor
         self.sender_size = int(input_tensor.get_shape()[1])
         self.sender_name = extract(input_tensor.name)
         self.size = size
@@ -52,7 +52,7 @@ class Layer(object):
                                      shape=[self.sender_size, self.size],
                                      dtype=tf.float32,
                                      initializer=orthogonal_initializer(scope))
-            self.net = tf.matmul(self.input_tensor, self.W, name = 'net')
+            self.net = tf.matmul(self.inp, self.W, name ='net')
             if self.bias_on:
                 self.b = tf.get_variable('biases', [self.size], tf.float32)
                 if self.bias_val != None:
@@ -70,7 +70,7 @@ class Layer(object):
                                      shape = [1, self.size],
                                      dtype = tf.float32)
         with tf.name_scope('net'):
-            self.net = tf.matmul(self.input_tensor, self.W) + self.b
+            self.net = tf.matmul(self.inp, self.W) + self.b
             if self.stop_grad: self.net = tf.stop_gradient(self.net)
         with tf.name_scope('act'):
             self.act = self.actf(self.net)

@@ -1,14 +1,14 @@
 import code
 
-import FFBP.utilities.activation_functions as actf
-import FFBP.utilities.evaluation_functions as evalf
+import utilities.activation_functions as actf
+import utilities.evaluation_functions as evalf
 import tensorflow as tf
-from FFBP.utilities.model import model
+from utilities.model import model
 
 import utilities.error_functions as errf
-from constructors.DataSet import DataSet
-from constructors.Layer import Layer
-from constructors.Network import Network
+from classes.DataSet import DataSet
+from classes.Layer import Layer
+from classes.Network import Network
 
 # ----------------------------- BUILD -----------------------------
 try:
@@ -23,27 +23,27 @@ labels = tf.placeholder(tf.float32, shape=[None,36], name='labels')
 representation = Layer(
     input_tensor=item,
     size=8,
-    init=[-.45, .45, 1],
     act=actf.sigmoid,
     layer_name='representation',
     layer_type='hidden')
+representation.set_wrange([-.45, .45, 1])
 
 hidden = Layer(
-    # concatenate representation.activations and relation (name properly for neat visualization)
+    # concatenate representation.activations and relation (name properly for better visualization)
     input_tensor=tf.concat(1,[representation.act, relation], name='representation/relation'),
     size=12,
-    init=[-.45, .45, 2],
     act=actf.sigmoid,
     layer_name='hidden',
     layer_type='hidden')
+hidden.set_wrange([-.45, .45, 1])
 
 attribute = Layer(
     input_tensor=hidden.act,
     size=36,
-    init=[-.45, .45, 3],
     act=actf.sigmoid,
     layer_name='attribute',
     layer_type='output')
+attribute.set_wrange([-.45, .45, 1])
 
 eight_things = model([item, relation], [representation, hidden, attribute], labels)
 et_net = Network(eight_things, name = '8t_network')
@@ -63,7 +63,7 @@ et_net.configure(train_batch_size = 32,
                  )
 et_net.init_weights()
 
-code.interact(local=locals())
+# code.interact(local=locals())
 
 # ------------------------------- RUN ------------------------------
 

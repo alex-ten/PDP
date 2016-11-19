@@ -26,8 +26,8 @@ class SimpleTransition(Transition):
 
 class FSM():
     def __init__(self, states, transitions):
-        self.start = 'B'
-        self.end = 'E'
+        self.start = 'B '
+        self.end = '\n'
         self.states = states
         self.transitions = transitions
         self.num_states = len(states)
@@ -53,7 +53,7 @@ class FSM():
         for step in range(max_units):
             self.transition()
             if self.in_state == self.states[-1]: break
-        self.composition += 'E'
+        self.composition += '\n'
         print(self.composition)
         return self.composition
 
@@ -66,12 +66,16 @@ class FSM():
 
     def reset(self):
         self.in_state = self.states[0]
-        self.composition = 'B'
+        self.composition = 'B '
 
 
-def store_random_chatter(log, path):
+def pickle_random_chatter(log, path):
     pickle.dump(log, open(path, 'wb'))
 
+def save_txt(log, path):
+    with open(path+'new_file', 'w') as f:
+        for line in log:
+            f.write(str(line))
 
 def make_states(l):
     return [IntState(s) for s in l]
@@ -84,22 +88,23 @@ def make_transitions(td):
 def main():
     l = list(range(0,6))
     states = make_states(l)
-    td = {(states[0],states[1]): 'T',
-          (states[2],states[2]): 'T',
-          (states[1],states[1]): 'S',
-          (states[3],states[5]): 'S',
-          (states[1],states[3]): 'X',
-          (states[3],states[2]): 'X',
-          (states[2],states[4]): 'V',
-          (states[4],states[5]): 'V',
-          (states[4],states[3]): 'P',
-          (states[0],states[2]): 'P',
+    td = {(states[0],states[1]): 'T ',
+          (states[2],states[2]): 'T ',
+          (states[1],states[1]): 'S ',
+          (states[3],states[5]): 'S ',
+          (states[1],states[3]): 'X ',
+          (states[3],states[2]): 'X ',
+          (states[2],states[4]): 'V ',
+          (states[4],states[5]): 'V ',
+          (states[4],states[3]): 'P ',
+          (states[0],states[2]): 'P ',
           }
     transitions = make_transitions(td)
 
     myFSM = FSM(states, transitions)
     chatter_log = myFSM.chatter(240,50)
-    store_random_chatter(chatter_log, 'pickles/240x50.pkl')
+    save_txt(chatter_log, '/Users/alexten/Projects/PDP/SRN/sandbox/simple-examples/toy_data/')
+
 
 if __name__=='__main__': main()
 
