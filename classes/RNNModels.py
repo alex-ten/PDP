@@ -8,6 +8,7 @@ class Basic_LSTM_Model(object):
   """The recurrent model with LSTM and Dropout."""
 
   def __init__(self, is_training, config, input_):
+    self.is_training = is_training
     self._input = input_
     batch_size = input_.batch_size
     num_steps = input_.num_steps
@@ -24,7 +25,6 @@ class Basic_LSTM_Model(object):
     # ===================================================================================== LSTM
 
     self._initial_state = cell.zero_state(batch_size, data_type())
-    print('LSTM init state is:', type(self._initial_state))
 
     with tf.device("/cpu:0"):
       embedding = tf.get_variable(
@@ -56,6 +56,10 @@ class Basic_LSTM_Model(object):
         "softmax_w", [size, vocab_size], dtype=data_type())
     softmax_b = tf.get_variable("softmax_b", [vocab_size], dtype=data_type())
     logits = tf.matmul(output, softmax_w) + softmax_b
+
+    if not is_training: # ***** experimental feature *****
+        self.seq_outputs = tf.nn.softmax(logits)
+
     loss = tf.nn.seq2seq.sequence_loss_by_example(
         [logits],
         [tf.reshape(input_.targets, [-1])],
@@ -110,6 +114,7 @@ class Basic_RNN_Model(object):
   """The simple recurrent model."""
 
   def __init__(self, is_training, config, input_, BPTT=True):
+      self.is_training = is_training
       self._input = input_
       batch_size = input_.batch_size
       num_steps = input_.num_steps
@@ -126,7 +131,6 @@ class Basic_RNN_Model(object):
       # ====================================================================================== / SNN
 
       self._initial_state = cell.zero_state(batch_size, data_type())
-      print('SRN init state is:', type(self._initial_state))
 
       with tf.device("/cpu:0"):
           embedding = tf.get_variable(
@@ -137,11 +141,13 @@ class Basic_RNN_Model(object):
           inputs = tf.nn.dropout(inputs, config.keep_prob)
 
       hid_states = []
+      targ_list = [] # ***** experimental feature *****
       state = self._initial_state
       with tf.variable_scope("RNN"):
           for time_step in range(num_steps):
               if time_step > 0: tf.get_variable_scope().reuse_variables()
               (cell_act, newstate) = cell(inputs[:, time_step, :], state)
+              targ_list.append(input_.targets[time_step, :]) # ***** experimental feature *****
               if not BPTT:
                   state = tf.stop_gradient(newstate)  # SRN
               else:
@@ -153,10 +159,16 @@ class Basic_RNN_Model(object):
           "softmax_w", [size, vocab_size], dtype=data_type())
       softmax_b = tf.get_variable("softmax_b", [vocab_size], dtype=data_type())
       logits = tf.matmul(output, softmax_w) + softmax_b
+      if not is_training: # ***** experimental feature *****
+          self.seq_outputs = tf.nn.softmax(logits)
 
       # ------------- SPARSE SOFTMAX CROSS ENTROPY WITH LOGITS ----------------
       labels = tf.reshape(input_.targets, [-1])
       loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, labels)
+
+      # ---------------- SIGMOID CROSS ENTROPY WITH LOGITS --------------------
+      # labels = tf.reshape(tf.concat(1, targ_list), [-1, vocab_size])
+      # loss = tf.nn.sigmoid_cross_entropy_with_logits(logits, labels)
 
       self._cost = cost = tf.reduce_sum(loss) / batch_size
       self._final_state = state
