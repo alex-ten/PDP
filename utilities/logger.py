@@ -25,7 +25,7 @@ class LayerLog(object):
             self.__getattribute__(attr).append(value)
 
 
-def logdir():
+def logdir(TF=True):
     # Create logdir directory if it doesn't exist
     logdir_dir = os.getcwd() + '/logdir'
     try:
@@ -34,13 +34,13 @@ def logdir():
         sess_name = 'Sess_' + dt.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         dir_path = logdir_dir + '/' + sess_name
         os.mkdir(dir_path)
-        os.mkdir(dir_path + '/tf_params')
         os.mkdir(dir_path + '/mpl_data')
+        if TF: os.mkdir(dir_path + '/tf_params')
     except FileExistsError:
         sess_name = 'Sess_'+dt.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         dir_path = logdir_dir + '/' + sess_name
         os.mkdir(dir_path)
-        os.mkdir(dir_path + '/tf_params')
         os.mkdir(dir_path + '/mpl_data')
+        if TF: os.mkdir(dir_path + '/tf_params')
     return dir_path
 

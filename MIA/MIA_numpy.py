@@ -1,5 +1,8 @@
 import numpy as np
 import pickle
+from utilities.logger import logdir
+import tkinter as tk
+from classes.MIA_Viewer import MIA_Viewer
 
 def intprint(x):
     # Prettily print x and shape of x
@@ -66,15 +69,15 @@ with open(weights_path + 'L2toW_weights.pkl', 'rb') as f:
 # for feature, present in zip(list(range(14)), np.reshape(np.sum(FtoL_weights, axis=0),[14,2]).astype(int)):
 #     print('F{}: +{}, -{}'.format(feature,present[0],present[1]))
 
-batch_size = 4000
+batch_size = 100
 
 prev_word = np.zeros([batch_size,36]).T
 
 # For each element of the batch this is a vector of length NWORDS
 
-x0 = new_input(22, features, batch_size)
-x1 = new_input(14, features, batch_size)
-x2 = new_input(4, features, batch_size)
+x0 = new_input(1, features, batch_size)
+x1 = new_input(0, features, batch_size)
+x2 = new_input(3, features, batch_size)
 
 L0, L0_mean = [], []
 L1, L1_mean = [], []
@@ -153,7 +156,15 @@ print(np.around(L2_mean[-1],2))
 print()
 print(np.around(word_mean[-1],2))
 
+log = {'L0_mean': L0_mean,
+       'L1_mean': L1_mean,
+       'L2_mean': L2_mean,
+       'word_mean': word_mean}
 
+logdir_path = logdir(TF=False)
+
+with open(logdir_path + '/mpl_data/log_dict.pkl', 'wb') as new_file:
+    pickle.dump(log, new_file)
 
 # Running a test of the network would be done on a single specified input pattern that the user would create or choose from a list.
 #
@@ -163,3 +174,6 @@ print(np.around(word_mean[-1],2))
 # Finally, we will need a to create a set of pre-defined input patterns for particular test cases, as well as a
 # function that could ‘generate input’ when given a sequence of three letters, as well.
 # The user should then be able to manually alter the features to create any desired input pattern.
+
+root = tk.Tk()
+VisApp = MIA_Viewer(root, log)
