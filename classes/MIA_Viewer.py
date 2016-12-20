@@ -50,7 +50,7 @@ class MIA_Viewer():
 
         self.word_ax = self.figure.add_subplot(122)
         self.word_ax.set_title('Word')
-        self.word_ax.set_xlim(0, 0.3)
+        # self.word_ax.set_xlim(0, 0.3)
         self.word_ax.set_ylim(0, 36)
         self.word_ax.set_yticks(yax)
         self.word_ax.set_yticklabels(wordlabs)

@@ -3,6 +3,7 @@ import pickle
 from utilities.logger import logdir
 import tkinter as tk
 from classes.MIA_Viewer import MIA_Viewer
+import math
 
 def intprint(x):
     # Prettily print x and shape of x
@@ -53,23 +54,24 @@ weights_path = 'weights/'
 with open(weights_path + 'FtoL_weights.pkl', 'rb') as f:
     FtoL_weights = pickle.load(f)
     features = FtoL_weights
+    FtoL_weights *= math.log(5)
 
 with open(weights_path + 'L0toW_weights.pkl', 'rb') as f:
-    L0toW_weights = pickle.load(f)
+    L0toW_weights = pickle.load(f) * math.log(220)
     WtoL0_weights = L0toW_weights.T
 
 with open(weights_path + 'L1toW_weights.pkl', 'rb') as f:
-    L1toW_weights = pickle.load(f)
+    L1toW_weights = pickle.load(f) * math.log(220)
     WtoL1_weights = L0toW_weights.T
 
 with open(weights_path + 'L2toW_weights.pkl', 'rb') as f:
-    L2toW_weights = pickle.load(f)
+    L2toW_weights = pickle.load(f) * math.log(220)
     WtoL2_weights = L0toW_weights.T
 
 # for feature, present in zip(list(range(14)), np.reshape(np.sum(FtoL_weights, axis=0),[14,2]).astype(int)):
 #     print('F{}: +{}, -{}'.format(feature,present[0],present[1]))
 
-batch_size = 100
+batch_size = 1000
 
 prev_word = np.zeros([batch_size,36]).T
 
