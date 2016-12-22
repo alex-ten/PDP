@@ -1,5 +1,5 @@
 import code
-
+import os
 import utilities.activation_functions as actf
 import utilities.evaluation_functions as evalf
 import tensorflow as tf
@@ -10,7 +10,8 @@ from classes.DataSet import DataSet
 from classes.Layer import Layer
 from classes.Network import Network
 
-trainSet = DataSet('f_net838.txt')
+path_to_trainset = os.getcwd()+'/FFBP/exercises/ex_net838/f_net838.txt'
+trainSet = DataSet(path_to_trainset)
 testSet = trainSet
 
 input_layer = tf.placeholder(tf.float32, shape=[None,8], name='input')
@@ -45,5 +46,5 @@ net838.tnt(500,50,0)
 net838.train(100,1)
 net838.test(1)
 
-code.interact(local=locals())
+# code.interact(local=locals())
  

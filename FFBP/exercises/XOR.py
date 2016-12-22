@@ -1,5 +1,4 @@
 import os
-import code
 print(os.getcwd())
 import utilities.activation_functions as actf
 import utilities.evaluation_functions as evalf
@@ -13,8 +12,8 @@ from classes.Network import Network
 
 import tensorflow as tf
 
-path_to_trainset = os.getcwd()+'/ex_XOR/f_XOR.txt'
-path_to_params = os.getcwd()+'/ex_XOR/xor_params1.ckpt'
+path_to_trainset = os.getcwd()+'/FFBP/exercises/ex_XOR/f_XOR.txt'
+path_to_params = os.getcwd()+'/FFBP/exercises/ex_XOR/xor_params1.ckpt'
 
 trainSet = DataSet(path_to_trainset)
 testSet = trainSet

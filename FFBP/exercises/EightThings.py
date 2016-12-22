@@ -1,4 +1,4 @@
-import code
+import os
 import tensorflow as tf
 import utilities.activation_functions as actf
 import utilities.evaluation_functions as evalf
@@ -9,10 +9,8 @@ from classes.Layer import Layer
 from classes.Network import Network
 
 # ----------------------------- BUILD -----------------------------
-try:
-    ET = DataSet('exercises/ex_EightThings/f_EightThings.txt')
-except FileNotFoundError:
-    ET = DataSet('ex_EightThings/f_EightThings.txt')
+path_to_trainset = os.getcwd()+'/FFBP/exercises/ex_EightThings/f_EightThings.txt'
+ET = DataSet(path_to_trainset)
 
 item = tf.placeholder(tf.float32, shape=[None,8], name='item')
 relation = tf.placeholder(tf.float32, shape=[None,4], name='relation')
@@ -47,7 +45,6 @@ eight_things = model([item, relation], [representation, hidden, attribute], labe
 et_net = Network(eight_things, name = '8t_network')
 
 # ----------------------------- SETUP -----------------------------
-
 et_net.train_set = ET
 et_net.test_set = ET
 et_net.configure(train_batch_size = 32,
