@@ -4,6 +4,7 @@ from utilities.logger import logdir
 import tkinter as tk
 from classes.MIA_Viewer import MIA_Viewer
 import math
+import os
 
 def intprint(x):
     # Prettily print x and shape of x
@@ -49,7 +50,7 @@ def choose_one(x):
 # features in four letter positions
 # ======================================================================
 
-weights_path = 'weights/'
+weights_path = os.getcwd()+'/weights/'
 
 with open(weights_path + 'FtoL_weights.pkl', 'rb') as f:
     FtoL_weights = pickle.load(f)
