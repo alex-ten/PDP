@@ -36,7 +36,6 @@ def cgrid(xc, yc, ax, M, colmap, nrange, t=False):
         ax.add_patch(rect)
 
 def prep_figure(data, fig):
-
     fig.subplots_adjust(left=0, bottom=0.02, right=1, top=0.98)
     fig.canvas.set_window_title('Network Visualization')
 

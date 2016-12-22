@@ -1,11 +1,12 @@
 import os
 import pickle
 import numpy as np
+import matplotlib; matplotlib.use('QT4AGG')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import tkinter as tk
 from tkinter import ttk
 import matplotlib.pyplot as plt
-path_to_wordsr = os.getcwd()+'/MIA/raw/wordsr.txt'
+path_to_wordsr = os.getcwd()+'/raw/wordsr.txt'
 
 wordlabs = []
 with open(path_to_wordsr, 'r') as words_file:

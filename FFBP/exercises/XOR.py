@@ -1,4 +1,5 @@
-import os;
+import os
+import code
 print(os.getcwd())
 import utilities.activation_functions as actf
 import utilities.evaluation_functions as evalf
@@ -7,8 +8,8 @@ import utilities.error_functions as errf
 from classes.DataSet import DataSet
 from classes.Layer import Layer
 from classes.Network import Network
-import sys
-for i in sys.path: print(i)
+# import sys
+# for i in sys.path: print(i)
 
 import tensorflow as tf
 
@@ -60,7 +61,7 @@ xor_net.configure(loss = errf.squared_error,
 
 def demo():
     xor_net.tnt(330,30,0)
-    #xor_net.test(vis=True)
+    xor_net.test(vis=True)
 
 if __name__=="__main__":  demo()
 

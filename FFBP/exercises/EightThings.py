@@ -1,11 +1,9 @@
 import code
-
+import tensorflow as tf
 import utilities.activation_functions as actf
 import utilities.evaluation_functions as evalf
-import tensorflow as tf
-from utilities.model import model
-
 import utilities.error_functions as errf
+from utilities.model import model
 from classes.DataSet import DataSet
 from classes.Layer import Layer
 from classes.Network import Network
