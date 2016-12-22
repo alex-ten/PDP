@@ -50,7 +50,7 @@ def choose_one(x):
 # features in four letter positions
 # ======================================================================
 
-weights_path = os.getcwd()+'/weights/'
+weights_path = os.getcwd()+'/MIA/weights/'
 
 with open(weights_path + 'FtoL_weights.pkl', 'rb') as f:
     FtoL_weights = pickle.load(f)
