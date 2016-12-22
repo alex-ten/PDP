@@ -153,7 +153,7 @@ def layer_image(origin, ax, layer, epoch, pattern, colmap, nrange):
     grid_inp_y = origin + 2
 
     # Drawing
-    cgrid(grid_W_x, grid_l_y, ax, layer.W[epoch], colmap, nrange)
+    cgrid(grid_W_x, grid_l_y, ax, layer.W[epoch].T, colmap, nrange)
     cgrid(grid_b_x, grid_l_y, ax, np.reshape(layer.b[epoch], (layer.size, 1)), colmap, nrange)
     cgrid(grid_net_x, grid_l_y, ax, np.reshape(layer.net[epoch][pattern], (layer.size, 1)), colmap, nrange)
     cgrid(grid_a_x, grid_l_y, ax, np.reshape(layer.act[epoch][pattern], (layer.size, 1)), colmap, nrange)
@@ -170,7 +170,7 @@ def layer_image(origin, ax, layer, epoch, pattern, colmap, nrange):
     grid_a_x += subpanel_width
 
     # Drawing
-    cgrid(grid_W_x, grid_l_y, ax, layer.ded_W[epoch], colmap, nrange)
+    cgrid(grid_W_x, grid_l_y, ax, layer.ded_W[epoch].T, colmap, nrange)
     cgrid(grid_b_x, grid_l_y, ax, np.reshape(layer.b[epoch], (layer.size, 1)), colmap, nrange)
     cgrid(grid_net_x, grid_l_y, ax, np.reshape(layer.ded_net[epoch][pattern], (layer.size, 1)), colmap, nrange)
     cgrid(grid_a_x, grid_l_y, ax, np.reshape(layer.ded_act[epoch][pattern], (layer.size, 1)), colmap, nrange)

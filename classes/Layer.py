@@ -2,7 +2,7 @@
 import tensorflow as tf
 import numpy as np
 
-def extract(s):
+def extract_name(s):
     s = s.split('/', 1)[0]
     s = s.split(':', 1)[0]
     return s
@@ -36,7 +36,7 @@ class Layer(object):
     def __init__(self, input_tensor, size, act, layer_name, layer_type='nd', bias=True, bias_val=None, stop_grad=False):
         self.inp = input_tensor
         self.sender_size = int(input_tensor.get_shape()[1])
-        self.sender_name = extract(input_tensor.name)
+        self.sender_name = extract_name(input_tensor.name)
         self.size = size
         self.layer_name = layer_name
         self.layer_type = layer_type
@@ -49,7 +49,7 @@ class Layer(object):
     def set_orthogonal(self, scope=1.1):
         with tf.variable_scope(self.layer_name, reuse=False):
             self.W = tf.get_variable(name='weights',
-                                     shape=[self.sender_size, self.size],
+                                     shape=[self.size, self.sender_size],
                                      dtype=tf.float32,
                                      initializer=orthogonal_initializer(scope))
             self.net = tf.matmul(self.inp, self.W, name ='net')
@@ -84,7 +84,7 @@ class RecurrentLayer(object):
                  stop_grad=False):
         self.input_tensor = input_tensor
         self.sender_size = int(input_tensor.get_shape()[1])
-        self.sender_name = extract(input_tensor.name)
+        self.sender_name = extract_name(input_tensor.name)
         self.size = size
         self.layer_name = layer_name
         self.layer_type = layer_type
