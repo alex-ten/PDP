@@ -1,12 +1,15 @@
+import os
 import pickle
 import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import tkinter as tk
 from tkinter import ttk
 import matplotlib.pyplot as plt
+path_to_wordsr = os.getcwd()+'/raw/wordsr.txt'
+
 
 wordlabs = []
-with open('/Users/alexten/Projects/PDP/MIA/raw/wordsr.txt', 'r') as words_file:
+with open(path_to_wordsr, 'r') as words_file:
     for line in words_file:
         wordlabs.append(line.replace(' ', '').upper().replace('\n', ''))
 
