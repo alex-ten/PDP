@@ -12,9 +12,10 @@ for i in sys.path: print(i)
 
 import tensorflow as tf
 
+path_to_trainset = os.getcwd()+'/ex_XOR/f_XOR.txt'
+path_to_params = os.getcwd()+'/ex_XOR/xor_params1.ckpt'
 
-
-trainSet = DataSet('FFBP/exercises/ex_XOR/f_XOR.txt')
+trainSet = DataSet(path_to_trainset)
 testSet = trainSet
 
 # ----------------------------- BUILD -----------------------------
@@ -47,7 +48,7 @@ xor_net.train_set = trainSet
 xor_net.test_set = testSet
 
 xor_net.init_weights()
-xor_net.restore('FFBP/exercises/ex_XOR/xor_params1.ckpt')
+xor_net.restore(path_to_params)
 xor_net.configure(loss = errf.squared_error,
                   train_batch_size = 4,
                   learning_rate = 0.5,

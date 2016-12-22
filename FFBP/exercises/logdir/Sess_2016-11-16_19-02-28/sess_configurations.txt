@@ -1,6 +1,0 @@
-Learning rate:     0.5
-Momentum rate:     0.9
-Error:             squared_error
-Batch size:        4
-Permuted mode:     False
-Ecrit:             0.01
