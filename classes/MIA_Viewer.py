@@ -25,7 +25,7 @@ class MIA_Viewer():
         self.L0_ax.set_title('Letter in position 0')
         self.L0_ax.set_xlim(0, 26)
         self.L0_ax.set_ylim(0, 1)
-        self.L0_ax.set_ylabel('L0')
+        self.L0_ax.set_ylabel('')
         self.L0_ax.set_xticks(xax)
         self.L0_ax.set_xticklabels(letlabs)
         self.L0_bars = self.L0_ax.bar(xax, data['L0_mean'][0], align='center')

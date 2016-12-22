@@ -78,7 +78,7 @@ prev_word = np.zeros([batch_size,36]).T
 # For each element of the batch this is a vector of length NWORDS
 
 x0 = new_input(1, features, batch_size)
-x1 = new_input(0, features, batch_size)
+x1 = new_input(0, features, batch_size) * 0
 x2 = new_input(3, features, batch_size)
 
 L0, L0_mean = [], []
