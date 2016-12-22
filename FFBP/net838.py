@@ -1,5 +1,5 @@
 import sys
-print(sys.path())
+print(sys.path)
 import code
 
 import utilities.activation_functions as actf
