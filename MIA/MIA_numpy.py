@@ -68,8 +68,10 @@ def main():
     parser.add_argument('-sc1', '--scalar1', help='scale bottom-up weights', action='store', type=float)
     parser.add_argument('-sc2', '--scalar2', help='scale top-down weights', action='store', type=float)
     parser.add_argument('-in', '--input', help='input to the model', action='store', type=str)
-    parser.add_argument('-v', '--visualize', help='follow up with visualization', action='store_true')
+    parser.add_argument('-t', '--timesteps', help='number of timesteps to run the model', type=int)
     parser.add_argument('-s', '--save', help='save choices at each time step', action='store_true')
+    parser.add_argument('-v', '--visualize', help='follow up with visualization', action='store_true')
+
 
     args = parser.parse_args()
 
@@ -121,10 +123,10 @@ def main():
     L2, L2_mean = [], []
     word, word_mean = [], []
 
-    timesteps = 5
+    timesteps = 20
+    if args.timesteps is not None: timesteps = args.timesteps
 
     for t in range(timesteps):
-        print('-------------------------- time step {} --------------------------'.format(t))
         # bottom up signal
         bus_L0 = np.dot(FtoL_weights, x0)
         bus_L1 = np.dot(FtoL_weights, x1)
