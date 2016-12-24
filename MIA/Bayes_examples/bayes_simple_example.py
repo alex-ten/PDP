@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.rcParams['backend'] = 'Agg'
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import style
