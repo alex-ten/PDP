@@ -1,12 +1,13 @@
 import os
 import pickle
 import numpy as np
-import matplotlib; matplotlib.use('QT4AGG')
+import matplotlib as mpl; print(mpl.rcParams['backend'])
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import tkinter as tk
 from tkinter import ttk
 import matplotlib.pyplot as plt
-path_to_wordsr = os.getcwd()+'/raw/wordsr.txt'
+
+path_to_wordsr = os.getcwd()+'/MIA/raw/wordsr.txt'
 
 wordlabs = []
 with open(path_to_wordsr, 'r') as words_file:
@@ -93,13 +94,18 @@ class MIA_Viewer():
         L2 = self.data['L2_mean'][x]
         word = self.data['word_mean'][x]
 
-        for vb0, vb1, vb2, l0, l1, l2 in zip(self.L0_bars, self.L1_bars, self.L2_bars, L0, L1, L2):
+        for vb0, l0 in zip(self.L0_bars, L0):
             vb0.set_height(l0)
+
+        for vb1, l1 in zip(self.L1_bars, L1):
             vb1.set_height(l1)
+
+        for vb2, l2 in zip(self.L2_bars, L2):
             vb2.set_height(l2)
 
         for hb, w in zip(self.word_bars, word):
             hb.set_width(w)
+
         self.Renderer.draw()
 
     def onContinue(self):
