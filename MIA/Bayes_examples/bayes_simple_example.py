@@ -1,5 +1,5 @@
 import matplotlib
-matplotlib.rcParams['backend'] = 'Agg'
+matplotlib.rcParams['backend'] = 'TkAgg'
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import style
