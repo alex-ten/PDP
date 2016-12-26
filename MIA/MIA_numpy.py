@@ -1,4 +1,4 @@
-import matplotlib; matplotlib.use('Agg')
+import matplotlib; matplotlib.use('TkAgg')
 import numpy as np
 import pickle
 from utilities.logger import logdir
