@@ -64,13 +64,15 @@ def choose_one(x):
 
 def main():
     parser = argparse.ArgumentParser()
+    group = parser.add_mutually_exclusive_group()
     parser.add_argument('-bs', '--batch_size', help='size of the input batch to be processed in parallel', type=int)
     parser.add_argument('-sc1', '--scalar1', help='scale bottom-up weights', action='store', type=float)
     parser.add_argument('-sc2', '--scalar2', help='scale top-down weights', action='store', type=float)
     parser.add_argument('-in', '--input', help='input to the model', action='store', type=str)
     parser.add_argument('-t', '--timesteps', help='number of timesteps to run the model', type=int)
-    parser.add_argument('-s', '--save', help='save choices at each time step', action='store_true')
-    parser.add_argument('-v', '--visualize', help='follow up with visualization', action='store_true')
+    group.add_argument('-s', '--save', help='save choices at each time step', action='store_true')
+    group.add_argument('-v', '--visualize', help='follow up the simulation with visualization', action='store_true')
+    group.add_argument('-sv', '--save_and_visualize', help='save choices at each time step and follow up with visualization', action='store_true')
 
 
     args = parser.parse_args()
@@ -200,21 +202,21 @@ def main():
 
         word_mean.append(np.mean(prev_word,1))
 
-    if args.visualize and not args.save: raise IOError('Can\'t run visualization as no data was saved')
+    log = {'L0_mean': L0_mean,
+           'L1_mean': L1_mean,
+           'L2_mean': L2_mean,
+           'word_mean': word_mean}
+    logdir_path = logdir(TF=False)
 
     if args.save:
-        log = {'L0_mean': L0_mean,
-               'L1_mean': L1_mean,
-               'L2_mean': L2_mean,
-               'word_mean': word_mean}
-
-        logdir_path = logdir(TF=False)
-
         with open(logdir_path + '/mpl_data/log_dict.pkl', 'wb') as new_file:
             pickle.dump(log, new_file)
-        if args.visualize:
-            root = tk.Tk()
-            VisApp = MIA_Viewer(root, log)
+
+    if args.save_and_visualize:
+        with open(logdir_path + '/mpl_data/log_dict.pkl', 'wb') as new_file:
+            pickle.dump(log, new_file)
+        root = tk.Tk()
+        VisApp = MIA_Viewer(root, log)
 
 
 if __name__=='__main__': main()
