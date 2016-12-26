@@ -1,11 +1,11 @@
 import matplotlib
-matplotlib.rcParams['backend'] = 'TkAgg'
+# matplotlib.rcParams['backend'] = 'TkAgg'
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import style
 from matplotlib.widgets import Slider, Button
 from MIA.Bayes_examples.dynamic_annotation import fancy_annotation
-#style.use('ggplot')
+style.use('ggplot')
 
 def infer(prior, likelihood_A, likelihood_B):
     evidence = prior * likelihood_A  +  (1 - prior) * likelihood_B
