@@ -24,13 +24,15 @@ def softmax(x):
 
 def new_input(s, features, batch_size = 1):
     # special symbols
-    underbar, hash, at, questionmark = features[0], features[0], features[1], features[4]
+    intprint(features[0])
+    underbar, hash_, at, questionmark = features[0], features[0], features[1], features[4]
     underbar = underbar * 0
-    hash[[4,5]] = 0
+    hash_[[4,5]] = 0
     at[[16,17]] = 0
     questionmark[[6,7,8,9,12,13]] = 0
-    special = np.array([underbar, hash, at, questionmark])
-    features = np.row_stack([features,special])
+    special = np.array([underbar, hash_, at, questionmark])
+    features = np.vstack([features,special]) # todo ------------------------
+    intprint(features[0])
     alphabet = list('abcdefghijklmnopqrstuvwxyz_#@?')
     xs = list(s.lower())
     inds = [alphabet.index(x) for x in xs]
@@ -119,6 +121,8 @@ def main():
     x0, x1, x2 = new_input('age', features, batch_size)
     if args.input is not None:
         x0, x1, x2 = new_input(args.input, features, batch_size)
+
+    #intprint(x0.T[0])
 
     L0, L0_mean = [], []
     L1, L1_mean = [], []
