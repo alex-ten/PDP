@@ -96,23 +96,22 @@ def main():
         features = FtoL_weights
 
     with open(weights_path + 'L0toW_weights.pkl', 'rb') as f:
-        L0toW_weights = pickle.load(f) * WtoLScaleFactor
+        L0toW_weights = pickle.load(f)
 
     with open(weights_path + 'L1toW_weights.pkl', 'rb') as f:
-        L1toW_weights = pickle.load(f) * WtoLScaleFactor
+        L1toW_weights = pickle.load(f)
 
     with open(weights_path + 'L2toW_weights.pkl', 'rb') as f:
-        L2toW_weights = pickle.load(f) * WtoLScaleFactor
-
+        L2toW_weights = pickle.load(f)
 
 
     FtoL_weights = FtoL_weights * LtoFScaleFactor
     L0toW_weights = L0toW_weights * WtoLScaleFactor
     WtoL0_weights = L0toW_weights.T
     L1toW_weights = L1toW_weights * WtoLScaleFactor
-    WtoL1_weights = L0toW_weights.T
+    WtoL1_weights = L2toW_weights.T
     L2toW_weights = L2toW_weights * WtoLScaleFactor
-    WtoL2_weights = L0toW_weights.T
+    WtoL2_weights = L2toW_weights.T
 
     prev_word = np.zeros([batch_size,36]).T
 
