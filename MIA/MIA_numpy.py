@@ -11,6 +11,7 @@ import argparse
 def rprint(x):
     print(np.around(x,2))
 
+
 def intprint(x):
     # Prettily print x and shape of x
     print('shape {}'.format(np.shape(x)),'\n', x.astype(int))
@@ -211,6 +212,10 @@ def main():
     if args.save:
         with open(logdir_path + '/mpl_data/log_dict.pkl', 'wb') as new_file:
             pickle.dump(log, new_file)
+
+    if args.visualize:
+        root = tk.Tk()
+        VisApp = MIA_Viewer(root, log)
 
     if args.save_and_visualize:
         with open(logdir_path + '/mpl_data/log_dict.pkl', 'wb') as new_file:
