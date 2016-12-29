@@ -2,7 +2,7 @@ import numpy as np
 import pickle
 
 path_to_raw = input('Path to raw letfets -> ')
-FtoL_weights = np.zeros((26, 28))
+FtoL_weights = np.zeros((26, 28)) # shape of the array to be stored
 
 with open(path_to_raw, 'r') as letfet_file:
     for row, line in enumerate(letfet_file):
