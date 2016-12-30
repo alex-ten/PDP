@@ -4,16 +4,14 @@ import utilities.activation_functions as actf
 import utilities.evaluation_functions as evalf
 from utilities.model import model
 import utilities.error_functions as errf
-from classes.DataSet import DataSet
-from classes.Layer import Layer
-from classes.Network import Network
-# import sys
-# for i in sys.path: print(i)
+from FFBP.classes.DataSet import DataSet
+from FFBP.classes.Layer import Layer
+from FFBP.classes.Network import Network
 
 import tensorflow as tf
 
-path_to_trainset = os.getcwd()+'/FFBP/exercises/ex_XOR/f_XOR.txt'
-path_to_params = os.getcwd()+'/FFBP/exercises/ex_XOR/xor_params1.ckpt'
+path_to_trainset = os.getcwd()+'/FFBP/data/f_XOR.txt'
+path_to_params = os.getcwd()+'/FFBP/data/xor_params1.ckpt'
 
 trainSet = DataSet(path_to_trainset)
 testSet = trainSet
@@ -58,9 +56,9 @@ xor_net.configure(loss = errf.squared_error,
 
 # code.interact(local = locals())
 
-def demo():
+def main():
     xor_net.tnt(330,30,0)
     xor_net.test(vis=True)
 
-if __name__=="__main__":  demo()
+if __name__=="__main__":  main()
 

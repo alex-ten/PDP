@@ -4,12 +4,12 @@ import utilities.activation_functions as actf
 import utilities.evaluation_functions as evalf
 import utilities.error_functions as errf
 from utilities.model import model
-from classes.DataSet import DataSet
-from classes.Layer import Layer
-from classes.Network import Network
+from FFBP.classes.DataSet import DataSet
+from FFBP.classes.Layer import Layer
+from FFBP.classes.Network import Network
 
 # ----------------------------- BUILD -----------------------------
-path_to_trainset = os.getcwd()+'/FFBP/exercises/ex_EightThings/f_EightThings.txt'
+path_to_trainset = os.getcwd()+'/FFBP/data/f_EightThings.txt'
 ET = DataSet(path_to_trainset)
 
 item = tf.placeholder(tf.float32, shape=[None,8], name='item')
@@ -63,10 +63,7 @@ et_net.init_weights()
 # ------------------------------- RUN ------------------------------
 
 def main():
+    et_net.tnt(330,30,0)
     et_net.test(vis=True)
-    # for i in range(10):
-    #     if et_net._terminate: continue
-    #     et_net.test(vis=True)
-    #     et_net.train(200, vis=True, ckpt_freq=False)
 
 if __name__=="__main__":  main()

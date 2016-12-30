@@ -6,11 +6,11 @@ import tensorflow as tf
 from utilities.model import model
 
 import utilities.error_functions as errf
-from classes.DataSet import DataSet
-from classes.Layer import Layer
-from classes.Network import Network
+from FFBP.classes.DataSet import DataSet
+from FFBP.classes.Layer import Layer
+from FFBP.classes.Network import Network
 
-path_to_trainset = os.getcwd()+'/FFBP/exercises/ex_net838/f_net838.txt'
+path_to_trainset = os.getcwd()+'/FFBP/data/f_net838.txt'
 trainSet = DataSet(path_to_trainset)
 testSet = trainSet
 
@@ -40,11 +40,7 @@ net838.test_set = testSet
 
 net838.init_and_configure(loss = errf.squared_error, train_batch_size = 8, learning_rate = .3, momentum = .9, test_func = evalf.tss, test_scope = 'all')
 
-net838.test()
-net838.train(50)
-net838.tnt(500,50,0)
-net838.train(100,1)
-net838.test(1)
-
+def main():
+    net838.tnt(500,50,0)
+    net838.test(vis=True)
 # code.interact(local=locals())
- 

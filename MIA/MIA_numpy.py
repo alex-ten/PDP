@@ -1,12 +1,14 @@
 import matplotlib; matplotlib.use('TkAgg')
-import numpy as np
-import pickle
-from utilities.logger import logdir
-import tkinter as tk
-from classes.MIA_Viewer import MIA_Viewer
 import os
+import pickle
 import argparse
-import MIA.tester as tester
+import numpy as np
+import tkinter as tk
+from MIA.visualization.MIA_Viewer import MIA_Viewer
+
+from utilities.logger import logdir
+from matplotlib import style; style.use('ggplot')
+
 
 def rprint(x):
     print(np.around(x,2))
