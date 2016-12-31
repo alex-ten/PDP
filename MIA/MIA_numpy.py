@@ -7,7 +7,6 @@ import tkinter as tk
 from MIA.visualization.MIA_Viewer import MIA_Viewer
 
 from utilities.logger import logdir
-from matplotlib import style; style.use('ggplot')
 
 
 def rprint(x):
