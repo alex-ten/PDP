@@ -7,7 +7,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 from collections import OrderedDict
 
-path_to_wordsr = '/Users/alexten/Projects/PDP/MIA/raw/wordsr.txt'
+path_to_wordsr = os.getcwd() + '/MIA/raw/wordsr.txt'
 
 def remove_ticks(ax):
     ax.tick_params(
