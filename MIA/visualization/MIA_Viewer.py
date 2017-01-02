@@ -105,7 +105,7 @@ class MIA_Viewer():
                                     text='Timestep: {}'.format(int(float(self.slide.get()))))
 
         # ---------------------------   MPL2   --------------------------
-        self.miniCanvasFrame = ttk.Frame(self.controlsFrame, width = 150, height = 50)
+        self.miniCanvasFrame = ttk.Frame(self.controlsFrame, width = 99, height = 33)
         self.miniRenderer = FigureCanvasTkAgg(self.minifig, self.controlsFrame)
         self.miniMplCanvas = self.miniRenderer.get_tk_widget()
         self.miniRenderer.draw()

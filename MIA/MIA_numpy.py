@@ -64,6 +64,7 @@ def main():
     parser.add_argument('-sc1', '--scalar1', help='scale bottom-up weights', action='store', type=float)
     parser.add_argument('-sc2', '--scalar2', help='scale top-down weights', action='store', type=float)
     parser.add_argument('-t', '--timesteps', help='number of timesteps to run the model', type=int)
+    parser.add_argument('-nw', '--no_word', help='turn off top-down word-to-letter signal', action='store_true')
     group.add_argument('-s', '--save', help='save choices at each time step', action='store_true')
     group.add_argument('-v', '--visualize', help='follow up the simulation with visualization', action='store_true')
     group.add_argument('-sv', '--save_and_visualize', help='save choices at each time step and follow up with visualization', action='store_true')
@@ -107,6 +108,11 @@ def main():
     WtoL0_weights = L0toW_weights.T
     WtoL1_weights = L2toW_weights.T
     WtoL2_weights = L2toW_weights.T
+
+    if args.no_word:
+        WtoL0_weights *= 0
+        WtoL1_weights *= 0
+        WtoL2_weights *= 0
 
     if args.save or args.save_and_visualize:
         logdir_path = logdir(TF=False)
