@@ -25,7 +25,10 @@ with open(path_to_wordsr, 'r') as words_file:
 
 class MIA_Viewer():
     def __init__(self, master, data):
+        # ============================= DATA =============================
+        timesteps = len(data['word_mean'])
         self.master = master
+        self.master.resizable(width = False, height=False)
         self.figure = plt.figure(1, facecolor='w', figsize=[10,8])
         self.data = data
         self.yax = np.fliplr([np.arange(26) + 0.5])[0]
@@ -35,6 +38,8 @@ class MIA_Viewer():
         self.letter_axes = OrderedDict()
         self.letter_axxes = OrderedDict()
         self.letter_data = []
+
+        self.minifig = plt.figure(2, facecolor='w', figsize=[3,1])
 
         for i in range(3):
             vec = self.data['L{}_mean'.format(i)][0]
@@ -69,13 +74,18 @@ class MIA_Viewer():
         self.word_axx.set_yticklabels(np.around(word_vec, 4))
         self.word_bars = self.word_ax.barh(self.xax, word_vec, align='center', alpha=0.6, facecolor='#0D6EFF', linewidth=0)
 
+        # =========================== WIDGETS ===========================
+        # ---------------------------   MPL1   --------------------------
         self.canvasFrame = ttk.Frame(master, width = 1200)
         self.Renderer = FigureCanvasTkAgg(self.figure, master)
         self.mplCanvas = self.Renderer.get_tk_widget()
         self.Renderer.draw()
 
-        self.controlsFrame = ttk.Frame(master, width = 1200)
-        timesteps = len(data['word_mean'])
+        # --------------------------- TKINTER ----------------------------
+        # Controls:
+        self.controlsFrame = ttk.Frame(master, width = 1200, height = 100)
+
+        # Slider and Button:
         self.slide = ttk.Scale(self.controlsFrame,
                                orient = tk.HORIZONTAL,
                                length = 400,
@@ -84,13 +94,35 @@ class MIA_Viewer():
                                to = timesteps - 1,
                                command = self.onSlide)
         self.slide.set('0')
-
         self.continueButton = ttk.Button(self.controlsFrame, text = 'Continue', command = self.onContinue)
+
+        self.time0Label = ttk.Label(self.controlsFrame,
+                                    text='0')
+
+        self.time1Label = ttk.Label(self.controlsFrame,
+                                    text=str(int(timesteps - 1)))
+        self.curTimeLabel = ttk.Label(self.controlsFrame,
+                                    text='Timestep: {}'.format(int(float(self.slide.get()))))
+
+        # ---------------------------   MPL2   --------------------------
+        self.miniCanvasFrame = ttk.Frame(self.controlsFrame, width = 150, height = 50)
+        self.miniRenderer = FigureCanvasTkAgg(self.minifig, self.controlsFrame)
+        self.miniMplCanvas = self.miniRenderer.get_tk_widget()
+        self.miniRenderer.draw()
+
+        # ========================== GEOMETRY ===========================
         self.canvasFrame.pack(fill = tk.BOTH)
         self.mplCanvas.pack(fill = tk.BOTH, expand = True)
-        self.controlsFrame.pack(fill = tk.X)
-        self.slide.pack()
-        self.continueButton.pack()
+
+        self.controlsFrame.pack(fill = tk.X, side=tk.BOTTOM)
+        self.miniCanvasFrame.pack(side=tk.LEFT, pady=10)
+        self.miniMplCanvas.pack(side=tk.LEFT, pady=10)
+
+        self.time0Label.pack(side=tk.LEFT, pady=10, padx=10)
+        self.slide.pack(side=tk.LEFT, pady=10)
+        self.time1Label.pack(side=tk.LEFT, pady=10, padx=10)
+        self.curTimeLabel.pack(side=tk.LEFT, pady=10, padx=30)
+        self.continueButton.pack(side=tk.RIGHT, pady=10, padx=10)
         self.master.protocol('WM_DELETE_WINDOW', self.onMasterX)
         self.master.state('normal')
         self.master.mainloop()
@@ -134,9 +166,10 @@ class MIA_Viewer():
         self.master.state('normal')
         self.master.mainloop()
 
-
     def onSlide(self, val):
         x = int(float(self.slide.get()))
+        self.curTimeLabel.config(text='Timestep: {}'.format(x))
+
         self.letter_data = []
         for i, axx in enumerate(self.letter_axxes.keys()):
             let_vals = self.data['L{}_mean'.format(i)][x]
@@ -170,7 +203,6 @@ def main():
     proceed = True
     while proceed:
         path = input('[MIA_Viewer] Provide path to log dict: ')
-        path = '/Users/alexten/Projects/PDP/logdir/Sess_2016-12-31_01-21-21/mpl_data/log_dict-GOD.pkl'
         root = tk.Tk()
         if first:
             first = False
