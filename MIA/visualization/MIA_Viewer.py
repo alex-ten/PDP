@@ -60,8 +60,7 @@ def remove_ticks(ax):
 def draw_features(x, ax):
     ax.set_ylim(0, ymax + yoff * 2)
     ax.set_xlim(0, xmax + xoff * 2)
-    ax.get_xaxis().set_visible(False)
-    ax.get_yaxis().set_visible(False)
+    ax.axis('off')
     for v, f0, f1 in zip(verts,np.array(x)[0::2], np.array(x)[1::2]):
         if f1: f = 1
         elif f0+f1 == 0: f = 0.4
@@ -130,7 +129,7 @@ class MIA_Viewer():
 
         # ---------------------------- INPUT ----------------------------
         for i, s in enumerate(self.data['input']):
-            self.feat_ax = self.minifig.add_subplot(1,3,i+1)
+            self.feat_ax = self.minifig.add_subplot(1,3,i+1, aspect='equal')
             draw_features(s, self.feat_ax)
             self.feat_disp.append(self.feat_ax)
 
