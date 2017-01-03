@@ -206,6 +206,7 @@ def main():
         log['L1_mean'] = L1_mean
         log['L2_mean'] = L2_mean
         log['word_mean'] = word_mean
+        log['input'] = (x0.T[0], x1.T[0], x2.T[0])
 
         if args.save:
             with open(logdir_path + '/mpl_data/log_dict-{}.pkl'.format(inp), 'wb') as new_file:

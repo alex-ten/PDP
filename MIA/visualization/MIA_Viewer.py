@@ -4,10 +4,49 @@ import numpy as np
 import tkinter as tk
 from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 from collections import OrderedDict
 
 path_to_wordsr = os.getcwd() + '/MIA/raw/wordsr.txt'
+
+xmax = 4
+ymax = 6
+
+xoff = xmax/10
+yoff = ymax/10
+
+verts = ((0,3),(3,6),(6,8),(8,5),(5,2),(2,0), # outer O
+         (3,4),(4,7),(4,5),(1,4), # inner +
+         (4,8),(4,6),(2,4),(0,4)) # inner X
+
+f_coords = (
+    (0,0), (xmax/2,0), (xmax,0),
+    (0,ymax/2), (xmax/2,ymax/2), (xmax,ymax/2),
+    (0,ymax), (xmax/2,ymax), (xmax,ymax)
+)
+
+
+def vert2coord(v1, v2):
+    x0, y0 = f_coords[v1]
+    x1, y1 = f_coords[v2]
+    return (x0+xoff, x1+xoff), (y0+yoff, y1+yoff)
+
+
+def make_line(ax, xy, on=0):
+    lw = 3
+    if on:
+        lc = 'k'
+        z = 10
+        a = on
+    else:
+        lc = 'k'
+        z = 0
+        a = 0.05
+    cs = 'round'
+    f0 = Line2D(xy[0], xy[1], linewidth=lw, color=lc, solid_capstyle=cs, zorder=z, alpha = a)
+    ax.add_line(f0)
+
 
 def remove_ticks(ax):
     ax.tick_params(
@@ -16,6 +55,19 @@ def remove_ticks(ax):
         bottom='off',  # ticks along the bottom edge are off
         top='off',  # ticks along the top edge are off
     )
+
+
+def draw_features(x, ax):
+    ax.set_ylim(0, ymax + yoff * 2)
+    ax.set_xlim(0, xmax + xoff * 2)
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    for v, f0, f1 in zip(verts,np.array(x)[0::2], np.array(x)[1::2]):
+        if f1: f = 1
+        elif f0+f1 == 0: f = 0.5
+        else: f = 0
+        make_line(ax, vert2coord(v[0], v[1]), on=f)
+
 
 wordlabs = []
 with open(path_to_wordsr, 'r') as words_file:
@@ -26,6 +78,7 @@ with open(path_to_wordsr, 'r') as words_file:
 class MIA_Viewer():
     def __init__(self, master, data):
         # ============================= DATA =============================
+        # ----------------------------- MAIN -----------------------------
         timesteps = len(data['word_mean'])
         self.master = master
         self.master.resizable(width = False, height=False)
@@ -38,8 +91,9 @@ class MIA_Viewer():
         self.letter_axes = OrderedDict()
         self.letter_axxes = OrderedDict()
         self.letter_data = []
+        self.feat_disp = []
 
-        self.minifig = plt.figure(2, facecolor='w', figsize=[3,1])
+        self.minifig = plt.figure(2, facecolor='w', figsize=[3,0.8])
 
         for i in range(3):
             vec = self.data['L{}_mean'.format(i)][0]
@@ -74,6 +128,12 @@ class MIA_Viewer():
         self.word_axx.set_yticklabels(np.around(word_vec, 4))
         self.word_bars = self.word_ax.barh(self.xax, word_vec, align='center', alpha=0.6, facecolor='#0D6EFF', linewidth=0)
 
+        # ---------------------------- INPUT ----------------------------
+        for i, s in enumerate(self.data['input']):
+            self.feat_ax = self.minifig.add_subplot(1,3,i+1)
+            draw_features(s, self.feat_ax)
+            self.feat_disp.append(self.feat_ax)
+
         # =========================== WIDGETS ===========================
         # ---------------------------   MPL1   --------------------------
         self.canvasFrame = ttk.Frame(master, width = 1200)
@@ -84,6 +144,11 @@ class MIA_Viewer():
         # --------------------------- TKINTER ----------------------------
         # Controls:
         self.controlsFrame = ttk.Frame(master, width = 1200, height = 100)
+
+        # Labels:
+        self.time0Label = ttk.Label(self.controlsFrame, text='0')
+        self.time1Label = ttk.Label(self.controlsFrame, text=str(int(timesteps - 1)))
+        self.curTimeLabel = ttk.Label(self.controlsFrame, text='Timestep: 0')
 
         # Slider and Button:
         self.slide = ttk.Scale(self.controlsFrame,
@@ -96,16 +161,8 @@ class MIA_Viewer():
         self.slide.set('0')
         self.continueButton = ttk.Button(self.controlsFrame, text = 'Continue', command = self.onContinue)
 
-        self.time0Label = ttk.Label(self.controlsFrame,
-                                    text='0')
-
-        self.time1Label = ttk.Label(self.controlsFrame,
-                                    text=str(int(timesteps - 1)))
-        self.curTimeLabel = ttk.Label(self.controlsFrame,
-                                    text='Timestep: {}'.format(int(float(self.slide.get()))))
-
         # ---------------------------   MPL2   --------------------------
-        self.miniCanvasFrame = ttk.Frame(self.controlsFrame, width = 99, height = 33)
+        self.miniCanvasFrame = ttk.Frame(self.controlsFrame, width=20)
         self.miniRenderer = FigureCanvasTkAgg(self.minifig, self.controlsFrame)
         self.miniMplCanvas = self.miniRenderer.get_tk_widget()
         self.miniRenderer.draw()
@@ -161,14 +218,18 @@ class MIA_Viewer():
         self.word_axx.set_yticks(self.word_ax.get_yticks())
         self.word_axx.set_yticklabels(np.around(word_vec, 4))
         self.word_bars = self.word_ax.barh(self.xax, word_vec, align='center', alpha = 0.6, facecolor='#0D6EFF', linewidth=0)
-
         self.Renderer.draw()
+
+        for inp, ax in zip(self.data['input'], self.feat_disp):
+            ax.clear()
+            draw_features(inp, ax)
+        self.miniRenderer.draw()
+
         self.master.state('normal')
         self.master.mainloop()
 
     def onSlide(self, val):
         x = int(float(self.slide.get()))
-        self.curTimeLabel.config(text='Timestep: {}'.format(x))
 
         self.letter_data = []
         for i, axx in enumerate(self.letter_axxes.keys()):
@@ -185,6 +246,7 @@ class MIA_Viewer():
         for hb, w in zip(self.word_bars, word):
             hb.set_width(w)
 
+        self.curTimeLabel.config(text='Timestep: {}'.format(x))
         self.Renderer.draw()
 
     def onContinue(self):
