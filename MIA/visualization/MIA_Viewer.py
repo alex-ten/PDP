@@ -64,7 +64,7 @@ def draw_features(x, ax):
     ax.get_yaxis().set_visible(False)
     for v, f0, f1 in zip(verts,np.array(x)[0::2], np.array(x)[1::2]):
         if f1: f = 1
-        elif f0+f1 == 0: f = 0.5
+        elif f0+f1 == 0: f = 0.4
         else: f = 0
         make_line(ax, vert2coord(v[0], v[1]), on=f)
 
