@@ -3,18 +3,18 @@ import pickle
 import time
 import tkinter as tk
 
-import utilities.logger as logger
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
-from utilities.init_rest import init_rest
-from utilities.restore_params import restore_xor
-from utilities.store_configurations import store
 
+import utilities.logger as logger
 from FFBP.visualization.NetworkData import NetworkData
 from FFBP.visualization.VisErrorApp import VisErrorApp
 from FFBP.visualization.VisLayersApp import VisLayersApp
+from utilities.init_rest import init_rest
 from utilities.printProgress import printProgress
+from utilities.restore_params import restore_xor
+from utilities.store_configurations import store
 
 
 class Network(object):
