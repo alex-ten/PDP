@@ -1,5 +1,4 @@
 import matplotlib; matplotlib.use('TkAgg')
-import matplotlib; matplotlib.use('TkAgg')
 import os
 import pickle
 import argparse

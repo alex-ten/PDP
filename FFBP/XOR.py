@@ -9,6 +9,7 @@ from FFBP.classes.Layer import Layer
 from FFBP.classes.Network import Network
 
 import tensorflow as tf
+import code
 
 path_to_trainset = os.getcwd()+'/FFBP/data/f_XOR.txt'
 path_to_params = os.getcwd()+'/FFBP/data/xor_params1.ckpt'
@@ -54,11 +55,14 @@ xor_net.configure(loss = errf.squared_error,
                   test_func = evalf.tss,
                   test_scope = 'all')
 
-# code.interact(local = locals())
+code.interact(local = locals())
 
-def main():
-    xor_net.tnt(330,30,0)
-    xor_net.test(vis=True)
-
-if __name__=="__main__":  main()
+# def main():
+#     import code
+#
+#     xor_net.tnt(330,30,0)
+#     xor_net.test(vis=True)
+#     code.interact(local=locals())
+#
+# if __name__=="__main__":  main()
 
