@@ -40,7 +40,11 @@ net838.test_set = testSet
 
 net838.init_and_configure(loss = errf.squared_error, train_batch_size = 8, learning_rate = .3, momentum = .9, test_func = evalf.tss, test_scope = 'all')
 
-def main():
-    net838.tnt(500,50,0)
-    net838.test(vis=True)
-# code.interact(local=locals())
+code.interact(local=locals())
+
+# def main():
+#
+# 	net838.tnt(500,50,0)
+# 	net838.test(vis=True)
+#
+# if __name__=='__main__': main()

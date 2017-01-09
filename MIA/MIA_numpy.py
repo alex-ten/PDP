@@ -1,5 +1,4 @@
 import matplotlib; matplotlib.use('TkAgg')
-import matplotlib; matplotlib.use('TkAgg')
 import os
 import pickle
 import argparse
@@ -149,9 +148,9 @@ def main():
         gL1 = np.dot(FtoL_weights, x1.T[0])
         gL2 = np.dot(FtoL_weights, x2.T[0])
         tEGW = np.zeros(numwords) #same shape as word but just one column
-        tEGL0 = np.zeros(26); #same shape as L0 but just one column
-        tEGL1 = np.zeros(26);
-        tEGL2 = np.zeros(26);
+        tEGL0 = np.zeros(26) #same shape as L0 but just one column
+        tEGL1 = np.zeros(26)
+        tEGL2 = np.zeros(26)
 
         for w in range(numwords):
           for l0 in range(26):

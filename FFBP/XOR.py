@@ -1,5 +1,7 @@
 import os
-print(os.getcwd())
+import code
+import tensorflow as tf
+
 import utilities.activation_functions as actf
 import utilities.evaluation_functions as evalf
 from utilities.model import model
@@ -8,8 +10,8 @@ from FFBP.classes.DataSet import DataSet
 from FFBP.classes.Layer import Layer
 from FFBP.classes.Network import Network
 
-import tensorflow as tf
-import code
+
+
 
 path_to_trainset = os.getcwd()+'/FFBP/data/f_XOR.txt'
 path_to_params = os.getcwd()+'/FFBP/data/xor_params1.ckpt'

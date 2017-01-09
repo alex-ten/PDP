@@ -1,4 +1,5 @@
 import os
+import code
 import tensorflow as tf
 import utilities.activation_functions as actf
 import utilities.evaluation_functions as evalf
@@ -58,12 +59,12 @@ et_net.configure(train_batch_size = 32,
                  )
 et_net.init_weights()
 
-# code.interact(local=locals())
+code.interact(local=locals())
 
 # ------------------------------- RUN ------------------------------
-
-def main():
-    et_net.tnt(330,30,0)
-    et_net.test(vis=True)
-
-if __name__=="__main__":  main()
+#
+# def main():
+#     et_net.tnt(330,30,0)
+#     et_net.test(vis=True)
+#
+# if __name__=="__main__":  main()
