@@ -61,8 +61,8 @@ def main():
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group()
     parser.add_argument('-bs', '--batch_size', help='size of the input batch to be processed in parallel', type=int)
-    parser.add_argument('-sc1', '--scalar1', help='scale bottom-up weights', action='store', type=float)
-    parser.add_argument('-sc2', '--scalar2', help='scale top-down weights', action='store', type=float)
+    parser.add_argument('-olw', '--oletwrd', help='set odds correct letter given word', action='store', type=float)
+    parser.add_argument('-ofl', '--ofetlet', help='set odds correct feature given letter', action='store', type=float)
     parser.add_argument('-t', '--timesteps', help='number of timesteps to run the model', type=int)
     parser.add_argument('-nw', '--no_word', help='turn off top-down word-to-letter signal', action='store_true')
     group.add_argument('-s', '--save', help='save choices at each time step', action='store_true')
@@ -72,16 +72,17 @@ def main():
 
     batch_size = 1000
     timesteps = 20
-    PLgivenW = .9
-    PFgivenL = .9
+    OLgivenW = 20
+    OFgivenL = 10
 
     if args.batch_size is not None: batch_size = args.batch_size
-    if args.scalar1 is not None: PLgivenW = args.scalar1
-    if args.scalar2 is not None: PFgivenL = args.scalar2
+    if args.oletwrd is not None: OLgivenW = args.oletwrd
+    if args.ofetlet is not None: OFgivenL = args.ofetlet
     if args.timesteps is not None: timesteps = args.timesteps
 
-    WtoLScaleFactor = np.log(PLgivenW / ((1 - PLgivenW) / 25))
-    LtoFScaleFactor = np.log(PFgivenL /(1 - PFgivenL))
+
+    WtoLScaleFactor = np.log(OLgivenW)
+    LtoFScaleFactor = np.log(OFgivenL)
 
     weights_path = os.getcwd()+'/MIA/weights/'
     features_path = os.getcwd()+'/MIA/raw/'
@@ -106,7 +107,7 @@ def main():
     L1toW_weights = L1toW_weights * WtoLScaleFactor
     L2toW_weights = L2toW_weights * WtoLScaleFactor
     WtoL0_weights = L0toW_weights.T
-    WtoL1_weights = L2toW_weights.T
+    WtoL1_weights = L1toW_weights.T #corrected by jlm
     WtoL2_weights = L2toW_weights.T
 
     if args.no_word:
