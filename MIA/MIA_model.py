@@ -8,4 +8,5 @@ OFgivenL = 10
 
 mynet = MIANetwork(OLgivenW, OFgivenL, 'MIA')
 
+
 code.interact(local = locals())

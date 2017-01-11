@@ -7,6 +7,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 from collections import OrderedDict
+import argparse
 
 path_to_wordsr = os.getcwd() + '/MIA/raw/wordsr.txt'
 
@@ -86,7 +87,7 @@ class MIA_Viewer():
         self.yax = np.fliplr([np.arange(26) + 0.5])[0]
         self.xax = np.fliplr([np.arange(36) + 0.5])[0]
         self.letlabs = tuple('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
-        plt.subplots_adjust(wspace=0.5, left=0.03, right=.95)
+        plt.subplots_adjust(wspace=0.8, left=0.03, right=.90)
         self.letter_axes = OrderedDict()
         self.letter_axxes = OrderedDict()
         self.letter_data = []
@@ -113,6 +114,8 @@ class MIA_Viewer():
             self.letter_axxes[axx] = None
 
         word_vec = data['word_mean'][0]
+        word_vec_labs = ['{1} | {0}'.format(j, k) for j, k in zip(np.around(data['word_mean'][0],3),np.around(data['word_marginal'],3))]
+        for i in word_vec_labs: print(i)
         self.word_ax = self.figure.add_subplot(1,4,4)
         self.word_ax.set_title('Word')
         self.word_ax.set_xlim(0, 1)
@@ -124,7 +127,7 @@ class MIA_Viewer():
         self.word_axx = self.word_ax.twinx()
         self.word_axx.set_ylim(0, 36)
         self.word_axx.set_yticks(self.word_ax.get_yticks())
-        self.word_axx.set_yticklabels(np.around(word_vec, 4))
+        self.word_axx.set_yticklabels(word_vec_labs)
         self.word_bars = self.word_ax.barh(self.xax, word_vec, align='center', alpha=0.6, facecolor='#0D6EFF', linewidth=0)
 
         # ---------------------------- INPUT ----------------------------
@@ -206,6 +209,7 @@ class MIA_Viewer():
         self.word_ax.clear()
         self.word_axx.clear()
         word_vec = self.data['word_mean'][0]
+        word_vec_labs = ['{1} | {0}'.format(j, k) for j, k in zip(np.around(self.data['word_mean'][0],3),np.around(self.data['word_marginal'],3))]
         self.word_ax.set_title('Word')
         self.word_ax.set_xlim(0, 1)
         self.word_ax.set_ylim(0, 36)
@@ -236,7 +240,8 @@ class MIA_Viewer():
             axx.set_yticklabels(np.around(let_vals, 3))
             self.letter_data.append(let_vals)
         word = self.data['word_mean'][x]
-        self.word_axx.set_yticklabels(word)
+        word_vec_labs = ['{1:6} : {0}'.format(j, k) for j, k in zip(np.around(self.data['word_mean'][x],3),np.around(self.data['word_marginal'],3))]
+        self.word_axx.set_yticklabels(word_vec_labs)
 
         for i, bars in enumerate(self.letter_axes.values()):
             for vb, l in zip(bars, self.letter_data[i]):
@@ -259,11 +264,11 @@ class MIA_Viewer():
         self.master.quit()
 
 
-def main():
+def main1():
     first = True
     proceed = True
     while proceed:
-        path = input('[MIA_Viewer] Provide path to log dict: ')
+        path =  input('[MIA_Viewer] Provide path to log dict: ')
         root = tk.Tk()
         if first:
             first = False
@@ -278,5 +283,10 @@ def main():
         prompt = input('[y/n] -> ')
         if prompt == 'n': proceed = False
 
+def main2():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-bs', '--batch_size', help='size of the input batch to be processed in parallel', type=int)
+    args = parser.parse_args()
 
-if __name__=='__main__': main()
+
+if __name__=='__main__': main1()
