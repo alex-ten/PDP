@@ -4,7 +4,8 @@ import numpy as np
 import tkinter as tk
 
 from MIA.visualization.MIA_Viewer import MIA_Viewer
-from utilities.logger import Logger
+from MIA.classes.MIAInput import  MIAInput
+from MIA.classes.Logger import Logger
 
 
 def softmax(x):
@@ -31,7 +32,7 @@ def choose_one(x):
 
 
 class MIANetwork(object):
-    def __init__(self, OLgivenW, OFgivenL, name='MIA network', top_down = True):
+    def __init__(self, OLgivenW, OFgivenL, batch_size = 1000, timesteps = 20, top_down = True, name='MIA network'):
         weights_path = os.getcwd() + '/MIA/weights/'
 
         with open(weights_path + 'FtoL_weights.pkl', 'rb') as f:
@@ -54,38 +55,38 @@ class MIANetwork(object):
         self.L1toW_weights = self.L1toW_weights * self.WtoLScaleFactor
         self.L2toW_weights = self.L2toW_weights * self.WtoLScaleFactor
 
-        self.topdown = top_down
-        if top_down:
-            self.WtoL0_weights = self.L0toW_weights.T
-            self.WtoL1_weights = self.L1toW_weights.T
-            self.WtoL2_weights = self.L2toW_weights.T
-        else:
-            self.WtoL0_weights = np.zeros(np.shape(self.L0toW_weights)).T
-            self.WtoL1_weights = np.zeros(np.shape(self.L1toW_weights)).T
-            self.WtoL2_weights = np.zeros(np.shape(self.L2toW_weights)).T
+        self.WtoL0_weights = self.L0toW_weights.T
+        self.WtoL1_weights = self.L1toW_weights.T
+        self.WtoL2_weights = self.L2toW_weights.T
 
+        self.batch_size = batch_size
+        self.timesteps = timesteps
+        self.topdown = top_down
         self.name = name
 
         self.root = tk.Tk()
         self.root.state('withdrawn')
 
-        self.logger = Logger()
-        self.log = {}
+        self.Logger = Logger()
+        self.log = None
         self._first = True
         self._sim_count = 1
 
-    def run_sim(self, inp, timesteps, save=False, vis=False):
-        numwords = 36
-        prev_word = np.zeros([inp.batch_size, 36]).T
-        # For each element of the batch this is a vector of length NWORDS
-        print('[{}] Starting new simulation (sim{})...'.format(self.name, self._sim_count))
-        x0, x1, x2 = inp()
-
+    def run_sim(self, s, mask0=None, mask1=None, mask2=None, vis=True):
+        NWORDS = 36
         L0, L0_mean = [], []
         L1, L1_mean = [], []
         L2, L2_mean = [], []
         word, word_mean = [], []
-        self.log = {}
+        self.log = {'batch_size': self.batch_size, 'w2l': self.WtoLScaleFactor, 'l2f': self.LtoFScaleFactor}
+
+        # For each element of the batch this is a vector of length NWORDS
+        print('[{}] Starting new simulation (sim{})...'.format(self.name, self._sim_count))
+        mia_inp = MIAInput(s, self.batch_size)
+        for i, mask in enumerate((mask0, mask1, mask2)):
+            if mask is not None: mia_inp.mask(i, mask)
+
+        x0, x1, x2 = mia_inp()
 
         # Compute marginals from sums of state goodnesses
         # bottom up signal to letters
@@ -94,16 +95,16 @@ class MIANetwork(object):
         gL0 = np.dot(self.FtoL_weights, x0.T[0])
         gL1 = np.dot(self.FtoL_weights, x1.T[0])
         gL2 = np.dot(self.FtoL_weights, x2.T[0])
-        tEGW = np.zeros(numwords)  # same shape as word but just one column
+        tEGW = np.zeros(NWORDS)  # same shape as word but just one column
         tEGL0 = np.zeros(26)  # same shape as L0 but just one column
         tEGL1 = np.zeros(26)
         tEGL2 = np.zeros(26)
 
-        for w in range(numwords):
+        for w in range(NWORDS):
             for l0 in range(26):
                 for l1 in range(26):
                     for l2 in range(26):
-                        gw = np.log(1 / numwords) + self.L0toW_weights[w, l0] + self.L1toW_weights[w, l1] + self.L2toW_weights[w, l2]
+                        gw = np.log(1 / NWORDS) + self.L0toW_weights[w, l0] + self.L1toW_weights[w, l1] + self.L2toW_weights[w, l2]
                         eGS = np.exp(gw + gL0[l0] + gL1[l1] + gL2[l2])
                         tEGL0[l0] += eGS
                         tEGL1[l1] += eGS
@@ -120,19 +121,25 @@ class MIANetwork(object):
         self.log['L1_marginal'] = pEGL1
         self.log['L2_marginal'] = pEGL2
         self.log['word_marginal'] = pEGW
-
         # end of computing marginals
 
-        for t in range(timesteps):
+        prev_word = np.zeros([self.batch_size, 36]).T
+
+        for t in range(self.timesteps):
             # bottom up signal
             bus_L0 = np.dot(self.FtoL_weights, x0)
             bus_L1 = np.dot(self.FtoL_weights, x1)
             bus_L2 = np.dot(self.FtoL_weights, x2)
 
             # top down signal
-            tds_L0 = np.dot(self.WtoL0_weights, prev_word)
-            tds_L1 = np.dot(self.WtoL1_weights, prev_word)
-            tds_L2 = np.dot(self.WtoL2_weights, prev_word)
+            if self.topdown:
+                tds_L0 = np.dot(self.WtoL0_weights, prev_word)
+                tds_L1 = np.dot(self.WtoL1_weights, prev_word)
+                tds_L2 = np.dot(self.WtoL2_weights, prev_word)
+            else:
+                tds_L0 = np.dot(self.WtoL0_weights * 0, prev_word)
+                tds_L1 = np.dot(self.WtoL1_weights * 0, prev_word)
+                tds_L2 = np.dot(self.WtoL2_weights * 0, prev_word)
 
             # logits
             logit_L0 = bus_L0 + tds_L0
@@ -192,16 +199,9 @@ class MIANetwork(object):
         self.log['L2_mean'] = L2_mean
         self.log['word_mean'] = word_mean
 
-        if save:
-            if self.logger.has_children == False:
-                self.logger.make_dir(TF=False)
-            path = self.logger.child_path + '/mpl_data'
-            filename = 'sim{}-{}-bs{}-t{}.pkl'.format(self._sim_count, inp.word, inp.batch_size, timesteps)
-            with open(path + '/' + filename, 'wb') as new_file:
-                pickle.dump(self.log, new_file)
-            print('[{}] Saved \"{}\" to {}'.format(self.name,
-                                                   filename,
-                                                   path))
+        filename = self.Logger.save(self.log)
+        print('[{}] Saved \"{}\" to MIA/logs.'.format(self.name,
+                                               filename))
 
         if vis:
             print('[{}] Displaying visualization...'.format(self.name))
@@ -214,8 +214,8 @@ class MIANetwork(object):
         self._sim_count += 1
         print('[{}] Simulation terminated.'.format(self.name))
 
-    def set_w2l(self, odds_wl):
-        self.WtoLScaleFactor = np.log(odds_wl)
+    def set_w2l(self, OLgivenW):
+        self.WtoLScaleFactor = np.log(OLgivenW)
         self.L0toW_weights = self.L0toW_weights * self.WtoLScaleFactor
         self.L1toW_weights = self.L1toW_weights * self.WtoLScaleFactor
         self.L2toW_weights = self.L2toW_weights * self.WtoLScaleFactor
@@ -225,25 +225,19 @@ class MIANetwork(object):
         self.WtoL2_weights = self.L2toW_weights.T
         print('[{}] Word to Letter scale factor set to {}'.format(self.name, self.WtoLScaleFactor))
 
-    def set_l2f(self, odds_lf):
-        self.LtoFScaleFactor = np.log(odds_lf)
+    def set_l2f(self, OFgivenL):
+        self.LtoFScaleFactor = np.log(OFgivenL)
         self.FtoL_weights = self.FtoL_weights * self.LtoFScaleFactor
         print('[{}] Feature to Letter scale factor set to {}'.format(self.name, self.LtoFScaleFactor))
 
     def set_weights(self,  OLgivenW, OFgivenL):
-        self.set_olw(OLgivenW)
-        self.set_ofl(OFgivenL)
+        self.set_w2l(OLgivenW)
+        self.set_l2f(OFgivenL)
 
     def set_topdown(self, b):
         if (b == 'off' or b == False or b == 0) and self.topdown == True:
             self.topdown = False
             print('[{}] Top-down signal is now off'.format(self.name))
-            self.WtoL0_weights *= 0
-            self.WtoL1_weights *= 0
-            self.WtoL2_weights *= 0
         if (b == 'on' or b == True or b == 1) and self.topdown == False:
             self.topdown = True
             print('[{}] Top-down signal is now on'.format(self.name))
-            self.WtoL0_weights = np.transpose(self.L0toW_weights * self.WtoLScaleFactor)
-            self.WtoL1_weights = np.transpose(self.L1toW_weights * self.WtoLScaleFactor)
-            self.WtoL2_weights = np.transpose(self.L2toW_weights * self.WtoLScaleFactor)

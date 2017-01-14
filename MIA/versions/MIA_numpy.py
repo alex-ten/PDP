@@ -72,7 +72,7 @@ def main():
 
     batch_size = 1000
     timesteps = 20
-    OLgivenW = 10
+    OLgivenW = 20
     OFgivenL = 10
     numwords = 36
 
@@ -111,10 +111,10 @@ def main():
     WtoL1_weights = L1toW_weights.T #corrected by jlm
     WtoL2_weights = L2toW_weights.T
 
-    if args.no_word:
-        WtoL0_weights *= 0
-        WtoL1_weights *= 0
-        WtoL2_weights *= 0
+    # if args.no_word:
+    #     WtoL0_weights *= 0
+    #     WtoL1_weights *= 0
+    #     WtoL2_weights *= 0
 
     if args.save or args.save_and_visualize:
         logdir_path = logdir(TF=False)
@@ -167,10 +167,6 @@ def main():
         pEGL1 = tEGL1/np.sum(tEGL1)
         pEGL2 = tEGL2/np.sum(tEGL2)
         pEGW = tEGW/np.sum(tEGW)
-        rprint(pEGL0)
-        rprint(pEGL1)
-        rprint(pEGL2)
-        rprint(pEGW)
 
         log['input'] = (x0.T[0], x1.T[0], x2.T[0])
         log['L0_marginal'] = pEGL0
@@ -186,10 +182,15 @@ def main():
             bus_L1 = np.dot(FtoL_weights, x1)
             bus_L2 = np.dot(FtoL_weights, x2)
 
-            # top down signal
-            tds_L0 = np.dot(WtoL0_weights, prev_word)
-            tds_L1 = np.dot(WtoL1_weights, prev_word)
-            tds_L2 = np.dot(WtoL2_weights, prev_word)
+            if args.no_word:
+                # top down signal
+                tds_L0 = np.dot(WtoL0_weights*0, prev_word)
+                tds_L1 = np.dot(WtoL1_weights*0, prev_word)
+                tds_L2 = np.dot(WtoL2_weights*0, prev_word)
+            else:
+                tds_L0 = np.dot(WtoL0_weights, prev_word)
+                tds_L1 = np.dot(WtoL1_weights, prev_word)
+                tds_L2 = np.dot(WtoL2_weights, prev_word)
 
             # logits
             logit_L0 = bus_L0 + tds_L0
@@ -244,6 +245,7 @@ def main():
             L2_mean.append(np.mean(rcv_L2,1))
 
             word_mean.append(np.mean(prev_word,1))
+            intprint(np.mean(prev_word,1))
 
         log['L0_mean'] = L0_mean
         log['L1_mean'] = L1_mean

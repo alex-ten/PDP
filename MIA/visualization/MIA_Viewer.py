@@ -87,7 +87,7 @@ class MIA_Viewer():
         self.yax = np.fliplr([np.arange(26) + 0.5])[0]
         self.xax = np.fliplr([np.arange(36) + 0.5])[0]
         self.letlabs = tuple('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
-        plt.subplots_adjust(wspace=0.8, left=0.03, right=.90)
+        plt.subplots_adjust(wspace=0.9, left=0.03, right=.90)
         self.letter_axes = OrderedDict()
         self.letter_axxes = OrderedDict()
         self.letter_data = []
@@ -97,6 +97,8 @@ class MIA_Viewer():
 
         for i in range(3):
             vec = self.data['L{}_mean'.format(i)][0]
+            vec_lab = ['{1} | {0}'.format(j, k) for j, k in zip(np.around(self.data['L{}_mean'.format(i)][0],3),
+                                                                np.around(self.data['L{}_marginal'.format(i)],3))]
             ax = self.figure.add_subplot(1, 4, i+1)
             ax.set_title('Letter in position {}'.format(i))
             ax.set_ylim(0, 26)
@@ -108,14 +110,13 @@ class MIA_Viewer():
             axx = ax.twinx()
             axx.set_ylim(0, 26)
             axx.set_yticks(ax.get_yticks())
-            axx.set_yticklabels(np.around(vec, 4))
+            axx.set_yticklabels(vec_lab)
             bars = ax.barh(self.yax, vec, align='center', alpha = 1, facecolor='#FFB12B', linewidth=0)
             self.letter_axes[ax] = bars
             self.letter_axxes[axx] = None
 
         word_vec = data['word_mean'][0]
-        word_vec_labs = ['{1} | {0}'.format(j, k) for j, k in zip(np.around(data['word_mean'][0],3),np.around(data['word_marginal'],3))]
-        for i in word_vec_labs: print(i)
+        word_vec_labs = ['[{1}] {0}'.format(j, k) for j, k in zip(np.around(data['word_mean'][0],3),np.around(data['word_marginal'],3))]
         self.word_ax = self.figure.add_subplot(1,4,4)
         self.word_ax.set_title('Word')
         self.word_ax.set_xlim(0, 1)
@@ -151,6 +152,9 @@ class MIA_Viewer():
         self.time0Label = ttk.Label(self.controlsFrame, text='0')
         self.time1Label = ttk.Label(self.controlsFrame, text=str(int(timesteps - 1)))
         self.curTimeLabel = ttk.Label(self.controlsFrame, text='Timestep: 0')
+        self.bsLabel = ttk.Label(self.controlsFrame,
+                                 text='Batch size: {}\nW to L scale factor: {}\nL to F scale factor: {}'.format(
+            data['batch_size'], round(data['w2l'],3), round(data['l2f'],3)))
 
         # Slider and Button:
         self.slide = ttk.Scale(self.controlsFrame,
@@ -181,6 +185,7 @@ class MIA_Viewer():
         self.slide.pack(side=tk.LEFT, pady=10)
         self.time1Label.pack(side=tk.LEFT, pady=10, padx=10)
         self.curTimeLabel.pack(side=tk.LEFT, pady=10, padx=30)
+        self.bsLabel.pack(side=tk.LEFT, pady=10, padx=30)
         self.continueButton.pack(side=tk.RIGHT, pady=10, padx=10)
         self.master.protocol('WM_DELETE_WINDOW', self.onMasterX)
         self.master.state('normal')
@@ -237,10 +242,13 @@ class MIA_Viewer():
         self.letter_data = []
         for i, axx in enumerate(self.letter_axxes.keys()):
             let_vals = self.data['L{}_mean'.format(i)][x]
-            axx.set_yticklabels(np.around(let_vals, 3))
+            vec_labs = ['[{1}] {0}'.format(j, k) for j, k in zip(np.around(self.data['L{}_mean'.format(i)][x],3),
+                                                                np.around(self.data['L{}_marginal'.format(i)],3))]
+            axx.set_yticklabels(vec_labs)
             self.letter_data.append(let_vals)
         word = self.data['word_mean'][x]
-        word_vec_labs = ['{1:6} : {0}'.format(j, k) for j, k in zip(np.around(self.data['word_mean'][x],3),np.around(self.data['word_marginal'],3))]
+        word_vec_labs = ['[{1}] {0}'.format(j, k) for j, k in zip(np.around(self.data['word_mean'][x],3),
+                                                                    np.around(self.data['word_marginal'],3))]
         self.word_axx.set_yticklabels(word_vec_labs)
 
         for i, bars in enumerate(self.letter_axes.values()):
