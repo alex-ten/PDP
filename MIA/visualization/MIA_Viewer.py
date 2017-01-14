@@ -19,7 +19,7 @@ yoff = ymax/10
 
 verts = ((0,3),(3,6),(6,8),(8,5),(5,2),(2,0), # outer O
          (3,4),(4,7),(4,5),(1,4), # inner +
-         (4,8),(4,6),(2,4),(0,4)) # inner X
+         (6,4),(8,4),(2,4),(0,4)) # inner X
 
 f_coords = (
     (0,0), (xmax/2,0), (xmax,0),
@@ -77,6 +77,7 @@ with open(path_to_wordsr, 'r') as words_file:
 
 class MIA_Viewer():
     def __init__(self, master, data):
+        print('[MIA_Viewer] Initializing new Viewer')
         # ============================= DATA =============================
         # ----------------------------- MAIN -----------------------------
         timesteps = len(data['word_mean'])
@@ -97,9 +98,11 @@ class MIA_Viewer():
 
         for i in range(3):
             vec = self.data['L{}_mean'.format(i)][0]
+            vec_lab = []
             vec_lab = ['{1} | {0}'.format(j, k) for j, k in zip(np.around(self.data['L{}_mean'.format(i)][0],3),
                                                                 np.around(self.data['L{}_marginal'.format(i)],3))]
             ax = self.figure.add_subplot(1, 4, i+1)
+            ax.clear()
             ax.set_title('Letter in position {}'.format(i))
             ax.set_ylim(0, 26)
             ax.set_xlim(0, 1)
@@ -108,6 +111,7 @@ class MIA_Viewer():
             ax.yaxis.grid(True, linestyle='-', color='grey', alpha=0.5)
             remove_ticks(ax)
             axx = ax.twinx()
+            axx.clear()
             axx.set_ylim(0, 26)
             axx.set_yticks(ax.get_yticks())
             axx.set_yticklabels(vec_lab)
@@ -118,6 +122,7 @@ class MIA_Viewer():
         word_vec = data['word_mean'][0]
         word_vec_labs = ['[{1}] {0}'.format(j, k) for j, k in zip(np.around(data['word_mean'][0],3),np.around(data['word_marginal'],3))]
         self.word_ax = self.figure.add_subplot(1,4,4)
+        self.word_ax.clear()
         self.word_ax.set_title('Word')
         self.word_ax.set_xlim(0, 1)
         self.word_ax.set_ylim(0, 36)
@@ -126,6 +131,7 @@ class MIA_Viewer():
         self.word_ax.yaxis.grid(True, linestyle='-', color='grey', alpha=0.5, zorder=1)
         remove_ticks(self.word_ax)
         self.word_axx = self.word_ax.twinx()
+        self.word_axx.clear()
         self.word_axx.set_ylim(0, 36)
         self.word_axx.set_yticks(self.word_ax.get_yticks())
         self.word_axx.set_yticklabels(word_vec_labs)
@@ -134,6 +140,7 @@ class MIA_Viewer():
         # ---------------------------- INPUT ----------------------------
         for i, s in enumerate(self.data['input']):
             self.feat_ax = self.minifig.add_subplot(1,3,i+1, aspect='equal')
+            self.feat_ax.clear()
             draw_features(s, self.feat_ax)
             self.feat_disp.append(self.feat_ax)
 
@@ -188,8 +195,6 @@ class MIA_Viewer():
         self.bsLabel.pack(side=tk.LEFT, pady=10, padx=30)
         self.continueButton.pack(side=tk.RIGHT, pady=10, padx=10)
         self.master.protocol('WM_DELETE_WINDOW', self.onMasterX)
-        self.master.state('normal')
-        self.master.mainloop()
 
     def plot_new_data(self, new_data):
         self.data = new_data
@@ -268,8 +273,8 @@ class MIA_Viewer():
         self._sleep()
 
     def _sleep(self):
-        self.master.state('withdrawn')
         self.master.quit()
+        self.master.destroy()
 
 
 def main1():

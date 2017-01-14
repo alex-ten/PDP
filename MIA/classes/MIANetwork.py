@@ -60,16 +60,14 @@ class MIANetwork(object):
         self.WtoL2_weights = self.L2toW_weights.T
 
         self.batch_size = batch_size
-        self.timesteps = timesteps
+        self.time_steps = timesteps
         self.topdown = top_down
         self.name = name
-
-        self.root = tk.Tk()
-        self.root.state('withdrawn')
 
         self.Logger = Logger()
         self.log = None
         self._first = True
+        self._roots = {}
         self._sim_count = 1
 
     def run_sim(self, s, mask0=None, mask1=None, mask2=None, vis=True):
@@ -125,7 +123,7 @@ class MIANetwork(object):
 
         prev_word = np.zeros([self.batch_size, 36]).T
 
-        for t in range(self.timesteps):
+        for t in range(self.time_steps):
             # bottom up signal
             bus_L0 = np.dot(self.FtoL_weights, x0)
             bus_L1 = np.dot(self.FtoL_weights, x1)
@@ -204,12 +202,9 @@ class MIANetwork(object):
                                                filename))
 
         if vis:
+            root = tk.Tk()
             print('[{}] Displaying visualization...'.format(self.name))
-            if self._first:
-                self.VisApp = MIA_Viewer(self.root, self.log)
-                self._first = False
-            else:
-                self.VisApp.plot_new_data(self.log)
+            MIA_Viewer(root, self.log)
 
         self._sim_count += 1
         print('[{}] Simulation terminated.'.format(self.name))
