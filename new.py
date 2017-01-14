@@ -4,7 +4,7 @@ import pickle
 import argparse
 import numpy as np
 import tkinter as tk
-from MIA.visualization.MIA_Viewer import MIA_Viewer
+from MIA.MIA_Viewer import MIA_Viewer
 
 from utilities.logger import logdir
 

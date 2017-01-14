@@ -282,6 +282,7 @@ def main1():
     proceed = True
     while proceed:
         path =  input('[MIA_Viewer] Provide path to log dict: ')
+        path = 'MIA/logs/' + path
         root = tk.Tk()
         if first:
             first = False

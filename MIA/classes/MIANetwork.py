@@ -1,11 +1,12 @@
 import os
 import pickle
-import numpy as np
 import tkinter as tk
 
-from MIA.visualization.MIA_Viewer import MIA_Viewer
-from MIA.classes.MIAInput import  MIAInput
+import numpy as np
+
+from MIA.MIA_Viewer import MIA_Viewer
 from MIA.classes.Logger import Logger
+from MIA.classes.MIAInput import  MIAInput
 
 
 def softmax(x):
@@ -197,6 +198,7 @@ class MIANetwork(object):
         self.log['L2_mean'] = L2_mean
         self.log['word_mean'] = word_mean
 
+        self.Logger.may_be_make_parent()
         filename = self.Logger.save(self.log)
         print('[{}] Saved \"{}\" to MIA/logs.'.format(self.name,
                                                filename))
