@@ -75,34 +75,50 @@ with open(path_to_wordsr, 'r') as words_file:
         wordlabs.append(line.replace(' ', '').upper().replace('\n', ''))
 
 
-class MIA_Viewer():
-    def __init__(self, master, data):
-        print('[MIA_Viewer] Initializing new Viewer')
+class ViewerExecutive():
+    def __init__(self, master):
+        self.master = master
+        self.master.state('withdrawn')
+        self.viewers = []
+        self._intcount = 1
+    def view(self, path):
+        log_ind = os.path.splitext(path)[0].split(sep='/')[-1].split(sep='_')[-1]
+        new_window = tk.Toplevel(self.master)
+        _figinds = [self._intcount, 100+self._intcount]
+        self.viewers.append(MIAViewer(new_window, path, 'MIAlog_{}'.format(log_ind), _figinds))
+        self._intcount += 1
+
+
+class MIAViewer():
+    def __init__(self, master, path, sim, inds):
+        print('[MIA_Viewer] Initializing new viewer...')
+        self.master = master
+        i1, i2 = inds
         # ============================= DATA =============================
         # ----------------------------- MAIN -----------------------------
-        timesteps = len(data['word_mean'])
-        self.master = master
+        with open(path, 'rb') as logfile:
+            self.data = pickle.load(logfile)
+        self.master.title(sim)
         self.master.resizable(width = False, height=False)
-        self.figure = plt.figure(1, facecolor='w', figsize=[10,8])
-        self.data = data
+        timesteps = len(self.data['word_mean'])
+        self.figure = plt.figure(i1, facecolor='w', figsize=[10, 8])
+        self.figure.clear()
         self.yax = np.fliplr([np.arange(26) + 0.5])[0]
         self.xax = np.fliplr([np.arange(36) + 0.5])[0]
         self.letlabs = tuple('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
         plt.subplots_adjust(wspace=0.9, left=0.03, right=.90)
         self.letter_axes = OrderedDict()
         self.letter_axxes = OrderedDict()
-        self.letter_data = []
         self.feat_disp = []
 
-        self.minifig = plt.figure(2, facecolor='w', figsize=[3,0.8])
+        self.minifig = plt.figure(i2, facecolor='w', figsize=[3, 0.8])
+        self.minifig.clear()
 
         for i in range(3):
             vec = self.data['L{}_mean'.format(i)][0]
-            vec_lab = []
-            vec_lab = ['{1} | {0}'.format(j, k) for j, k in zip(np.around(self.data['L{}_mean'.format(i)][0],3),
-                                                                np.around(self.data['L{}_marginal'.format(i)],3))]
-            ax = self.figure.add_subplot(1, 4, i+1)
-            ax.clear()
+            vec_lab = ['{1} | {0}'.format(j, k) for j, k in zip(np.around(self.data['L{}_mean'.format(i)][0], 3),
+                                                                np.around(self.data['L{}_marginal'.format(i)], 3))]
+            ax = self.figure.add_subplot(1, 4, i + 1)
             ax.set_title('Letter in position {}'.format(i))
             ax.set_ylim(0, 26)
             ax.set_xlim(0, 1)
@@ -111,18 +127,17 @@ class MIA_Viewer():
             ax.yaxis.grid(True, linestyle='-', color='grey', alpha=0.5)
             remove_ticks(ax)
             axx = ax.twinx()
-            axx.clear()
             axx.set_ylim(0, 26)
             axx.set_yticks(ax.get_yticks())
             axx.set_yticklabels(vec_lab)
-            bars = ax.barh(self.yax, vec, align='center', alpha = 1, facecolor='#FFB12B', linewidth=0)
+            bars = ax.barh(self.yax, vec, align='center', alpha=1, facecolor='#FFB12B', linewidth=0)
             self.letter_axes[ax] = bars
             self.letter_axxes[axx] = None
 
-        word_vec = data['word_mean'][0]
-        word_vec_labs = ['[{1}] {0}'.format(j, k) for j, k in zip(np.around(data['word_mean'][0],3),np.around(data['word_marginal'],3))]
-        self.word_ax = self.figure.add_subplot(1,4,4)
-        self.word_ax.clear()
+        word_vec = self.data['word_mean'][0]
+        word_vec_labs = ['[{1}] {0}'.format(j, k) for j, k in
+                         zip(np.around(self.data['word_mean'][0], 3), np.around(self.data['word_marginal'], 3))]
+        self.word_ax = self.figure.add_subplot(1, 4, 4)
         self.word_ax.set_title('Word')
         self.word_ax.set_xlim(0, 1)
         self.word_ax.set_ylim(0, 36)
@@ -131,29 +146,29 @@ class MIA_Viewer():
         self.word_ax.yaxis.grid(True, linestyle='-', color='grey', alpha=0.5, zorder=1)
         remove_ticks(self.word_ax)
         self.word_axx = self.word_ax.twinx()
-        self.word_axx.clear()
         self.word_axx.set_ylim(0, 36)
         self.word_axx.set_yticks(self.word_ax.get_yticks())
         self.word_axx.set_yticklabels(word_vec_labs)
-        self.word_bars = self.word_ax.barh(self.xax, word_vec, align='center', alpha=0.6, facecolor='#0D6EFF', linewidth=0)
+        self.word_bars = self.word_ax.barh(self.xax, word_vec, align='center', alpha=0.6, facecolor='#0D6EFF',
+                                           linewidth=0)
 
         # ---------------------------- INPUT ----------------------------
         for i, s in enumerate(self.data['input']):
-            self.feat_ax = self.minifig.add_subplot(1,3,i+1, aspect='equal')
-            self.feat_ax.clear()
-            draw_features(s, self.feat_ax)
-            self.feat_disp.append(self.feat_ax)
+            self.mini_ax = self.minifig.add_subplot(1, 3, i + 1, aspect='equal')
+            self.mini_ax.clear()
+            draw_features(s, self.mini_ax)
+            self.feat_disp.append(self.mini_ax)
 
         # =========================== WIDGETS ===========================
         # ---------------------------   MPL1   --------------------------
-        self.canvasFrame = ttk.Frame(master, width = 1200)
-        self.Renderer = FigureCanvasTkAgg(self.figure, master)
-        self.mplCanvas = self.Renderer.get_tk_widget()
-        self.Renderer.draw()
+        self.canvasFrame = ttk.Frame(self.master, width=1200)
+        self.tkCanvas = FigureCanvasTkAgg(self.figure, self.canvasFrame)
+        self.tkCanvas.draw()
+        self.mplCanvas = self.tkCanvas.get_tk_widget()
 
         # --------------------------- TKINTER ----------------------------
         # Controls:
-        self.controlsFrame = ttk.Frame(master, width = 1200, height = 100)
+        self.controlsFrame = ttk.Frame(self.master, width=1200, height=100)
 
         # Labels:
         self.time0Label = ttk.Label(self.controlsFrame, text='0')
@@ -161,18 +176,18 @@ class MIA_Viewer():
         self.curTimeLabel = ttk.Label(self.controlsFrame, text='Timestep: 0')
         self.bsLabel = ttk.Label(self.controlsFrame,
                                  text='Batch size: {}\nW to L scale factor: {}\nL to F scale factor: {}'.format(
-            data['batch_size'], round(data['w2l'],3), round(data['l2f'],3)))
+                                     self.data['batch_size'], round(self.data['w2l'], 3), round(self.data['l2f'], 3)))
 
         # Slider and Button:
         self.slide = ttk.Scale(self.controlsFrame,
-                               orient = tk.HORIZONTAL,
-                               length = 400,
-                               value = 0,
-                               from_ = 0,
-                               to = timesteps - 1,
-                               command = self.onSlide)
+                               orient=tk.HORIZONTAL,
+                               length=400,
+                               value=0,
+                               from_=0,
+                               to=timesteps - 1,
+                               command=self.onSlide)
         self.slide.set('0')
-        self.continueButton = ttk.Button(self.controlsFrame, text = 'Continue', command = self.onContinue)
+        self.closeButton = ttk.Button(self.controlsFrame, text='Close', command=self.onClose)
 
         # ---------------------------   MPL2   --------------------------
         self.miniCanvasFrame = ttk.Frame(self.controlsFrame, width=20)
@@ -181,10 +196,10 @@ class MIA_Viewer():
         self.miniRenderer.draw()
 
         # ========================== GEOMETRY ===========================
-        self.canvasFrame.pack(fill = tk.BOTH)
-        self.mplCanvas.pack(fill = tk.BOTH, expand = True)
+        self.canvasFrame.pack(fill=tk.BOTH)
+        self.mplCanvas.pack(fill=tk.BOTH, expand=True)
 
-        self.controlsFrame.pack(fill = tk.X, side=tk.BOTTOM)
+        self.controlsFrame.pack(fill=tk.X, side=tk.BOTTOM)
         self.miniCanvasFrame.pack(side=tk.LEFT, pady=10)
         self.miniMplCanvas.pack(side=tk.LEFT, pady=10)
 
@@ -193,114 +208,63 @@ class MIA_Viewer():
         self.time1Label.pack(side=tk.LEFT, pady=10, padx=10)
         self.curTimeLabel.pack(side=tk.LEFT, pady=10, padx=30)
         self.bsLabel.pack(side=tk.LEFT, pady=10, padx=30)
-        self.continueButton.pack(side=tk.RIGHT, pady=10, padx=10)
+        self.closeButton.pack(side=tk.RIGHT, pady=10, padx=10)
         self.master.protocol('WM_DELETE_WINDOW', self.onMasterX)
 
-    def plot_new_data(self, new_data):
-        self.data = new_data
-        self.slide.set('0')
-
-        for i, axs in enumerate(zip(self.letter_axes.keys(), self.letter_axxes.keys())):
-            axs = list(axs)
-            axs[0].clear()
-            vec = self.data['L{}_mean'.format(i)][0]
-            axs[0].set_title('Letter in position {}'.format(i))
-            axs[0].set_ylim(0, 26)
-            axs[0].set_xlim(0, 1)
-            axs[0].set_yticks(self.yax)
-            axs[0].set_yticklabels(self.letlabs)
-            axs[0].yaxis.grid(True, linestyle='-', color='grey', alpha=0.5)
-            remove_ticks(axs[0])
-            axs[1].set_ylim(0, 26)
-            axs[1].set_yticks(axs[0].get_yticks())
-            axs[1].set_yticklabels(np.around(vec, 4))
-            self.letter_axes[axs[0]] = axs[0].barh(self.yax, vec, align='center', facecolor='#FFB12B', linewidth=0)
-
-        self.word_ax.clear()
-        self.word_axx.clear()
-        word_vec = self.data['word_mean'][0]
-        word_vec_labs = ['{1} | {0}'.format(j, k) for j, k in zip(np.around(self.data['word_mean'][0],3),np.around(self.data['word_marginal'],3))]
-        self.word_ax.set_title('Word')
-        self.word_ax.set_xlim(0, 1)
-        self.word_ax.set_ylim(0, 36)
-        self.word_ax.set_yticks(self.xax)
-        self.word_ax.set_yticklabels(wordlabs)
-        self.word_ax.yaxis.grid(True, linestyle='-', color='grey', alpha=0.5, zorder=1)
-        remove_ticks(self.word_ax)
-        self.word_axx.set_ylim(0, 36)
-        self.word_axx.set_yticks(self.word_ax.get_yticks())
-        self.word_axx.set_yticklabels(np.around(word_vec, 4))
-        self.word_bars = self.word_ax.barh(self.xax, word_vec, align='center', alpha = 0.6, facecolor='#0D6EFF', linewidth=0)
-        self.Renderer.draw()
-
         for inp, ax in zip(self.data['input'], self.feat_disp):
-            ax.clear()
             draw_features(inp, ax)
         self.miniRenderer.draw()
-
-        self.master.state('normal')
-        self.master.mainloop()
 
     def onSlide(self, val):
         x = int(float(self.slide.get()))
 
-        self.letter_data = []
+        letter_data = []
         for i, axx in enumerate(self.letter_axxes.keys()):
             let_vals = self.data['L{}_mean'.format(i)][x]
             vec_labs = ['[{1}] {0}'.format(j, k) for j, k in zip(np.around(self.data['L{}_mean'.format(i)][x],3),
                                                                 np.around(self.data['L{}_marginal'.format(i)],3))]
             axx.set_yticklabels(vec_labs)
-            self.letter_data.append(let_vals)
+            letter_data.append(let_vals)
+
         word = self.data['word_mean'][x]
         word_vec_labs = ['[{1}] {0}'.format(j, k) for j, k in zip(np.around(self.data['word_mean'][x],3),
                                                                     np.around(self.data['word_marginal'],3))]
         self.word_axx.set_yticklabels(word_vec_labs)
 
         for i, bars in enumerate(self.letter_axes.values()):
-            for vb, l in zip(bars, self.letter_data[i]):
+            for vb, l in zip(bars, letter_data[i]):
                 vb.set_width(l)
 
         for hb, w in zip(self.word_bars, word):
             hb.set_width(w)
 
         self.curTimeLabel.config(text='Timestep: {}'.format(x))
-        self.Renderer.draw()
+        self.tkCanvas.draw()
 
-    def onContinue(self):
-        self._sleep()
+    def onClose(self):
+        self._close()
 
     def onMasterX(self):
-        self._sleep()
+        self._close()
 
-    def _sleep(self):
+    def _close(self):
         self.master.quit()
         self.master.destroy()
 
 
-def main1():
-    first = True
+def main():
     proceed = True
+    VEX = ViewerExecutive(tk.Tk())
     while proceed:
-        path =  input('[MIA_Viewer] Provide path to log dict: ')
-        path = 'MIA/logs/' + path
-        root = tk.Tk()
-        if first:
-            first = False
-            with open(path, 'rb') as f:
-                data = pickle.load(f)
-            VisApp = MIA_Viewer(root, data)
-        else:
-            with open(path, 'rb') as f:
-                data = pickle.load(f)
-            VisApp.new_data(data)
-        print('[MIA_Viewer] Would you like to proceed?')
-        prompt = input('[y/n] -> ')
+        path =  input('[MIA_Viewer] Enter name of log file OR log file index: ')
+        try:
+            int(path)
+            path = 'MIA/logs/MIAlog_{}.pkl'.format(path)
+        except ValueError:
+            path = 'MIA/logs/' + path
+        VEX.view(path)
+        print('[MIA_Viewer] Would you like to proceed? [return / n]')
+        prompt = input(">>> " )
         if prompt == 'n': proceed = False
 
-def main2():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-bs', '--batch_size', help='size of the input batch to be processed in parallel', type=int)
-    args = parser.parse_args()
-
-
-if __name__=='__main__': main1()
+if __name__=='__main__': main()
