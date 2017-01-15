@@ -4,9 +4,9 @@ import tkinter as tk
 
 import numpy as np
 
-from MIA.MIAViewer import ViewerExecutive, MIAViewer
 from MIA.classes.Logger import Logger
 from MIA.classes.MIAInput import MIAInput
+from MIA.classes.MIAViewer import ViewerExecutive
 
 
 def softmax(x):
