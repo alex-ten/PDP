@@ -13,18 +13,18 @@ class Logger():
 
     def get_last(self):
         contents = os.listdir(self.parent_path)
+        inds = [int(os.path.splitext(x)[0].split(sep='/')[-1].split(sep='_')[-1]) for x in contents]
         try:
-            return sorted(contents)[-1]
+            return sorted(inds).pop()
         except IndexError:
             return None
 
     def save(self, log):
-        last_file = self.get_last()
-        if last_file is None:
+        last_ind = self.get_last()
+        if last_ind is None:
             filename = 'MIAlog_0.pkl'
         else:
-            name = os.path.splitext(last_file)[0].split(sep='_')[-1]
-            filename = 'MIAlog_{}.pkl'.format(int(name)+1)
+            filename = 'MIAlog_{}.pkl'.format(last_ind+1)
         with open(self.parent_path + '/' + filename, 'wb') as new_file:
             pickle.dump(log, new_file)
         return self.parent_path + '/' + filename
