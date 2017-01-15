@@ -60,8 +60,8 @@ class MIANetwork(object):
         self.WtoL1_weights = self.L1toW_weights.T
         self.WtoL2_weights = self.L2toW_weights.T
 
-        self.batch_size = batch_size
-        self.time_steps = timesteps
+        self.batchsize = batch_size
+        self.timesteps = timesteps
         self.topdown = top_down
         self.name = name
         self.viewer_exec = ViewerExecutive(tk.Tk())
@@ -71,17 +71,17 @@ class MIANetwork(object):
         self._first = True
         self._sim_count = 1
 
-    def run_sim(self, s, mask0=None, mask1=None, mask2=None, vis=True):
+    def run(self, s, mask0=None, mask1=None, mask2=None, vis=True):
         NWORDS = 36
         L0, L0_mean = [], []
         L1, L1_mean = [], []
         L2, L2_mean = [], []
         word, word_mean = [], []
-        self.log = {'batch_size': self.batch_size, 'w2l': self.WtoLScaleFactor, 'l2f': self.LtoFScaleFactor}
+        self.log = {'batch_size': self.batchsize, 'w2l': self.WtoLScaleFactor, 'l2f': self.LtoFScaleFactor}
 
         # For each element of the batch this is a vector of length NWORDS
         print('[{}] Starting new simulation (sim{})...'.format(self.name, self._sim_count))
-        mia_inp = MIAInput(s, self.batch_size)
+        mia_inp = MIAInput(s, self.batchsize)
         for i, mask in enumerate((mask0, mask1, mask2)):
             if mask is not None: mia_inp.mask(i, mask)
 
@@ -99,16 +99,27 @@ class MIANetwork(object):
         tEGL1 = np.zeros(26)
         tEGL2 = np.zeros(26)
 
-        for w in range(NWORDS):
+
+        if self.topdown:
+            for w in range(NWORDS):
+                for l0 in range(26):
+                    for l1 in range(26):
+                        for l2 in range(26):
+                            gw = (np.log(1 / NWORDS) + self.L0toW_weights[w, l0]
+                                  + self.L1toW_weights[w, l1] + self.L2toW_weights[w, l2])
+                            eGS = np.exp(gw + gL0[l0] + gL1[l1] + gL2[l2])
+                            tEGL0[l0] += eGS
+                            tEGL1[l1] += eGS
+                            tEGL2[l2] += eGS
+                            tEGW[w] += eGS
+        else:
             for l0 in range(26):
                 for l1 in range(26):
                     for l2 in range(26):
-                        gw = np.log(1 / NWORDS) + self.L0toW_weights[w, l0] + self.L1toW_weights[w, l1] + self.L2toW_weights[w, l2]
-                        eGS = np.exp(gw + gL0[l0] + gL1[l1] + gL2[l2])
+                        eGS = np.exp(gL0[l0] + gL1[l1] + gL2[l2])
                         tEGL0[l0] += eGS
                         tEGL1[l1] += eGS
                         tEGL2[l2] += eGS
-                        tEGW[w] += eGS
 
         pEGL0 = tEGL0 / np.sum(tEGL0)
         pEGL1 = tEGL1 / np.sum(tEGL1)
@@ -122,9 +133,9 @@ class MIANetwork(object):
         self.log['word_marginal'] = pEGW
         # end of computing marginals
 
-        prev_word = np.zeros([self.batch_size, 36]).T
+        prev_word = np.zeros([self.batchsize, 36]).T
 
-        for t in range(self.time_steps):
+        for t in range(self.timesteps):
             # bottom up signal
             bus_L0 = np.dot(self.FtoL_weights, x0)
             bus_L1 = np.dot(self.FtoL_weights, x1)
@@ -210,7 +221,7 @@ class MIANetwork(object):
         self._sim_count += 1
         print('[{}] Simulation terminated.'.format(self.name))
 
-    def set_w2l(self, OLgivenW):
+    def setw2l(self, OLgivenW):
         self.WtoLScaleFactor = np.log(OLgivenW)
         self.L0toW_weights = self.L0toW_weights * self.WtoLScaleFactor
         self.L1toW_weights = self.L1toW_weights * self.WtoLScaleFactor
@@ -221,16 +232,16 @@ class MIANetwork(object):
         self.WtoL2_weights = self.L2toW_weights.T
         print('[{}] Word to Letter scale factor set to {}'.format(self.name, self.WtoLScaleFactor))
 
-    def set_l2f(self, OFgivenL):
+    def setl2f(self, OFgivenL):
         self.LtoFScaleFactor = np.log(OFgivenL)
         self.FtoL_weights = self.FtoL_weights * self.LtoFScaleFactor
         print('[{}] Feature to Letter scale factor set to {}'.format(self.name, self.LtoFScaleFactor))
 
     def set_weights(self,  OLgivenW, OFgivenL):
-        self.set_w2l(OLgivenW)
-        self.set_l2f(OFgivenL)
+        self.setw2l(OLgivenW)
+        self.setl2f(OFgivenL)
 
-    def set_topdown(self, b):
+    def td(self, b):
         if (b == 'off' or b == False or b == 0) and self.topdown == True:
             self.topdown = False
             print('[{}] Top-down signal is now off'.format(self.name))
