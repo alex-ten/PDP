@@ -4,9 +4,9 @@ import tkinter as tk
 
 import numpy as np
 
-from MIA.MIA_Viewer import MIA_Viewer
+from MIA.MIAViewer import ViewerExecutive, MIAViewer
 from MIA.classes.Logger import Logger
-from MIA.classes.MIAInput import  MIAInput
+from MIA.classes.MIAInput import MIAInput
 
 
 def softmax(x):
@@ -64,11 +64,11 @@ class MIANetwork(object):
         self.time_steps = timesteps
         self.topdown = top_down
         self.name = name
+        self.viewer_exec = ViewerExecutive(tk.Tk())
 
         self.Logger = Logger()
         self.log = None
         self._first = True
-        self._roots = {}
         self._sim_count = 1
 
     def run_sim(self, s, mask0=None, mask1=None, mask2=None, vis=True):
@@ -199,14 +199,13 @@ class MIANetwork(object):
         self.log['word_mean'] = word_mean
 
         self.Logger.may_be_make_parent()
-        filename = self.Logger.save(self.log)
-        print('[{}] Saved \"{}\" to MIA/logs.'.format(self.name,
-                                               filename))
+        fullname= self.Logger.save(self.log)
+        print('[{}] Saved log to \"{}\".'.format(self.name,
+                                               fullname))
 
         if vis:
-            root = tk.Tk()
             print('[{}] Displaying visualization...'.format(self.name))
-            MIA_Viewer(root, self.log)
+            self.viewer_exec.view(fullname)
 
         self._sim_count += 1
         print('[{}] Simulation terminated.'.format(self.name))
