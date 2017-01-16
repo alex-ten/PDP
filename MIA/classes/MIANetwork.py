@@ -237,11 +237,7 @@ class MIANetwork(object):
         self.FtoL_weights = self.FtoL_weights * self.LtoFScaleFactor
         print('[{}] Feature to Letter scale factor set to {}'.format(self.name, self.LtoFScaleFactor))
 
-    def set_weights(self,  OLgivenW, OFgivenL):
-        self.setw2l(OLgivenW)
-        self.setl2f(OFgivenL)
-
-    def td(self, b):
+    def settd(self, b):
         if (b == 'off' or b == False or b == 0) and self.topdown == True:
             self.topdown = False
             print('[{}] Top-down signal is now off'.format(self.name))
