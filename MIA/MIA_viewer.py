@@ -12,8 +12,8 @@ def main():
         except ValueError:
             path = 'MIA/logs/' + path
         VEX.view(path)
-        print('[MIA_Viewer] Would you like to proceed? [return / n]')
-        prompt = input(">>> ")
+        print('[MIA_Viewer] Would you like to proceed?')
+        prompt = input("[y/n] -> ")
         if prompt == 'n': proceed = False
 
 if __name__=='__main__': main()
