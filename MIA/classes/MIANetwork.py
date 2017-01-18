@@ -125,7 +125,9 @@ class MIANetwork(object):
         pEGL1 = tEGL1 / np.sum(tEGL1)
         pEGL2 = tEGL2 / np.sum(tEGL2)
         pEGW = tEGW / np.sum(tEGW)
+        sumpp = np.sum(tEGW) / np.exp(3 * np.log(35) + 42 * np.log(11))
 
+        self.log['sumpp'] = sumpp
         self.log['input'] = (x0.T[0], x1.T[0], x2.T[0])
         self.log['L0_marginal'] = pEGL0
         self.log['L1_marginal'] = pEGL1
