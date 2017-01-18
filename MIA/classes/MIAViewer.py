@@ -173,7 +173,7 @@ class MIAViewer():
         # Labels:
         self.time0Label = ttk.Label(self.controlsFrame, text='0')
         self.time1Label = ttk.Label(self.controlsFrame, text=str(int(timesteps - 1)))
-        self.curTimeLabel = ttk.Label(self.controlsFrame, text='Timestep: 0')
+        self.curTnSLabel = ttk.Label(self.controlsFrame, text='Time step: 0\nSum path prob: {}'.format(round(self.data['sumpp'],8)))
         self.bsLabel = ttk.Label(self.controlsFrame,
                                  text='Batch size: {}\nW to L scale factor: {}\nL to F scale factor: {}'.format(
                                      self.data['batch_size'], round(self.data['w2l'], 3), round(self.data['l2f'], 3)))
@@ -206,7 +206,7 @@ class MIAViewer():
         self.time0Label.pack(side=tk.LEFT, pady=10, padx=10)
         self.slide.pack(side=tk.LEFT, pady=10)
         self.time1Label.pack(side=tk.LEFT, pady=10, padx=10)
-        self.curTimeLabel.pack(side=tk.LEFT, pady=10, padx=30)
+        self.curTnSLabel.pack(side=tk.LEFT, pady=10, padx=30)
         self.bsLabel.pack(side=tk.LEFT, pady=10, padx=30)
         self.closeButton.pack(side=tk.RIGHT, pady=10, padx=10)
         self.master.protocol('WM_DELETE_WINDOW', self.onMasterX)
@@ -238,7 +238,7 @@ class MIAViewer():
         for hb, w in zip(self.word_bars, word):
             hb.set_width(w)
 
-        self.curTimeLabel.config(text='Timestep: {}'.format(x))
+        self.curTnSLabel.config(text='Time step: {}\nSum path prob: {}'.format(x, round(self.data['sumpp'],8)))
         self.tkCanvas.draw()
 
     def onClose(self):
