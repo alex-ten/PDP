@@ -48,6 +48,8 @@ class MIANetwork(object):
         with open(weights_path + 'L2toW_weights.pkl', 'rb') as f:
             self.L2toW_weights = pickle.load(f)
 
+        self.OLgivenW = OLgivenW
+        self.OFgivenL = OFgivenL
         self.WtoLScaleFactor = np.log(OLgivenW)
         self.LtoFScaleFactor = np.log(OFgivenL)
 
@@ -125,7 +127,7 @@ class MIANetwork(object):
         pEGL1 = tEGL1 / np.sum(tEGL1)
         pEGL2 = tEGL2 / np.sum(tEGL2)
         pEGW = tEGW / np.sum(tEGW)
-        sumpp = np.sum(tEGW) / np.exp(3 * np.log(35) + 42 * np.log(11))
+        sumpp = np.sum(tEGW) / np.exp(3 * np.log(self.OLgivenW + 25) + 42 * np.log(self.OFgivenL + 1))
 
         self.log['sumpp'] = sumpp
         self.log['input'] = (x0.T[0], x1.T[0], x2.T[0])
@@ -224,17 +226,19 @@ class MIANetwork(object):
         print('[{}] Simulation terminated.'.format(self.name))
 
     def setw2l(self, OLgivenW):
+        self.OLgivenW = OLgivenW
         self.WtoLScaleFactor = np.log(OLgivenW)
         self.L0toW_weights = self.L0toW_weights * self.WtoLScaleFactor
         self.L1toW_weights = self.L1toW_weights * self.WtoLScaleFactor
         self.L2toW_weights = self.L2toW_weights * self.WtoLScaleFactor
 
         self.WtoL0_weights = self.L0toW_weights.T
-        self.WtoL1_weights = self.L1toW_weights.T
+        self.WtoL1_weights = self.L1toW_weights.sT
         self.WtoL2_weights = self.L2toW_weights.T
         print('[{}] Word to Letter scale factor set to {}'.format(self.name, self.WtoLScaleFactor))
 
     def setl2f(self, OFgivenL):
+        self.OFgivenL = OFgivenL
         self.LtoFScaleFactor = np.log(OFgivenL)
         self.FtoL_weights = self.FtoL_weights * self.LtoFScaleFactor
         print('[{}] Feature to Letter scale factor set to {}'.format(self.name, self.LtoFScaleFactor))
