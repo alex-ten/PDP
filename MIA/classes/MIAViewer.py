@@ -64,7 +64,7 @@ def draw_features(x, ax):
     ax.axis('off')
     for v, f0, f1 in zip(verts,np.array(x)[0::2], np.array(x)[1::2]):
         if f1: f = 1
-        elif f0+f1 == 0: f = 0.4
+        elif f0+f1 == 0: f = 0.3
         else: f = 0
         make_line(ax, vert2coord(v[0], v[1]), on=f)
 
@@ -98,6 +98,7 @@ class MIAViewer():
         # ----------------------------- MAIN -----------------------------
         with open(path, 'rb') as logfile:
             self.data = pickle.load(logfile)
+
         self.master.title(sim)
         self.master.resizable(width = False, height=False)
         timesteps = len(self.data['word_mean'])
@@ -173,7 +174,7 @@ class MIAViewer():
         # Labels:
         self.time0Label = ttk.Label(self.controlsFrame, text='0')
         self.time1Label = ttk.Label(self.controlsFrame, text=str(int(timesteps - 1)))
-        self.curTnSLabel = ttk.Label(self.controlsFrame, text='Time step: 0\nSum path prob: {}'.format(round(self.data['sumpp'],8)))
+        self.curTnSLabel = ttk.Label(self.controlsFrame, text='Time step: 0\nSum path prob: {}'.format(round(self.data['sumpp'],11)))
         self.bsLabel = ttk.Label(self.controlsFrame,
                                  text='Batch size: {}\nW to L scale factor: {}\nL to F scale factor: {}'.format(
                                      self.data['batch_size'], round(self.data['w2l'], 3), round(self.data['l2f'], 3)))
@@ -238,7 +239,7 @@ class MIAViewer():
         for hb, w in zip(self.word_bars, word):
             hb.set_width(w)
 
-        self.curTnSLabel.config(text='Time step: {}\nSum path prob: {}'.format(x, round(self.data['sumpp'],8)))
+        self.curTnSLabel.config(text='Time step: {}\nSum path prob: {}'.format(x, round(self.data['sumpp'],11)))
         self.tkCanvas.draw()
 
     def onClose(self):
