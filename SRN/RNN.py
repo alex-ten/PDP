@@ -1,6 +1,5 @@
-import time
 import pickle
-import collections
+import time
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,7 +9,7 @@ from matplotlib import style
 style.use('ggplot')
 
 from SRN.FSM.DataSet import DataSet
-import utilities.logger as logger
+import FFBP.classes.logger as logger
 from utilities import mask
 from classes.RNNCell import RNNCell
 from classes.Layer import wrange_initializer

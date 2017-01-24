@@ -11,8 +11,6 @@ from FFBP.classes.Layer import Layer
 from FFBP.classes.Network import Network
 
 
-
-
 path_to_trainset = os.getcwd()+'/FFBP/data/f_XOR.txt'
 path_to_params = os.getcwd()+'/FFBP/data/xor_params1.ckpt'
 
@@ -41,21 +39,22 @@ output =  Layer(input_tensor = hidden1.act,
 output.set_wrange([-1,1,1])
 
 xor_model = model([image], [hidden1, output], label)
-xor_net = Network(xor_model, name='XOR Network')
+xor = Network(xor_model, name='XOR Network')
 
 # ----------------------------- SETUP -----------------------------
 
-xor_net.train_set = trainSet
-xor_net.test_set = testSet
+xor.train_set = trainSet
+xor.test_set = testSet
 
-xor_net.init_weights()
-xor_net.restore(path_to_params)
-xor_net.configure(loss = errf.squared_error,
-                  train_batch_size = 4,
-                  learning_rate = 0.5,
-                  momentum = 0.9,
-                  test_func = evalf.tss,
-                  test_scope = 'all')
+
+xor.configure(loss = errf.squared_error,
+              train_batch_size = 4,
+              learning_rate = 0.5,
+              momentum = 0.9,
+              test_func = evalf.tss,
+              test_scope = 'all')
+xor.init_weights()
+xor.restore(path_to_params)
 
 code.interact(local = locals())
 
@@ -67,4 +66,3 @@ code.interact(local = locals())
 #     code.interact(local=locals())
 #
 # if __name__=="__main__":  main()
-

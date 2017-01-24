@@ -213,7 +213,7 @@ class MIANetwork(object):
         self.log['L2_mean'] = L2_mean
         self.log['word_mean'] = word_mean
 
-        self.Logger.may_be_make_parent()
+        # self.Logger.may_be_make_parent()
         fullname= self.Logger.save(self.log)
         print('[{}] Saved log to \"{}\".'.format(self.name,
                                                fullname))

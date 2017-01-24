@@ -5,6 +5,7 @@ class Logger():
     def __init__(self):
         self.parent_path = os.getcwd() + '/MIA/logs'
         self.may_be_make_parent()
+
     def may_be_make_parent(self):
         try:
             os.mkdir(self.parent_path)

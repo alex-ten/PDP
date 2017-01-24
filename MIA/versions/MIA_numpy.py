@@ -6,7 +6,7 @@ import numpy as np
 import tkinter as tk
 from MIA.MIA_Viewer import MIA_Viewer
 
-from utilities.logger import logdir
+from FFBP.classes.logger import logdir
 
 
 def rprint(x):

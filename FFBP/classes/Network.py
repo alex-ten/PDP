@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 
-import utilities.logger as logger
+from FFBP.classes.Logger import Logger, LayerLog
 from FFBP.visualization.NetworkData import NetworkData
 from FFBP.visualization.VisErrorApp import VisErrorApp
 from FFBP.visualization.VisLayersApp import VisLayersApp
@@ -23,13 +23,13 @@ class Network(object):
         self.model = model
         self.sess = tf.InteractiveSession()
         self.graph = tf.get_default_graph()
-        self.logpath = logger.logdir()
+        self.logger = Logger()
         self.counter = 0
         self.train_set = None
         self.test_set = None
         self._loss = None
         self._opt = None
-        self._settings = {}
+        self.settings = {}
         self._lossHistory = []
         self._last_test = None
         self._interactive = False
@@ -38,6 +38,7 @@ class Network(object):
         self._errVisApp = None
         self._layVisApp = None
         self._vis_settings = {'ppc': 30, 'dpi': 96}
+        self.global_step = tf.Variable(0, name='global_step', trainable=False)
 
     def init_and_configure(self,
                            loss,
@@ -72,16 +73,16 @@ class Network(object):
 Set test_scope='all' to visualize snapshots. If you want to continue, press enter.''')
         self._loss = loss(self.model['labels'], self.model['network'][-1].act)
         self._opt = tf.train.MomentumOptimizer(learning_rate, momentum)
-        self._settings['loss_func'] = loss
-        self._settings['train_batch'] = train_batch_size
-        self._settings['lrate'] = learning_rate
-        self._settings['mrate'] = momentum
-        self._settings['permute'] = permute
-        self._settings['ecrit'] = ecrit
-        self._settings['test_func'] = test_func
-        self._settings['scope'] = test_scope
-        self._settings['opt_task'] = self._opt.minimize(self._loss)
-        self._settings['saver'] = tf.train.Saver()
+        self.settings['loss_func'] = loss
+        self.settings['train_batch'] = train_batch_size
+        self.settings['lrate'] = learning_rate
+        self.settings['mrate'] = momentum
+        self.settings['permute'] = permute
+        self.settings['ecrit'] = ecrit
+        self.settings['test_func'] = test_func
+        self.settings['scope'] = test_scope
+        self.settings['opt_task'] = self._opt.minimize(self._loss, global_step=self.global_step)
+        self.settings['saver'] = tf.train.Saver(max_to_keep=0)
         for l in self.model['network']:
             # When run in current session tf.gradients returns a list of numpy arrays with
             # batch_size number of rows and Layer.size number of columns.
@@ -91,13 +92,13 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
             l.ded_act = tf.gradients(self._loss, l.act)
             l.ded_W = tf.gradients(self._loss, l.W)
             l.ded_b = tf.gradients(self._loss, l.b)
-        hyper_parameters = [('Learning rate:', self._settings['lrate']),
-                            ('Momentum rate:', self._settings['mrate']),
-                            ('Error:', self._settings['loss_func']),
-                            ('Batch size:', self._settings['train_batch']),
-                            ('Permuted mode:', self._settings['permute']),
-                            ('Ecrit:', self._settings['ecrit'])]
-        store(collections.OrderedDict(hyper_parameters), self.logpath)
+        hyper_parameters = [('Learning rate:', self.settings['lrate']),
+                            ('Momentum rate:', self.settings['mrate']),
+                            ('Error:', self.settings['loss_func']),
+                            ('Batch size:', self.settings['train_batch']),
+                            ('Permuted mode:', self.settings['permute']),
+                            ('Ecrit:', self.settings['ecrit'])]
+        store(collections.OrderedDict(hyper_parameters), self.logger.child_path)
         init = init_rest()
         self.sess.run(init)
 
@@ -124,7 +125,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
                 usr_inp = int(action)
                 self._train(num_epochs = usr_inp,
                             dataset = train_set,
-                            batch_size = self._settings['train_batch'])
+                            batch_size = self.settings['train_batch'])
                 if self._terminate:
                     print('[{}] Would you like to test before terminating the process?'.format(self.name))
                     action = input('y/n -> ')
@@ -133,7 +134,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
                         action = input('y/n ->')
                     if action=='y':
                         self._test(dataset = test_set,
-                                   evalfunc = self._settings['test_func'],
+                                   evalfunc = self.settings['test_func'],
                                    snapshot = take_snapshots)
                         self.visualize_error()
                         print('[{}] Process terminated.'.format(self.name))
@@ -146,7 +147,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
             except ValueError:
                 if action=='t':
                     self._test(dataset = test_set,
-                               evalfunc = self._settings['test_func'],
+                               evalfunc = self.settings['test_func'],
                                snapshot = take_snapshots)
                     self.visualize_error()
                     print('[{}] Input your next action:'.format(self.name))
@@ -154,7 +155,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
                 elif action=='c':
                     self._train(num_epochs =1000 ** 2,
                                 dataset = train_set,
-                                batch_size = self._settings['train_batch'])
+                                batch_size = self.settings['train_batch'])
 
                 else:
                     print("[{}] Choose one of the following options:".format(self.name))
@@ -168,7 +169,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
                         action = input('y/n -> ')
                     if action == 'y':
                         self._test(dataset = test_set,
-                                   evalfunc = self._settings['test_func'],
+                                   evalfunc = self.settings['test_func'],
                                    snapshot=take_snapshots)
                         self.visualize_error()
                         print('[{}] Process terminated.'.format(self.name))
@@ -178,19 +179,25 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
                         break
         self._interactive = False
 
-    def tnt(self, max_epochs, test_freq=0, ckpt_freq = 0, **kwargs):
-        print(self._interactive)
+    def tnt(self, max_epochs, test_freq=0, checkpoints = False, **kwargs):
+        max_epochs = self.counter + max_epochs
         if 'train_set' in kwargs: train_set = kwargs['train_set']
         else: train_set = self.train_set
         if 'test_set' in kwargs: test_set = kwargs['test_set']
         else: test_set = self.test_set
         print('[{}] Now in train and test mode...'.format(self.name))
         while self.counter < max_epochs:
-            result = self._test(test_set, evalfunc=self._settings['test_func'], snapshot=self._checkLastTest())
+            result = self._test(test_set,
+                                evalfunc=self.settings['test_func'],
+                                snapshot=self._checkLastTest(),
+                                checkpoint = checkpoints)
             print('[{}] epoch {}: {}'.format(self.name, self.counter, result))
-            self._train(test_freq, train_set, self._settings['train_batch'], ecrit=self._settings['ecrit'], ckpt_freq=ckpt_freq)
+            self._train(test_freq, train_set, self.settings['train_batch'], ecrit=self.settings['ecrit'])
             if self._terminate or self.counter == max_epochs:
-                result = self._test(test_set, evalfunc=self._settings['test_func'], snapshot=self._checkLastTest())
+                result = self._test(test_set,
+                                    evalfunc=self.settings['test_func'],
+                                    snapshot=self._checkLastTest(),
+                                    checkpoint = checkpoints)
                 print('[{}] Final error (epoch {}): {}'.format(self.name, self.counter, result))
                 print('[{}] Process terminated.'.format(self.name))
                 break
@@ -202,17 +209,17 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
             assert type(freq) is int, ValueError('Expected an integer, got {}'.format(type(freq)))
         self._train(num_epochs,
                     self.train_set,
-                    self._settings['train_batch'],
-                    self._settings['ecrit'],
+                    self.settings['train_batch'],
+                    self.settings['ecrit'],
                     ckpt_freq)
         if vis: self.visualize_error(
-            str(self._settings['test_func']).split(' ')[1])
+            str(self.settings['test_func']).split(' ')[1])
         self._interactive = False
 
     def test(self, vis = False):
         self._interactive = True
         self._test(dataset = self.test_set,
-                   evalfunc = self._settings['test_func'],
+                   evalfunc = self.settings['test_func'],
                    snapshot = self._checkLastTest())
         if vis:
             try:
@@ -236,7 +243,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
             self._errVisApp.catch_up(self._lossHistory)
 
     def visualize_layers(self):
-        snap = NetworkData(self.logpath + '/mpl_data/snapshot_log.pkl')
+        snap = NetworkData(self.logger.child_path + '/snap.pkl')
         if self._layVisApp is None:
             root2 = tk.Tk()
             self._layVisApp = VisLayersApp(root2, snap)
@@ -254,13 +261,13 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
         self._errVisApp = None
         self._layVisApp = None
 
-    def _train(self, num_epochs, dataset, batch_size, ecrit=0.01, ckpt_freq=100, permute = False):
+    def _train(self, num_epochs, dataset, batch_size, ecrit=0.01, permute = False):
         if not self._training: self._training = True
         if self._terminate:
             return
         else:
-            if 'permute' in self._settings:
-                permute = self._settings['permute']
+            if 'permute' in self.settings:
+                permute = self.settings['permute']
             t0 = self.counter
             t1 = t0 + num_epochs
             start = time.time()
@@ -269,18 +276,11 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
                 self._inBar(step, t1 - 1)
                 if permute: dataset.permute()
                 train_dict, _ = self._feed_dict(dataset, batch_size=batch_size)
-                _, loss_val = self.sess.run([self._settings['opt_task'], self._loss],
+                _, loss_val = self.sess.run([self.settings['opt_task'], self._loss],
                                             feed_dict=train_dict)
 
                 # Collect stats (note that loss is measured before the gradients are applied):
                 self._lossHistory.append(loss_val)
-
-                # Save a checkpoint periodically.
-                if ckpt_freq:
-                    if (self.counter + 1) % ckpt_freq == 0 or (self.counter + 1) == t1:
-                        self._settings['saver'].save(self.sess,
-                                                     self.logpath + '/tf_params/graph_vars_epoch-{}.ckpt'.format(
-                                                         self.counter))
 
                 if loss_val < ecrit:
                     self._inBar(1, 1)
@@ -297,15 +297,15 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
                                                                                            round(training_duration,3)))
                 self.counter += 1
 
-    def _test(self, dataset, evalfunc, snapshot=False):
+    def _test(self, dataset, evalfunc, snapshot=False, checkpoint=False):
         test_dict, inp_vects = self._feed_dict(dataset)
         inp_names = dataset.names
         test = evalfunc(self.model['labels'], self.model['network'][-1].act)
 
         # Evaluate test measure
         test_result = test.eval(feed_dict=test_dict)
-        if 'scope' in self._settings:
-            scope = self._settings['scope']
+        if 'scope' in self.settings:
+            scope = self.settings['scope']
         else: scope = snapshot
         if scope == 'all':
             scope = ['inp', 'net', 'act', 'W', 'b', 'ded_net', 'ded_act', 'ded_W', 'ded_b']
@@ -313,6 +313,13 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
         # Take a self-snapshot against a given input batch
         if snapshot:
             self._snapshot(scope, test_dict, test_result, inp_vects, inp_names)
+
+        # Save a checkpoint periodically
+        if checkpoint:
+            # if (self.counter + 1) % ckpt_freq == 0 or (self.counter + 1) == t1:
+            self.settings['saver'].save(self.sess,
+                                        self.logger.child_path + '/weights',
+                                        global_step=self.counter)
 
         # Stdout
         testName = test.name.split(sep='_')[0].split(sep=':')[0]
@@ -328,7 +335,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
     def _snapshot(self, attributes, batch, test_measure, inp_vects, inp_names):
         t = []
         try:
-            with open(self.logpath + '/mpl_data/snapshot_log.pkl', 'rb') as file:
+            with open(self.logger.child_path + '/snap.pkl', 'rb') as file:
                 snap = pickle.load(file)
             snap['inp_vects'].append(inp_vects)
             snap['epochs'] = np.append(snap['epochs'], [self.counter], axis=0)
@@ -340,7 +347,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
                     vals.append(batch[self.model['labels']])
                 state = zip(attributes + t, vals)
                 snap[l.layer_name].append(state)
-            pickle.dump(snap, open(self.logpath + '/mpl_data/snapshot_log.pkl', 'wb'))
+            pickle.dump(snap, open(self.logger.child_path + '/snap.pkl', 'wb'))
         except FileNotFoundError:
             new_snap = collections.OrderedDict({'epochs': np.array([self.counter], dtype=int),
                                                 'error': np.array([test_measure], dtype=float),
@@ -348,7 +355,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
                                                 'inp_vects': [inp_vects],
                                                 'inp_names': inp_names})
             for l in self.model['network']:
-                log = logger.LayerLog(l)
+                log = LayerLog(l)
                 vals = self.sess.run(self._fetch(l, attributes), feed_dict=batch)
                 if l.layer_type == 'output':
                     t = ['t']
@@ -356,7 +363,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
                 state = zip(attributes + t, vals)
                 log.append(state)
                 new_snap[l.layer_name] = log
-            pickle.dump(new_snap, open(self.logpath + '/mpl_data/snapshot_log.pkl', 'wb'))
+            pickle.dump(new_snap, open(self.logger.child_path + '/snap.pkl', 'wb'))
 
     def _feed_dict(self, dataset, **kwargs):
         # Fill a feed dictionary with the actual set of images and labels
@@ -394,7 +401,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
         if self._last_test == self.counter:
             return False
         else:
-            return self._settings['scope']
+            return self.settings['scope']
 
     def off(self):
         self.sess.close()
