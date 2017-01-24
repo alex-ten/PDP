@@ -46,7 +46,7 @@ class VisErrorApp():
         self.controlsFrame.pack(fill = tk.X)
         self.slide.pack()
         self.continueButton.pack(fill = tk.X)
-        self.master.mainloop()
+        # self.master.mainloop()
 
     def plotLatest(self, data):
         self.data = data
@@ -77,7 +77,7 @@ class VisErrorApp():
     def catch_up(self, data):
         self.plotLatest(data)
         self.master.state('normal')
-        self.master.mainloop()
+        # self.master.mainloop()
 
     def _sleep(self):
         self.master.state('withdrawn')

@@ -299,7 +299,7 @@ class VisLayersApp():
         self.controlsWindow.protocol('WM_DELETE_WINDOW', self.onControlsX)
         self.colorsWindow.protocol('WM_DELETE_WINDOW', self.onColorsX)
 
-        self.master.mainloop()
+        #self.master.mainloop()
 
     def create_fig(self):
         # Create a figure
@@ -430,7 +430,7 @@ class VisLayersApp():
         self._plotLatest()
         self.master.state('normal')
         self.controlsWindow.state('normal')
-        self.master.mainloop()
+        # self.master.mainloop()
 
     def _sleep(self):
         self.master.withdraw()
