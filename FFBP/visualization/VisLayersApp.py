@@ -163,7 +163,7 @@ class VisLayersApp():
 
         self.epochLabel = ttk.Label(self.epochSubFrame,
                                     text = 'epoch',
-                                    font = ('Menlo', 11),
+                                    font = ('Menlo', 9),
                                     justify = tk.CENTER)
 
         #   draw cell onto tiny canvas
@@ -174,19 +174,19 @@ class VisLayersApp():
 
         self.cellWeight = ttk.Label(self.cellSubFrame,
                                     text = '-',
-                                    font = ('Menlo', 11),
+                                    font = ('Menlo', 9),
                                     justify = tk.CENTER)
 
         self.cellCoords = ttk.Label(self.cellSubFrame,
                                     text = 'r: - | c: -',
-                                    font = ('Menlo', 11),
+                                    font = ('Menlo', 9),
                                     justify = tk.CENTER)
         # hyperparam widgets
-        self.hpFrame = ttk.Frame(self.hyperparamFrame,relief=tk.GROOVE)
+        self.hpFrame = ttk.Frame(self.hyperparamFrame,relief=tk.FLAT)
         self.hpLabel = ttk.Label(self.hpFrame,
                                  text = 'lrate: {}\nmomentum: {}\nbatch size: {}\nerror function: {}'.format(
                                            1,2,3,4),
-                                 font = ('Menlo', 11),
+                                 font = ('Menlo', 9),
                                  justify = tk.LEFT)
 
         # Progress bar:
