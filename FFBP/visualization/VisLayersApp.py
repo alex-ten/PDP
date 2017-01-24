@@ -65,15 +65,10 @@ class VisLayersApp():
         self.mplCanvasWidget = self.figureRenderer.get_tk_widget()
         self.mplCanvasWidget.grid(sticky = 'nsew')
 
-        self.liftControlsButton = ttk.Button(self.master,
-                                             text = 'Lift controls',
-                                             command=self.onLiftControls)
-        self.liftControlsButton.grid(row=2, column=0, sticky='ew')
-
-        self.colprefsButton = ttk.Button(self.master,
-                                         text = 'Color preferences',
-                                         command = self.onColorPrefs)
-        self.colprefsButton.grid(row=2, column=1, sticky='ew')
+        # self.colprefsButton = ttk.Button(self.master,
+        #                                  text = 'Color preferences',
+        #                                  command = self.onColorPrefs)
+        # self.colprefsButton.grid(row=2, column=1, sticky='ew')
 
         # Integrate mpl and tk
         self.backCanvasWind = self.backCanvas.create_window(0, 0, window=self.mplCanvasWidget, anchor = 'nw')
@@ -83,22 +78,26 @@ class VisLayersApp():
 
         # ================================ CONTROLS ================================
         # --------------------------- Window parameteres ---------------------------
-        controlsWidth = 230
-        controlsHeight = 340
-        self.controlsWindow = tk.Toplevel(master)
-        self.controlsWindow.title('Controls')
-        self.controlsWindow.lift(master)
-        self.controlsWindow.resizable('False','False')
-        self.controlsWindow.geometry(
-            '{}x{}+0+0'.format(
-                controlsWidth,
-                controlsHeight
-            )
-        )
+        # controlsWidth = 230
+        # controlsHeight = 340
+        # self.controlsWindow = tk.Toplevel(master)
+        # self.controlsWindow.title('Controls')
+        # self.controlsWindow.lift(master)
+        # self.controlsWindow.resizable('False','False')
+        # self.controlsWindow.geometry(
+        #     '{}x{}+0+0'.format(
+        #         controlsWidth,
+        #         controlsHeight
+        #     )
+        # )
+
         # --------------------------------- Frames ---------------------------------
 
+        # Controls
+        self.controlsFrame = ttk.Frame(master)
+
         # Info
-        self.infoFrame = ttk.Frame(self.controlsWindow, width = 230, height = 115)
+        self.infoFrame = ttk.Frame(self.controlsFrame, width = 230, height = 115)
         self.epochSubFrame = ttk.Frame(self.infoFrame,
                                        width = 111,
                                        height = 105,
@@ -112,17 +111,14 @@ class VisLayersApp():
                                  height = 40,
                                  relief = tk.SUNKEN)
         # Slide and combobox
-        self.selectorFrame = ttk.Frame(self.controlsWindow,
-                                       width = 230,
-                                       height = 95)
-        # Buttons
-        self.buttonFrame = ttk.Frame(self.controlsWindow)
-        self.continueFrame = ttk.Frame(self.controlsWindow)
+        self.widgetFrame = ttk.Frame(self.controlsFrame,
+                                     width = 230,
+                                     height = 95)
 
-        # Progress bar
-        self.progressFrame = ttk.Frame(self.controlsWindow,
-                                       width = 230,
-                                       height = 20)
+        # Progress bar and hyperparams
+        self.hyperparamFrame = ttk.Frame(self.controlsFrame,
+                                         width = 230,
+                                         height = 15)
 
         # -------------------------------- tk Vars ---------------------------------
         self.patternVar = tk.StringVar()
@@ -130,12 +126,12 @@ class VisLayersApp():
         # -------------------------------- Widgets ---------------------------------
 
         # Selectors:
-        self.patternSelector = ttk.Combobox(self.selectorFrame,
+        self.patternSelector = ttk.Combobox(self.widgetFrame,
                                             textvariable = self.patternVar,
                                             values = list(snap.inp_names.keys()))
         self.patternSelector.current(0)
 
-        self.epochSlider = ttk.Scale(self.selectorFrame,
+        self.epochSlider = ttk.Scale(self.widgetFrame,
                                      orient = tk.HORIZONTAL,
                                      length = 200,
                                      value =len(snap.epochs) - 1,
@@ -144,26 +140,19 @@ class VisLayersApp():
 
         self.epochSlider.set(str(len(snap.epochs) - 1))
 
-        # Buttons
-        self.updateButton = ttk.Button(self.buttonFrame,
+        # Buttons:
+        self.updateButton = ttk.Button(self.widgetFrame,
                                        text='Update',
                                        command=self.onUpdate)
 
-        self.labelsButton = ttk.Button(self.buttonFrame,
-                                       text='Hide labels',
-                                       command=self.onLabels)
-
-        self.zoominButton = ttk.Button(self.buttonFrame,
+        self.zoominButton = ttk.Button(self.widgetFrame,
                                        text = 'Zoom in',
                                        command = lambda: self.changeSize(1))
 
-        self.zoomoutButton = ttk.Button(self.buttonFrame,
+        self.zoomoutButton = ttk.Button(self.widgetFrame,
                                         text='Zoom out',
                                         command=lambda: self.changeSize(-1))
 
-        self.continueButton = ttk.Button(self.continueFrame,
-                                         text='Continue',
-                                         command=self.onContinue)
         # Labels:
         #   epoch info
         self.epochValLabel = ttk.Label(self.epochSubFrame,
@@ -192,16 +181,26 @@ class VisLayersApp():
                                     text = 'r: - | c: -',
                                     font = ('Menlo', 11),
                                     justify = tk.CENTER)
+        # hyperparam widgets
+        self.hpFrame = ttk.Frame(self.hyperparamFrame,relief=tk.GROOVE)
+        self.hpLabel = ttk.Label(self.hpFrame,
+                                 text = 'lrate: {}\nmomentum: {}\nbatch size: {}\nerror function: {}'.format(
+                                           1,2,3,4),
+                                 font = ('Menlo', 11),
+                                 justify = tk.LEFT)
 
         # Progress bar:
-        self.progBar = ttk.Progressbar(self.progressFrame,
+        self.progBar = ttk.Progressbar(self.hyperparamFrame,
                                        orient = tk.HORIZONTAL,
                                        length = 200)
 
         # -------------------------------- Geometry --------------------------------
 
+        # Controls
+        self.controlsFrame.grid(row=1, column=0, columnspan = 2, sticky='nsew')
+
         # Info
-        self.infoFrame.pack(side = tk.TOP, fill = tk.BOTH)
+        self.infoFrame.pack(side = tk.LEFT, fill = tk.BOTH, padx=10)
 
         # Epoch info
         self.epochSubFrame.pack(side = tk.LEFT, padx = 2, pady = 10)
@@ -216,26 +215,20 @@ class VisLayersApp():
         self.cellCoords.place(relx = 0.50, rely = 0.84, anchor = tk.CENTER)
 
         # Selectors
-        self.selectorFrame.pack(fill = tk.BOTH)
-        self.patternSelector.pack(fill = tk.Y, expand = True, pady=5)
-        self.epochSlider.pack(fill = tk.Y, expand = True, pady=5)
-        #
-        # Buttons
-        self.buttonFrame.pack(fill = tk.BOTH, expand = True)
-        self.buttonFrame.columnconfigure(0,weight=1)
-        self.buttonFrame.columnconfigure(1, weight=1)
-        self.labelsButton.grid(row=0, column = 0, columnspan=2, sticky='ew', padx=10)
-        self.zoominButton.grid(row=1, column = 1, columnspan=1, sticky='ew', padx=10)
-        self.zoomoutButton.grid(row=1, column = 0, columnspan=1, sticky='ew', padx=10)
-        self.updateButton.grid(row=2, column=0, columnspan=2, sticky='ew', padx=10)
+        self.widgetFrame.pack(side = tk.LEFT, fill = tk.X, pady=10)
+        self.patternSelector.grid(row=0, column=0, columnspan=2, sticky='nsew')
+        self.epochSlider.grid(row=1, column=0, columnspan=2, sticky='nsew')
+        self.zoominButton.grid(row=2, column = 1, columnspan=1, sticky='nsew')
+        self.zoomoutButton.grid(row=2, column = 0, columnspan=1, sticky='nsew')
+        self.updateButton.grid(row=3, column = 0, columnspan=2, sticky='nsew')
 
-        self.continueFrame.pack(fill=tk.X)
-        self.continueButton.pack(fill = tk.X, padx = 10)
-
-        # Progress Bar
-        self.progressFrame.pack(fill = tk.BOTH, expand = True)
-        self.progBar.place(relx = 0.5, rely = 0.5, anchor = tk.CENTER)
+        # Hyperparams and Progress Bar
+        self.hyperparamFrame.pack(side = tk.LEFT, fill = tk.BOTH, pady=10, padx=10, ipadx = 10)
+        self.hpFrame.pack(fill=tk.BOTH, expand=True)
+        self.hpLabel.pack(side = tk.LEFT)
+        self.progBar.pack(side = tk.BOTTOM, fill = tk.X, expand=True)
         self.progBar.config(mode='indeterminate')
+
 
         # ================================ COLORS ==================================
         mpl_color_maps = (['BrBG', 'bwr', 'coolwarm', 'PiYG',
@@ -296,10 +289,9 @@ class VisLayersApp():
 
         # ============================== PROTOCOLS ===============================
         self.master.protocol('WM_DELETE_WINDOW', self.onMasterX)
-        self.controlsWindow.protocol('WM_DELETE_WINDOW', self.onControlsX)
         self.colorsWindow.protocol('WM_DELETE_WINDOW', self.onColorsX)
 
-        #self.master.mainloop()
+        self.master.lift()
 
     def create_fig(self):
         # Create a figure
@@ -330,21 +322,6 @@ class VisLayersApp():
         else:
             messagebox.showinfo(title='Wrong selection',
                                 message='No such pattern. Please select a pattern from the list')
-
-    def onLabels(self):
-        if self._labels_on:
-            vl.labels_off(self._label_groups)
-            self._labels_on = False
-            self.labelsButton.config(text = 'Show labels')
-            self.figureRenderer.draw()
-        else:
-            self._label_groups = vl.annotate(self.snap, self.panelBoard, self._set_bfs())
-            self._labels_on = True
-            self.labelsButton.config(text='Hide labels')
-            self.figureRenderer.draw()
-
-    def onContinue(self):
-        self._sleep()
 
     def changeSize(self, direction):
         oldSize_inches = self.figure.get_size_inches()
@@ -405,19 +382,12 @@ class VisLayersApp():
                             'Try playing around with the preferences '
                             'to see what\'s going on :)')
 
-    def onLiftControls(self):
-        if self.controlsWindow.state() == 'withdrawn': self.controlsWindow.state('normal')
-        self.controlsWindow.lift()
-
-    def onColorPrefs(self):
-        if self.colorsWindow.state() == 'withdrawn': self.colorsWindow.state('normal')
-        self.colorsWindow.lift()
+    # def onColorPrefs(self):
+    #     if self.colorsWindow.state() == 'withdrawn': self.colorsWindow.state('normal')
+    #     self.colorsWindow.lift()
 
     def onMasterX(self):
         self._sleep()
-
-    def onControlsX(self):
-        self.controlsWindow.withdraw()
 
     def onColorsX(self):
         positive = messagebox.askyesno('O_o', 'Do you want to apply changes')
@@ -429,12 +399,10 @@ class VisLayersApp():
         self.snap = snap
         self._plotLatest()
         self.master.state('normal')
-        self.controlsWindow.state('normal')
-        # self.master.mainloop()
+        self.master.lift()
 
     def _sleep(self):
         self.master.withdraw()
-        self.controlsWindow.withdraw()
         self.colorsWindow.withdraw()
         self.master.quit()
 
@@ -464,13 +432,14 @@ class VisLayersApp():
 def main():
 
     # Prompt path to the snapshot
-    path = input('[VisLayersApp] Snapshot path: ')
+    path = '/Users/alexten/Projects/PDP/FFBP/logs/FFBPlog_1/snap.pkl'
 
     # Get network data
     snap = NetworkData(path)
 
     # Start the app
     root = tk.Tk()
-    app = VisLayersApp(root, snap, 30, 96)
+    app = VisLayersApp(root, snap, 40, 96)
+    app.master.mainloop()
 
 if __name__=='__main__': main()
