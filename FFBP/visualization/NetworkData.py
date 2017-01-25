@@ -5,18 +5,13 @@ class NetworkData(object):
     def __init__(self, path):
         with open(path, 'rb') as opened_file:
             snapshot = pickle.load(opened_file)
-        self.error = snapshot['error'] # use dict.pop() instead of del dict[]
-        self.epochs = snapshot['epochs']
-        self.attributes = snapshot['attributes']
-        self.inp_names = snapshot['inp_names']
-        self.inp_vects = snapshot['inp_vects']
-        self.hyperparams = snapshot['hyperparams']
-        del snapshot['error']
-        del snapshot['epochs']
-        del snapshot['attributes']
-        del snapshot['inp_names']
-        del snapshot['inp_vects']
-        del snapshot['hyperparams']
+        self.error = snapshot.pop('error')
+        self.epochs = snapshot.pop('epochs')
+        self.attributes = snapshot.pop('attributes')
+        self.inp_names = snapshot.pop('inp_names')
+        self.inp_vects = snapshot.pop('inp_vects')
+        self.hyperparams = snapshot.pop('hyperparams')
+        self.sess_index = snapshot.pop('sess_index')
         self.main = snapshot
         self.layer_names = self.main.keys()
         self.num_layers = len(self.main)

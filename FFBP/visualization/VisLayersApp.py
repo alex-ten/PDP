@@ -10,9 +10,10 @@ from FFBP.visualization.NetworkData import NetworkData
 
 class VisLayersApp():
     def __init__(self, master, snap, ppc = 20, dpi = 96, colors='coolwarm'):
-
+        title = 'FFBPlog_{}'.format(snap.sess_index)
+        print('[FFBP Viewer] Initializing viewer for {} ...'.format(title))
         self.master = master
-        self.master.title('Network Visualization')
+        self.master.title(title)
         # =========================== Figure preparation ===========================
         self.colors = colors
         self._ppc = ppc

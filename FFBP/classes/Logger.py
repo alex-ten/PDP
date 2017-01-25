@@ -26,9 +26,11 @@ class LayerLog(object):
 
 class Logger():
     def __init__(self):
+        self.sess_index = 0
         self.parent_path = os.getcwd() + '/FFBP/logs'
         self.may_be_make_parent()
         self.child_path = self.may_be_make_child()
+
 
     def may_be_make_parent(self):
         try:
@@ -38,10 +40,9 @@ class Logger():
 
     def may_be_make_child(self):
         last_ind = self.get_last()
-        if last_ind is None:
-            dirname = 'FFBPlog_0'
-        else:
-            dirname = 'FFBPlog_{}'.format(last_ind + 1)
+        if last_ind is not None:
+            self.sess_index = last_ind + 1
+        dirname = 'FFBPlog_{}'.format(self.sess_index)
         child_path = self.parent_path + '/' + dirname
         os.mkdir(child_path)
         return child_path

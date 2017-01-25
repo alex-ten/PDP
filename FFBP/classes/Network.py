@@ -85,8 +85,6 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
         for l in self.model['network']:
             # When run in current session tf.gradients returns a list of numpy arrays with
             # batch_size number of rows and Layer.size number of columns.
-            # That is, the rows of the returned arrays contain partial derivatives of loss with respect
-            # to the argument tensor (here the loss tensor) of each unit in the layer given a particular input
             l.ded_net = tf.gradients(self._loss, l.net)
             l.ded_act = tf.gradients(self._loss, l.act)
             l.ded_W = tf.gradients(self._loss, l.W)
@@ -224,15 +222,16 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
     def visualize_error(self, error_name = 'error'):
         if self._errVisApp is None:
             root1 = tk.Tk()
+            root1.title('FFBPlog_{}'.format(self.logger.sess_index))
             figure = plt.figure(1, facecolor='w', dpi=self._vis_settings['dpi'])
             self._errVisApp = VisErrorApp(root1,
                                           figure,
-                                          self._lossHistory,
+                                          np.around(self._lossHistory,4),
                                           'epoch',
                                           error_name,
                                           error_name)
         if self.counter > 0:
-            self._errVisApp.catch_up(self._lossHistory)
+            self._errVisApp.catch_up(np.around(self._lossHistory,4))
 
     def visualize_layers(self):
         snap = NetworkData(self.logger.child_path + '/snap.pkl')
@@ -308,7 +307,6 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
 
         # Save a checkpoint periodically
         if checkpoint:
-            # if (self.counter + 1) % ckpt_freq == 0 or (self.counter + 1) == t1:
             self.settings['saver'].save(self.sess,
                                         self.logger.child_path + '/weights',
                                         global_step=self.counter)
@@ -332,7 +330,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
             snap['inp_vects'].append(inp_vects)
             snap['epochs'] = np.append(snap['epochs'], [self.counter], axis=0)
             snap['error'] = np.append(snap['error'], [test_measure], axis=0)
-            # TO-DO: MAKE A MORE ELEGANT WAY TO DO THE APPENDING!
+            # TO-DO: FIGURE OUT AN ELEGANT WAY TO DO THE APPENDING! ================
             snap['hyperparams'].append([self.settings['lrate'],self.settings['mrate'],self.settings['loss_func'],self.settings['train_batch'], self.settings['permute']])
             for l in self.model['network']:
                 vals = self.sess.run(self._fetch(l, attributes), feed_dict=batch)
@@ -352,7 +350,8 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
                                                                 self.settings['mrate'],
                                                                 self.settings['loss_func'],
                                                                 self.settings['train_batch'],
-                                                                self.settings['permute']]]})
+                                                                self.settings['permute']]],
+                                               'sess_index': self.logger.sess_index})
             for l in self.model['network']:
                 log = LayerLog(l)
                 vals = self.sess.run(self._fetch(l, attributes), feed_dict=batch)
