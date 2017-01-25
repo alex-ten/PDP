@@ -91,7 +91,7 @@ class ViewerExecutive():
 
 class MIAViewer():
     def __init__(self, master, path, sim, inds):
-        print('[MIA_Viewer] Initializing new viewer...')
+        print('[MIA_Viewer] Initializing viewer for {} ...'.format(sim))
         self.master = master
         i1, i2 = inds
         # ============================= DATA =============================
