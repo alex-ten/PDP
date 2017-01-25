@@ -9,7 +9,7 @@ def fancy_annotation(ax, x, y, note, l_color='black', l_width=0.8, l_style=':'):
     ver = plt.axvline(x, c=l_color, lw=l_width, ls=l_style) # add vertical line
 
     # Annotate the last point (x, y)
-    ann = ax.annotate('{}: {}'.format(note, np.around(y,5)),  # annotation string
+    ann = ax.annotate('{}: {}'.format(note, np.around(y,4)),  # annotation string
                       # annotation coordinates:
                       xy=(x, y),  # position of element to annotate
                       xycoords='data',  # use xy to define the position in the coordinate system being annotated

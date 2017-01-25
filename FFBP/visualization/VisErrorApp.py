@@ -18,9 +18,9 @@ class VisErrorApp():
         self.line, = self.ax.plot(data, lw = 2, color = '#3DB1FF')
         self.fann, self.hline, self.vline = \
             ve.fancy_annotation(self.ax,
-            x = len(data) - 1,
-            y = data[-1],
-            note = note)
+                                x = len(data) - 1,
+                                y = round(data[-1],4),
+                                note = note)
 
         self.canvasFrame = ttk.Frame(master, width = 500)
         self.Renderer = FigureCanvasTkAgg(figure, master)
@@ -35,25 +35,30 @@ class VisErrorApp():
                                from_ = 0,
                                to = len(data) - 1,
                                command = self.onSlide)
+        self.zeroEpochLabel = ttk.Label(master = self.controlsFrame,
+                                        text = '0')
+        self.lastEpochLabel = ttk.Label(master = self.controlsFrame,
+                                        text = str(len(data) - 1))
 
         self.slide.set(str(len(data) - 1))
 
-        self.continueButton = ttk.Button(self.controlsFrame,
-                                         text = 'Continue', command = self.onContinue)
+        self.currEpochLabel = ttk.Label(master = self.controlsFrame,
+                                        text = 'epoch: {}'.format(int(self.slide.get())))
 
         self.canvasFrame.pack()
         self.mplCanvas.pack(fill = tk.BOTH, expand = True)
-        self.controlsFrame.pack(fill = tk.X)
-        self.slide.pack()
-        self.continueButton.pack(fill = tk.X)
-        # self.master.mainloop()
+        self.controlsFrame.pack(expand = True)
+        self.currEpochLabel.grid(row = 0, column = 1, columnspan = 3)
+        self.zeroEpochLabel.grid(row = 1, column = 0, columnspan = 1, sticky = 'w')
+        self.lastEpochLabel.grid(row = 1, column = 4, columnspan = 1, sticky = 'e')
+        self.slide.grid(row = 1, column = 1, columnspan = 3)
 
     def plotLatest(self, data):
         self.data = data
         x, y = len(data) - 1, data[-1]
         self.line, = self.ax.plot(data, lw = 2, color = '#3DB1FF')
         self.fann.xy = (x, y)  # set annotation xy to new values
-        self.fann.set_text('{}: {}'.format(self.note, np.around(y, 5)))  # change text accordingly
+        self.fann.set_text('{}: {}'.format(self.note, round(y, 4)))  # change text accordingly
         # change positions of straight lines
         self.hline.set_ydata(y)
         self.vline.set_xdata(x)
@@ -65,19 +70,19 @@ class VisErrorApp():
         x = int(float(self.slide.get()))
         y = self.data[x]
         self.fann.xy = (x, y) # set annotation xy to new values
-        self.fann.set_text('{}: {}'.format(self.note, np.around(y,5))) # change text accordingly
+        self.fann.set_text('{}: {}'.format(self.note, round(y,4))) # change text accordingly
+
         # change positions of straight lines
         self.hline.set_ydata(y)
         self.vline.set_xdata(x)
-        self.Renderer.draw()
 
-    def onContinue(self):
-        self._sleep()
+        # Update epoch label
+        self.lastEpochLabel.config(text = 'epoch: {}'.format(x))
+        self.Renderer.draw()
 
     def catch_up(self, data):
         self.plotLatest(data)
         self.master.state('normal')
-        # self.master.mainloop()
 
     def _sleep(self):
         self.master.state('withdrawn')
