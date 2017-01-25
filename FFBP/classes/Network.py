@@ -14,7 +14,6 @@ from FFBP.visualization.VisLayersApp import VisLayersApp
 from utilities.init_rest import init_rest
 from utilities.printProgress import printProgress
 from utilities.restore_params import restore_xor
-from utilities.store_configurations import store
 
 
 class Network(object):
@@ -38,7 +37,7 @@ class Network(object):
         self._errVisApp = None
         self._layVisApp = None
         self._vis_settings = {'ppc': 30, 'dpi': 96}
-        self.global_step = tf.Variable(0, name='global_step', trainable=False)
+        self._global_step = tf.Variable(0, name='global_step', trainable=False)
 
     def init_and_configure(self,
                            loss,
@@ -81,7 +80,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
         self.settings['ecrit'] = ecrit
         self.settings['test_func'] = test_func
         self.settings['scope'] = test_scope
-        self.settings['opt_task'] = self._opt.minimize(self._loss, global_step=self.global_step)
+        self.settings['opt_task'] = self._opt.minimize(self._loss, global_step=self._global_step)
         self.settings['saver'] = tf.train.Saver(max_to_keep=0)
         for l in self.model['network']:
             # When run in current session tf.gradients returns a list of numpy arrays with
@@ -92,13 +91,6 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
             l.ded_act = tf.gradients(self._loss, l.act)
             l.ded_W = tf.gradients(self._loss, l.W)
             l.ded_b = tf.gradients(self._loss, l.b)
-        hyper_parameters = [('Learning rate:', self.settings['lrate']),
-                            ('Momentum rate:', self.settings['mrate']),
-                            ('Error:', self.settings['loss_func']),
-                            ('Batch size:', self.settings['train_batch']),
-                            ('Permuted mode:', self.settings['permute']),
-                            ('Ecrit:', self.settings['ecrit'])]
-        store(collections.OrderedDict(hyper_parameters), self.logger.child_path)
         init = init_rest()
         self.sess.run(init)
 
@@ -246,7 +238,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
         snap = NetworkData(self.logger.child_path + '/snap.pkl')
         if self._layVisApp is None:
             root2 = tk.Tk()
-            self._layVisApp = VisLayersApp(root2, snap)
+            self._layVisApp = VisLayersApp(root2, snap, self._vis_settings['ppc'])
         else:
             self._layVisApp.catch_up(snap)
 
@@ -340,6 +332,8 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
             snap['inp_vects'].append(inp_vects)
             snap['epochs'] = np.append(snap['epochs'], [self.counter], axis=0)
             snap['error'] = np.append(snap['error'], [test_measure], axis=0)
+            # TO-DO: MAKE A MORE ELEGANT WAY TO DO THE APPENDING!
+            snap['hyperparams'].append([self.settings['lrate'],self.settings['mrate'],self.settings['loss_func'],self.settings['train_batch'], self.settings['permute']])
             for l in self.model['network']:
                 vals = self.sess.run(self._fetch(l, attributes), feed_dict=batch)
                 if l.layer_type == 'output':
@@ -353,7 +347,12 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
                                                 'error': np.array([test_measure], dtype=float),
                                                 'attributes': attributes,
                                                 'inp_vects': [inp_vects],
-                                                'inp_names': inp_names})
+                                                'inp_names': inp_names,
+                                                'hyperparams': [[self.settings['lrate'],
+                                                                self.settings['mrate'],
+                                                                self.settings['loss_func'],
+                                                                self.settings['train_batch'],
+                                                                self.settings['permute']]]})
             for l in self.model['network']:
                 log = LayerLog(l)
                 vals = self.sess.run(self._fetch(l, attributes), feed_dict=batch)
