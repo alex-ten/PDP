@@ -10,11 +10,13 @@ class NetworkData(object):
         self.attributes = snapshot['attributes']
         self.inp_names = snapshot['inp_names']
         self.inp_vects = snapshot['inp_vects']
+        self.hyperparams = snapshot['hyperparams']
         del snapshot['error']
         del snapshot['epochs']
         del snapshot['attributes']
         del snapshot['inp_names']
         del snapshot['inp_vects']
+        del snapshot['hyperparams']
         self.main = snapshot
         self.layer_names = self.main.keys()
         self.num_layers = len(self.main)
@@ -45,6 +47,7 @@ def main():
     print(data.epochs)
     print(data.error)
     print(data.inp_names)
+    print(data.hyperparams)
     # data.stdout()
 
 if __name__=='__main__': main()
