@@ -26,22 +26,20 @@ class VisLayersApp():
         # ============================= Parent Windows =============================
         # ---------------------- Figure and window parameteres----------------------
 
-        figWidth, figHeight = [int(x) for x in figSize]
-        maxWindWidth = 900
-        maxWindHeight = 700
-        w = min(figWidth, maxWindWidth)
-        h = min(figHeight, maxWindHeight)
-        master.geometry(
-            '{}x{}+0+0'.format(
-                w+20,
-                h))
+        self.figWidth, self.figHeight = [int(x) for x in figSize]
+        self.maxWindWidth = 900
+        self.maxWindHeight = 700
+        w = min(self.figWidth, self.maxWindWidth)
+        h = min(self.figHeight, self.maxWindHeight)
+        self.master.geometry('{}x{}+0+0'.format(w + 20, h))
+        self.master.update()
 
         # --------------------------------- Canvas ---------------------------------
         self.master.rowconfigure(0, weight=1)
         self.master.columnconfigure(0, weight=1)
 
         # Frames
-        self.canvasFrame = ttk.Frame(master, width = w+20, height = h+20)
+        self.canvasFrame = ttk.Frame(master, width = w + 20, height = h + 20)
         self.canvasFrame.grid(row=0, column=0, columnspan = 2, sticky='nsew')
         self.canvasFrame.rowconfigure(0, weight=1)
         self.canvasFrame.columnconfigure(0, weight=1)
@@ -77,22 +75,6 @@ class VisLayersApp():
 
 
         # ================================ CONTROLS ================================
-        # --------------------------- Window parameteres ---------------------------
-        # controlsWidth = 230
-        # controlsHeight = 340
-        # self.controlsWindow = tk.Toplevel(master)
-        # self.controlsWindow.title('Controls')
-        # self.controlsWindow.lift(master)
-        # self.controlsWindow.resizable('False','False')
-        # self.controlsWindow.geometry(
-        #     '{}x{}+0+0'.format(
-        #         controlsWidth,
-        #         controlsHeight
-        #     )
-        # )
-
-        # --------------------------------- Frames ---------------------------------
-
         # Controls
         self.controlsFrame = ttk.Frame(master)
 
@@ -124,7 +106,6 @@ class VisLayersApp():
         self.patternVar = tk.StringVar()
 
         # -------------------------------- Widgets ---------------------------------
-
         # Selectors:
         self.patternSelector = ttk.Combobox(self.widgetFrame,
                                             textvariable = self.patternVar,
@@ -189,11 +170,6 @@ class VisLayersApp():
                                  font = ('Menlo', 9),
                                  justify = tk.LEFT)
 
-        # Progress bar:
-        self.progBar = ttk.Progressbar(self.hyperparamFrame,
-                                       orient = tk.HORIZONTAL,
-                                       length = 200)
-
         # -------------------------------- Geometry --------------------------------
 
         # Controls
@@ -226,9 +202,6 @@ class VisLayersApp():
         self.hyperparamFrame.pack(side = tk.LEFT, fill = tk.BOTH, pady=10, padx=10, ipadx = 10)
         self.hpFrame.pack(fill=tk.BOTH, expand=True)
         self.hpLabel.pack(side = tk.LEFT)
-        self.progBar.pack(side = tk.BOTTOM, fill = tk.X, expand=True)
-        self.progBar.config(mode='indeterminate')
-
 
         # ================================ COLORS ==================================
         mpl_color_maps = (['BrBG', 'bwr', 'coolwarm', 'PiYG',
@@ -292,6 +265,8 @@ class VisLayersApp():
         self.colorsWindow.protocol('WM_DELETE_WINDOW', self.onColorsX)
 
         self.master.lift()
+        self.master.minsize(460, 125)
+        self.master.maxsize(self.master.winfo_width(), self.master.winfo_height())
 
     def create_fig(self):
         # Create a figure
@@ -311,14 +286,12 @@ class VisLayersApp():
         epoch_ind = int(self.epochSlider.get())
         key = self.patternSelector.get()
         if key in self.snap.inp_names.keys():
-            self.progBar.start()
             self.panelBoard.clear()
             ind_map = self.snap.inp_vects[epoch_ind]
             pattern_ind = np.where(np.all(ind_map == self.snap.inp_names[key], axis=1))[0][0]
             vl.draw_all_layers(self.snap, self.panelBoard, epoch_ind, pattern_ind, colmap=self.colors)
             self._label_groups = vl.annotate(self.snap, self.panelBoard, self._set_bfs())
             self.figureRenderer.draw()
-            self.progBar.stop()
         else:
             messagebox.showinfo(title='Wrong selection',
                                 message='No such pattern. Please select a pattern from the list')
@@ -342,6 +315,14 @@ class VisLayersApp():
             self._label_groups = vl.annotate(self.snap, self.panelBoard, self._set_bfs())
             self.figureRenderer.draw()
         self.figure.canvas.draw()
+        self.figWidth = int(nW)
+        self.figHeight = int(nH)
+        # Adjust master window size to figure size, so that regions outside figure are always hidden
+        if direction < 0 and self.figWidth < self.master.winfo_width():
+            self.master.geometry('{}x{}+0+0'.format(
+                min(self.figWidth, self.maxWindWidth) + 20,
+                min(self.figHeight + 125, self.maxWindHeight)))
+        self.master.maxsize(min(self.figWidth, self.maxWindWidth) + 20, min(self.figHeight + 125, self.maxWindHeight))
 
     def checkPPC(self):
         upperlim = 60
@@ -436,6 +417,7 @@ def main():
 
     # Get network data
     snap = NetworkData(path)
+    print(snap)
 
     # Start the app
     root = tk.Tk()
