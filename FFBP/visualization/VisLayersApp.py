@@ -30,7 +30,7 @@ class VisLayersApp():
         self.maxWindWidth = 900
         self.maxWindHeight = 700
         w = min(self.figWidth, self.maxWindWidth)
-        h = min(self.figHeight, self.maxWindHeight)
+        h = min(self.figHeight+125, self.maxWindHeight)
         self.master.geometry('{}x{}+0+0'.format(w + 20, h))
         self.master.update()
 
@@ -164,9 +164,10 @@ class VisLayersApp():
                                     justify = tk.CENTER)
         # hyperparam widgets
         self.hpFrame = ttk.Frame(self.hyperparamFrame,relief=tk.FLAT)
+        hp = self.snap.hyperparams[-1]
         self.hpLabel = ttk.Label(self.hpFrame,
-                                 text = 'lrate: {}\nmomentum: {}\nbatch size: {}\nerror function: {}'.format(
-                                           1,2,3,4),
+                                 text = 'lrate: {}\nmrate: {}\nerror function: {}\nbatch size: {}\ntrain mode: {}'.format(
+            hp[0], hp[1], '{}'.format(hp[2]).split()[1], hp[3], 'p-train' if hp[4] else 's-train'),
                                  font = ('Menlo', 9),
                                  justify = tk.LEFT)
 
@@ -349,6 +350,10 @@ class VisLayersApp():
     def onSlide(self, val):
         val = float(val)
         self.epochValLabel.config(text = str(self._get_epoch(val)))
+        hp = self.snap.hyperparams[int(val)]
+        self.hpLabel.config(text = 'lrate: {}\nmrate: {}\nerror function: {}\nbatch size: {}\ntrain mode: {}'.format(
+            hp[0], hp[1], '{}'.format(hp[2]).split()[1], hp[3], 'p-train' if hp[4] else 's-train'),)
+
 
     def onApply(self):
         print('Applying changes')
@@ -413,7 +418,7 @@ class VisLayersApp():
 def main():
 
     # Prompt path to the snapshot
-    path = '/Users/alexten/Projects/PDP/FFBP/logs/FFBPlog_1/snap.pkl'
+    path = '/Users/alexten/Projects/PDP/FFBP/logs/FFBPlog_4/snap.pkl'
 
     # Get network data
     snap = NetworkData(path)
