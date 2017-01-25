@@ -171,7 +171,7 @@ def layer_image(origin, ax, layer, epoch, pattern, colmap, nrange):
 
     # Drawing
     cgrid(grid_W_x, grid_l_y, ax, layer.ded_W[epoch].T, colmap, nrange)
-    cgrid(grid_b_x, grid_l_y, ax, np.reshape(layer.b[epoch], (layer.size, 1)), colmap, nrange)
+    cgrid(grid_b_x, grid_l_y, ax, np.reshape(layer.ded_b[epoch], (layer.size, 1)), colmap, nrange)
     cgrid(grid_net_x, grid_l_y, ax, np.reshape(layer.ded_net[epoch][pattern], (layer.size, 1)), colmap, nrange)
     cgrid(grid_a_x, grid_l_y, ax, np.reshape(layer.ded_act[epoch][pattern], (layer.size, 1)), colmap, nrange)
 
@@ -179,7 +179,7 @@ def layer_image(origin, ax, layer, epoch, pattern, colmap, nrange):
 
     return origin
 
-def draw_all_layers(snap, ax, epoch, pattern, colmap='coolwarm', nrange=1):
+def draw_all_layers(snap, ax, epoch, pattern, colmap='coolwarm', nrange=2):
     origin = 0
     for l in snap.main.values():
         origin = layer_image(origin, ax, l, epoch, pattern, colmap, nrange)

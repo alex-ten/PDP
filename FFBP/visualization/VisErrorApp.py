@@ -27,7 +27,7 @@ class VisErrorApp():
         self.mplCanvas = self.Renderer.get_tk_widget()
         self.Renderer.draw()
 
-        self.controlsFrame = ttk.Frame(master, width = 500)
+        self.controlsFrame = ttk.Frame(master, width = 500, height = 40)
         self.slide = ttk.Scale(self.controlsFrame,
                                orient = tk.HORIZONTAL,
                                length = 250,
@@ -44,8 +44,9 @@ class VisErrorApp():
         self.slide.set(str(len(data) - 1))
 
         self.canvasFrame.pack()
-        self.mplCanvas.pack(fill = tk.BOTH, expand = True)
-        self.controlsFrame.pack(expand = True)
+        self.mplCanvas.pack(side = tk.TOP, fill = tk.X, expand = True)
+
+        self.controlsFrame.pack(side = tk.TOP, expand = True)
         self.currEpochLabel.grid(row = 0, column = 1, columnspan = 3)
         self.zeroEpochLabel.grid(row = 1, column = 0, columnspan = 1, sticky = 'w')
         self.lastEpochLabel.grid(row = 1, column = 4, columnspan = 1, sticky = 'e')

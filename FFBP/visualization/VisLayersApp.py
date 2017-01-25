@@ -345,7 +345,7 @@ class VisLayersApp():
         rc = 'r: {} | c: {}'.format(r,c)
         self.cellCoords.config(text = rc)
         self.cellWeight.config(text = weight)
-        self.tinyFig.set_facecolor(vl.v2c(value, self.colors, 1))
+        self.tinyFig.set_facecolor(vl.v2c(value, self.colors, 2))
         self.tinyRenderer.draw()
 
     def onSlide(self, val):
