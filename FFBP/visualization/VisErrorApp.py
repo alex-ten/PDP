@@ -39,11 +39,9 @@ class VisErrorApp():
                                         text = '0')
         self.lastEpochLabel = ttk.Label(master = self.controlsFrame,
                                         text = str(len(data) - 1))
-
-        self.slide.set(str(len(data) - 1))
-
         self.currEpochLabel = ttk.Label(master = self.controlsFrame,
                                         text = 'epoch: {}'.format(int(self.slide.get())))
+        self.slide.set(str(len(data) - 1))
 
         self.canvasFrame.pack()
         self.mplCanvas.pack(fill = tk.BOTH, expand = True)
@@ -77,7 +75,7 @@ class VisErrorApp():
         self.vline.set_xdata(x)
 
         # Update epoch label
-        self.lastEpochLabel.config(text = 'epoch: {}'.format(x))
+        self.currEpochLabel.config(text = 'epoch: {}'.format(x))
         self.Renderer.draw()
 
     def catch_up(self, data):
