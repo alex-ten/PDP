@@ -39,18 +39,18 @@ class Network(object):
         self._vis_settings = {'ppc': 30, 'dpi': 96}
         self._global_step = tf.Variable(0, name='global_step', trainable=False)
 
-    def init_and_configure(self,
-                           loss,
-                           train_batch_size,
-                           learning_rate = 0.5,
-                           momentum = 0.9,
-                           permute = False,
-                           ecrit = 0.01,
-                           test_func = None,
-                           test_scope = 'all'):
+    def initconfig(self,
+                   loss,
+                   train_batch_size,
+                   learning_rate = 0.5,
+                   momentum = 0.9,
+                   permute = False,
+                   ecrit = 0.01,
+                   test_func = None,
+                   test_scope = 'all'):
+        self.config(loss, train_batch_size, learning_rate,
+                    momentum, permute, ecrit, test_func, wrange)
         self.init_weights()
-        self.configure(loss,train_batch_size, learning_rate,
-                       momentum, permute, ecrit, test_func, test_scope)
 
     def init_weights(self):
         # Initialize weights and biases
@@ -58,18 +58,15 @@ class Network(object):
         init_Wb_vars = tf.initialize_variables(Wb_vars)
         self.sess.run(init_Wb_vars)
 
-    def configure(self,
-                  loss,
-                  train_batch_size,
-                  learning_rate = 0.5,
-                  momentum = 0.9,
-                  permute = False,
-                  ecrit = 0.01,
-                  test_func = None,
-                  test_scope = 'all'):
-        if test_scope != 'all':
-            input('''Warning: current visualizer will not be able to show test data correctly.
-Set test_scope='all' to visualize snapshots. If you want to continue, press enter.''')
+    def config(self,
+               loss,
+               train_batch_size,
+               learning_rate = 0.5,
+               momentum = 0.9,
+               permute = False,
+               ecrit = 0.01,
+               test_func = None,
+               wrange = (-1,1)):
         self._loss = loss(self.model['labels'], self.model['network'][-1].act)
         self._opt = tf.train.MomentumOptimizer(learning_rate, momentum)
         self.settings['loss_func'] = loss
@@ -79,12 +76,12 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
         self.settings['permute'] = permute
         self.settings['ecrit'] = ecrit
         self.settings['test_func'] = test_func
-        self.settings['scope'] = test_scope
         self.settings['opt_task'] = self._opt.minimize(self._loss, global_step=self._global_step)
-        self.settings['saver'] = tf.train.Saver(max_to_keep=0)
+        self.settings['saver'] = tf.train.Saver(max_to_keep = 0)
         for l in self.model['network']:
             # When run in current session tf.gradients returns a list of numpy arrays with
             # batch_size number of rows and Layer.size number of columns.
+            l.set_wrange(wrange)
             l.ded_net = tf.gradients(self._loss, l.net)
             l.ded_act = tf.gradients(self._loss, l.act)
             l.ded_W = tf.gradients(self._loss, l.W)
@@ -93,81 +90,9 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
         self.sess.run(init)
 
     def restore(self, path, xor=True):
+        # STILL UNDER DEVELOPMENT
         # todo generalize this methods to enable restore of any set of variables
         if xor: restore_xor(path, model=self.model)
-
-    def interact(self, train_set, test_set, take_snapshots=True):
-        self._interactive = True
-        fill = len(self.name)
-        print('\n[{}] Now in interactive mode...'.format(self.name))
-        print('[{}] Input your next action:'.format(self.name))
-        print(' '*fill +' '*5+ "* # of epochs to train")
-        print(' '*fill +' '*5+ "* 't' to test")
-        print(' '*fill +' '*5+ "* 'c' to train until ecrit is reached")
-        print(' '*fill +' '*5+ "* 'q' to quit")
-        action = input('#/t/c/q -> ')
-        while not self._terminate:
-            if action == 'q':
-                self._terminate = True
-                print('[{}] Process terminated.'.format(self.name))
-                break
-            try:
-                usr_inp = int(action)
-                self._train(num_epochs = usr_inp,
-                            dataset = train_set,
-                            batch_size = self.settings['batch_size'])
-                if self._terminate:
-                    print('[{}] Would you like to test before terminating the process?'.format(self.name))
-                    action = input('y/n -> ')
-                    while not any([action=='y', action=='n']):
-                        print("[{}] Choose one of the folloing options:".format(self.name))
-                        action = input('y/n ->')
-                    if action=='y':
-                        self._test(dataset = test_set,
-                                   evalfunc = self.settings['test_func'],
-                                   snapshot = take_snapshots)
-                        self.showerr()
-                        print('[{}] Process terminated.'.format(self.name))
-                        break
-                    elif action=='n':
-                        print('[{}] Process terminated.'.format(self.name))
-                        break
-                print('[{}] Input your next action:'.format(self.name))
-                action = input('#/t/c/q -> ')
-            except ValueError:
-                if action=='t':
-                    self._test(dataset = test_set,
-                               evalfunc = self.settings['test_func'],
-                               snapshot = take_snapshots)
-                    self.showerr()
-                    print('[{}] Input your next action:'.format(self.name))
-                    action = input('#/t/c/q -> ')
-                elif action=='c':
-                    self._train(num_epochs =1000 ** 2,
-                                dataset = train_set,
-                                batch_size = self.settings['batch_size'])
-
-                else:
-                    print("[{}] Choose one of the following options:".format(self.name))
-                    action = input('#/t/c/q -> ')
-
-                if self._terminate:
-                    print('[{}] Would you like to test before terminating the process?'.format(self.name))
-                    action = input('y/n -> ')
-                    while not any([action == 'y', action == 'n']):
-                        print("[{}] Choose one of the folloing options:".format(self.name))
-                        action = input('y/n -> ')
-                    if action == 'y':
-                        self._test(dataset = test_set,
-                                   evalfunc = self.settings['test_func'],
-                                   snapshot=take_snapshots)
-                        self.showerr()
-                        print('[{}] Process terminated.'.format(self.name))
-                        break
-                    elif action == 'n':
-                        print('[{}] Process terminated.'.format(self.name))
-                        break
-        self._interactive = False
 
     def tnt(self, max_epochs, test_freq, checkpoints = False, **kwargs):
         max_epochs = self.counter + max_epochs
@@ -244,7 +169,9 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
         else:
             self._layVisApp.catch_up(snap)
 
-    def reset(self):
+    def restart(self):
+        # STILL UNDER DEVELOPMENT
+        print('[{}] Restarting network ...'.format(self.name))
         self.sess = tf.InteractiveSession()
         self.graph = tf.get_default_graph()
         self.counter = 0
@@ -252,8 +179,12 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
         self._interactive = False
         self._training = False
         self._terminate = False
+        if self._errVisApp is not None: self._errVisApp.destroy()
+        if self._layVisApp is not None: self._layVisApp.destroy()
         self._errVisApp = None
         self._layVisApp = None
+        self._global_step = tf.Variable(0, name='global_step', trainable=False)
+        print('[{}] Restarting complete.'.format(self.name))
 
     def _train(self, num_epochs, dataset, batch_size, ecrit=0.01, permute = False):
         if not self._training: self._training = True
@@ -300,11 +231,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
 
         # Evaluate test measure
         test_result = test.eval(feed_dict=test_dict)
-        if 'scope' in self.settings:
-            scope = self.settings['scope']
-        else: scope = snapshot
-        if scope == 'all':
-            scope = ['inp', 'net', 'act', 'W', 'b', 'ded_net', 'ded_act', 'ded_W', 'ded_b']
+        scope = ['inp', 'net', 'act', 'W', 'b', 'ded_net', 'ded_act', 'ded_W', 'ded_b']
 
         # Take a self-snapshot against a given input batch
         if snapshot:
@@ -404,7 +331,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
         if self._last_test == self.counter:
             return False
         else:
-            return self.settings['scope']
+            return True
 
     def off(self):
         self.sess.close()

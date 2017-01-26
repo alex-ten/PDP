@@ -38,7 +38,7 @@ net838 = Network(model838, name='net838')
 net838.train_set = trainSet
 net838.test_set = testSet
 
-net838.init_and_configure(loss = errf.squared_error, train_batch_size = 8, learning_rate = .3, momentum = .9, test_func = evalf.tss, test_scope = 'all')
+net838.initconfig(loss = errf.squared_error, train_batch_size = 8, learning_rate = .3, momentum = .9, test_func = evalf.tss, test_scope ='all')
 
 code.interact(local=locals())
 
