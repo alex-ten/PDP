@@ -73,7 +73,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
         self._loss = loss(self.model['labels'], self.model['network'][-1].act)
         self._opt = tf.train.MomentumOptimizer(learning_rate, momentum)
         self.settings['loss_func'] = loss
-        self.settings['train_batch'] = train_batch_size
+        self.settings['batch_size'] = train_batch_size
         self.settings['lrate'] = learning_rate
         self.settings['mrate'] = momentum
         self.settings['permute'] = permute
@@ -115,7 +115,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
                 usr_inp = int(action)
                 self._train(num_epochs = usr_inp,
                             dataset = train_set,
-                            batch_size = self.settings['train_batch'])
+                            batch_size = self.settings['batch_size'])
                 if self._terminate:
                     print('[{}] Would you like to test before terminating the process?'.format(self.name))
                     action = input('y/n -> ')
@@ -145,7 +145,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
                 elif action=='c':
                     self._train(num_epochs =1000 ** 2,
                                 dataset = train_set,
-                                batch_size = self.settings['train_batch'])
+                                batch_size = self.settings['batch_size'])
 
                 else:
                     print("[{}] Choose one of the following options:".format(self.name))
@@ -182,7 +182,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
                                 snapshot=self._checkLastTest(),
                                 checkpoint = checkpoints)
             print('[{}] epoch {}: {}'.format(self.name, self.counter, result))
-            self._train(test_freq, train_set, self.settings['train_batch'], ecrit=self.settings['ecrit'])
+            self._train(test_freq, train_set, self.settings['batch_size'], ecrit=self.settings['ecrit'])
             if self._terminate or self.counter == max_epochs:
                 result = self._test(test_set,
                                     evalfunc=self.settings['test_func'],
@@ -199,7 +199,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
             assert type(freq) is int, ValueError('Expected an integer, got {}'.format(type(freq)))
         self._train(num_epochs,
                     self.train_set,
-                    self.settings['train_batch'],
+                    self.settings['batch_size'],
                     self.settings['ecrit'],
                     ckpt_freq)
         if vis: self.showerr(
@@ -336,7 +336,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
             snap['epochs'] = np.append(snap['epochs'], [self.counter], axis=0)
             snap['error'] = np.append(snap['error'], [test_measure], axis=0)
             # TO-DO: FIGURE OUT AN ELEGANT WAY TO DO THE APPENDING! ================
-            snap['hyperparams'].append([self.settings['lrate'],self.settings['mrate'],self.settings['loss_func'],self.settings['train_batch'], self.settings['permute']])
+            snap['hyperparams'].append([self.settings['lrate'],self.settings['mrate'],self.settings['loss_func'],self.settings['batch_size'], self.settings['permute']])
             for l in self.model['network']:
                 vals = self.sess.run(self._fetch(l, attributes), feed_dict=batch)
                 if l.layer_type == 'output':
@@ -354,7 +354,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
                                                 'hyperparams': [[self.settings['lrate'],
                                                                 self.settings['mrate'],
                                                                 self.settings['loss_func'],
-                                                                self.settings['train_batch'],
+                                                                self.settings['batch_size'],
                                                                 self.settings['permute']]],
                                                'sess_index': self.logger.sess_index})
             for l in self.model['network']:
