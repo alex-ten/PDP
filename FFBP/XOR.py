@@ -28,15 +28,12 @@ hidden1 = Layer(input_tensor = image,
                 layer_name = 'hidden1',
                 layer_type = 'hidden',
                 stop_grad=False)
-# hidden1.init_wrange([-1,1]) # It is possible to set a different wrange for each layer.
-
 
 output =  Layer(input_tensor = hidden1.act,
                 size = 1,
                 act = actf.sigmoid,
                 layer_name = 'output',
                 layer_type = 'output')
-# output.init_wrange([-1,1]) # It is possible to set a different wrange for each layer
 
 xor_model = model([image], [hidden1, output], label)
 xor = Network(xor_model, name='XOR Network')
