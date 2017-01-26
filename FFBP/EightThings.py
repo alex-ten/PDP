@@ -23,7 +23,7 @@ representation = Layer(
     act=actf.sigmoid,
     layer_name='representation',
     layer_type='hidden')
-representation.set_wrange([-.45, .45, 1])
+representation.init_wrange([-.45, .45, 1])
 
 hidden = Layer(
     # concatenate representation.activations and relation (name properly for better visualization)
@@ -32,7 +32,7 @@ hidden = Layer(
     act=actf.sigmoid,
     layer_name='hidden',
     layer_type='hidden')
-hidden.set_wrange([-.45, .45, 1])
+hidden.init_wrange([-.45, .45, 1])
 
 attribute = Layer(
     input_tensor=hidden.act,
@@ -40,7 +40,7 @@ attribute = Layer(
     act=actf.sigmoid,
     layer_name='attribute',
     layer_type='output')
-attribute.set_wrange([-.45, .45, 1])
+attribute.init_wrange([-.45, .45, 1])
 
 eight_things = model([item, relation], [representation, hidden, attribute], labels)
 et_net = Network(eight_things, name = '8t_network')

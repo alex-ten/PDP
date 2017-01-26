@@ -27,14 +27,14 @@ hid = RecurrentLayer(input_tensor=_input,
                      layer_name = 'hidden',
                      layer_type = 'recurrent',
                      stop_grad = True)
-hid.set_orthogonal()
+hid.init_orthogonal()
 
 out = Layer(input_tensor = hid.act,
             size = data_dim,
             act = actf.sigmoid,
             layer_name = 'prediction',
             layer_type = 'output')
-out.set_wrange([-1,1])
+out.init_wrange([-1, 1])
 
 sess = tf.InteractiveSession()
 sess.run(tf.initialize_all_variables())

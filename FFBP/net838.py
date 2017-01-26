@@ -22,7 +22,7 @@ hidden = Layer(input_tensor = input_layer,
 		act = actf.sigmoid,
 		layer_name = 'hidden', 
 		layer_type = 'hidden')
-hidden.set_wrange([-1,1,1])
+hidden.init_wrange([-1, 1, 1])
 
 
 output = Layer(input_tensor = hidden.act, 
@@ -30,7 +30,7 @@ output = Layer(input_tensor = hidden.act,
 		act = actf.sigmoid,
 		layer_name = 'output', 
 		layer_type = 'output')
-output.set_wrange([-1,1,1])
+output.init_wrange([-1, 1, 1])
 
 model838 = model(input_layer, [hidden, output], targets)
 net838 = Network(model838, name='net838')
