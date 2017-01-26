@@ -126,7 +126,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
                         self._test(dataset = test_set,
                                    evalfunc = self.settings['test_func'],
                                    snapshot = take_snapshots)
-                        self.visualize_error()
+                        self.showerr()
                         print('[{}] Process terminated.'.format(self.name))
                         break
                     elif action=='n':
@@ -139,7 +139,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
                     self._test(dataset = test_set,
                                evalfunc = self.settings['test_func'],
                                snapshot = take_snapshots)
-                    self.visualize_error()
+                    self.showerr()
                     print('[{}] Input your next action:'.format(self.name))
                     action = input('#/t/c/q -> ')
                 elif action=='c':
@@ -161,7 +161,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
                         self._test(dataset = test_set,
                                    evalfunc = self.settings['test_func'],
                                    snapshot=take_snapshots)
-                        self.visualize_error()
+                        self.showerr()
                         print('[{}] Process terminated.'.format(self.name))
                         break
                     elif action == 'n':
@@ -169,7 +169,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
                         break
         self._interactive = False
 
-    def tnt(self, max_epochs, test_freq=0, checkpoints = False, **kwargs):
+    def tnt(self, max_epochs, test_freq, checkpoints = False, **kwargs):
         max_epochs = self.counter + max_epochs
         if 'train_set' in kwargs: train_set = kwargs['train_set']
         else: train_set = self.train_set
@@ -202,7 +202,7 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
                     self.settings['train_batch'],
                     self.settings['ecrit'],
                     ckpt_freq)
-        if vis: self.visualize_error(
+        if vis: self.showerr(
             str(self.settings['test_func']).split(' ')[1])
         self._interactive = False
 
@@ -213,27 +213,30 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
                    snapshot = self._checkLastTest())
         if vis:
             try:
-                self.visualize_layers()
+                self.shownet()
             except tk._tkinter.TclError:
                 self._layVisApp = None
-                self.visualize_layers()
+                self.shownet()
         self._interactive = False
 
-    def visualize_error(self, error_name = 'error'):
+    def showerr(self, error_name ='error'):
+        if self.counter == 0:
+            print('[{}] Run some training before viewing error.'.format(self.name))
+            return
         if self._errVisApp is None:
             root1 = tk.Tk()
             root1.title('FFBPlog_{}'.format(self.logger.sess_index))
             figure = plt.figure(1, facecolor='w', dpi=self._vis_settings['dpi'])
             self._errVisApp = VisErrorApp(root1,
                                           figure,
-                                          np.around(self._lossHistory,4),
+                                          self._lossHistory,
                                           'epoch',
                                           error_name,
                                           error_name)
         if self.counter > 0:
-            self._errVisApp.catch_up(np.around(self._lossHistory,4))
+            self._errVisApp.catch_up(self._lossHistory)
 
-    def visualize_layers(self):
+    def shownet(self):
         snap = NetworkData(self.logger.child_path + '/snap.pkl')
         if self._layVisApp is None:
             root2 = tk.Tk()
@@ -264,7 +267,10 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
             start = time.time()
             self._inBar(t0, t1)
             for step in range(t0, t1):
-                self._inBar(step, t1 - 1)
+                if t1 > 1:
+                    self._inBar(step, t1 - 1)
+                else:
+                    self._inBar(1, 1)
                 if permute: dataset.permute()
                 train_dict, _ = self._feed_dict(dataset, batch_size=batch_size)
                 _, loss_val = self.sess.run([self.settings['opt_task'], self._loss],
@@ -274,7 +280,6 @@ Set test_scope='all' to visualize snapshots. If you want to continue, press ente
                 self._lossHistory.append(loss_val)
 
                 if loss_val < ecrit:
-                    self._inBar(1, 1)
                     print('[{}] Reached critical loss value on epoch {}'.format(self.name, self.counter))
                     self._terminate = True
                     break
