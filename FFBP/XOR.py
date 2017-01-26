@@ -11,8 +11,8 @@ from FFBP.classes.Layer import Layer
 from FFBP.classes.Network import Network
 
 
-path_to_trainset = os.getcwd()+'/FFBP/data/f_XOR.txt'
-path_to_params = os.getcwd()+'/FFBP/data/xor_params1.ckpt'
+path_to_trainset = os.getcwd() + '/FFBP/data/f_XOR.txt'
+path_to_params = os.getcwd() + '/FFBP/data/xor_params1.ckpt'
 
 trainSet = DataSet(path_to_trainset)
 testSet = trainSet
@@ -28,7 +28,7 @@ hidden1 = Layer(input_tensor = image,
                 layer_name = 'hidden1',
                 layer_type = 'hidden',
                 stop_grad=False)
-hidden1.set_wrange([-1,1,2])
+hidden1.set_wrange([-1,1])
 
 
 output =  Layer(input_tensor = hidden1.act,
@@ -36,7 +36,7 @@ output =  Layer(input_tensor = hidden1.act,
                 act = actf.sigmoid,
                 layer_name = 'output',
                 layer_type = 'output')
-output.set_wrange([-1,1,1])
+output.set_wrange([-1,1])
 
 xor_model = model([image], [hidden1, output], label)
 xor = Network(xor_model, name='XOR Network')
@@ -46,15 +46,17 @@ xor = Network(xor_model, name='XOR Network')
 xor.train_set = trainSet
 xor.test_set = testSet
 
-
+# Change these values to explore hyperparameters
 xor.configure(loss = errf.squared_error,
               train_batch_size = 4,
-              learning_rate = 0.5,
+              learning_rate = .25,
               momentum = 0.9,
               test_func = evalf.tss,
-              test_scope = 'all')
+              permute = False,
+              ecrit = 0.01)
+
 xor.init_weights()
-xor.restore(path_to_params)
+xor.restore(path_to_params) # <-- Comment this line out for random weights
 
 code.interact(local = locals())
 
