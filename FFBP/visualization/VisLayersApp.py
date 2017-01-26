@@ -345,7 +345,7 @@ class VisLayersApp():
         rc = 'r: {} | c: {}'.format(r,c)
         self.cellCoords.config(text = rc)
         self.cellWeight.config(text = weight)
-        self.tinyFig.set_facecolor(vl.v2c(value, self.colors, 2))
+        self.tinyFig.set_facecolor(vl.v2c(value, self.colors, 4))
         self.tinyRenderer.draw()
 
     def onSlide(self, val):
@@ -400,6 +400,7 @@ class VisLayersApp():
                            latest_epoch_ind,
                            0)
         self.epochSlider.config(to = float(latest_epoch_ind))
+        self.epochSlider.set(latest_epoch_ind) # ============================
         self.figureRenderer.draw()
 
     def _get_epoch(self, slider_value):
