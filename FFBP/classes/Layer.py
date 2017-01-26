@@ -45,8 +45,9 @@ class Layer(object):
         self.actf = act
         self.stop_grad = stop_grad
         self.W = self.b = None
+        self.init_wrange()
 
-    def set_orthogonal(self, scope=1.1):
+    def init_orthogonal(self, scope=1.1):
         with tf.variable_scope(self.layer_name, reuse=False):
             self.W = tf.get_variable(name='weights',
                                      shape=[self.size, self.sender_size],
@@ -61,7 +62,7 @@ class Layer(object):
             if self.actf != None:
                 self.act = self.actf(self.net)
 
-    def set_wrange(self, wrange=0):
+    def init_wrange(self, wrange=0):
         with tf.variable_scope(self.layer_name, reuse=False, initializer = wrange_initializer(wrange)):
             self.W = tf.get_variable(name = 'weights',
                                      shape = [self.sender_size, self.size],

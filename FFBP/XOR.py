@@ -28,7 +28,7 @@ hidden1 = Layer(input_tensor = image,
                 layer_name = 'hidden1',
                 layer_type = 'hidden',
                 stop_grad=False)
-# hidden1.set_wrange([-1,1]) # It is possible to set a different wrange for each layer
+# hidden1.init_wrange([-1,1]) # It is possible to set a different wrange for each layer.
 
 
 output =  Layer(input_tensor = hidden1.act,
@@ -36,7 +36,7 @@ output =  Layer(input_tensor = hidden1.act,
                 act = actf.sigmoid,
                 layer_name = 'output',
                 layer_type = 'output')
-# output.set_wrange([-1,1]) # It is possible to set a different wrange for each layer
+# output.init_wrange([-1,1]) # It is possible to set a different wrange for each layer
 
 xor_model = model([image], [hidden1, output], label)
 xor = Network(xor_model, name='XOR Network')
@@ -54,9 +54,10 @@ xor.config(loss = errf.squared_error,
            test_func = evalf.tss,
            permute = False,
            ecrit = 0.01,
-           wrange=[-1,1])
+           wrange=[-0.5,0.5])
 
 xor.init_weights()
+
 xor.restore(path_to_params) # <-- Comment this line out for random weights
 
 

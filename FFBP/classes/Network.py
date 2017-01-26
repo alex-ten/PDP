@@ -66,7 +66,7 @@ class Network(object):
                permute = False,
                ecrit = 0.01,
                test_func = None,
-               wrange = (-1,1)):
+               wrange = 0):
         self._loss = loss(self.model['labels'], self.model['network'][-1].act)
         self._opt = tf.train.MomentumOptimizer(learning_rate, momentum)
         self.settings['loss_func'] = loss
@@ -81,7 +81,18 @@ class Network(object):
         for l in self.model['network']:
             # When run in current session tf.gradients returns a list of numpy arrays with
             # batch_size number of rows and Layer.size number of columns.
-            l.set_wrange(wrange)
+            l.W.assign(tf.random_uniform(
+                [l.sender_size, l.size],
+                minval = wrange[0],
+                maxval = wrange[1],
+                dtype = tf.float32,
+                seed = wrange[2] if len(wrange)>2 else None).eval()).eval()
+            l.b.assign(tf.random_uniform(
+                [1, l.size],
+                minval = wrange[0],
+                maxval = wrange[1],
+                dtype = tf.float32,
+                seed = wrange[2] if len(wrange)>2 else None).eval()).eval()
             l.ded_net = tf.gradients(self._loss, l.net)
             l.ded_act = tf.gradients(self._loss, l.act)
             l.ded_W = tf.gradients(self._loss, l.W)
