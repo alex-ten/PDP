@@ -28,7 +28,7 @@ hidden1 = Layer(input_tensor = image,
                 layer_name = 'hidden1',
                 layer_type = 'hidden',
                 stop_grad=False)
-hidden1.set_wrange([-1,1])
+# hidden1.set_wrange([-1,1]) # It is possible to set a different wrange for each layer
 
 
 output =  Layer(input_tensor = hidden1.act,
@@ -36,7 +36,7 @@ output =  Layer(input_tensor = hidden1.act,
                 act = actf.sigmoid,
                 layer_name = 'output',
                 layer_type = 'output')
-output.set_wrange([-1,1])
+# output.set_wrange([-1,1]) # It is possible to set a different wrange for each layer
 
 xor_model = model([image], [hidden1, output], label)
 xor = Network(xor_model, name='XOR Network')
@@ -47,24 +47,17 @@ xor.train_set = trainSet
 xor.test_set = testSet
 
 # Change these values to explore hyperparameters
-xor.configure(loss = errf.squared_error,
-              train_batch_size = 4,
-              learning_rate = .25,
-              momentum = 0.9,
-              test_func = evalf.tss,
-              permute = False,
-              ecrit = 0.01)
+xor.config(loss = errf.squared_error,
+           train_batch_size = 4,
+           learning_rate = .25,
+           momentum = 0.9,
+           test_func = evalf.tss,
+           permute = False,
+           ecrit = 0.01,
+           wrange=[-1,1])
 
 xor.init_weights()
 xor.restore(path_to_params) # <-- Comment this line out for random weights
 
-code.interact(local = locals())
 
-# def main():
-#     import code
-#
-#     xor_net.tnt(330,30,0)
-#     xor_net.test(vis=True)
-#     code.interact(local=locals())
-#
-# if __name__=="__main__":  main()
+code.interact(local = locals())
