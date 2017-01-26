@@ -52,12 +52,16 @@ class VisErrorApp():
         self.lastEpochLabel.grid(row = 1, column = 4, columnspan = 1, sticky = 'e')
         self.slide.grid(row = 1, column = 1, columnspan = 3)
 
+        # ============================== PROTOCOLS ===============================
+        self.master.protocol('WM_DELETE_WINDOW', self.onMasterX)
+
     def plotLatest(self, data):
         self.data = data
         x, y = len(data) - 1, data[-1]
+        self.lastEpochLabel.config(text = str(x))
         self.line, = self.ax.plot(data, lw = 2, color = '#3DB1FF')
         self.fann.xy = (x, y)  # set annotation xy to new values
-        self.fann.set_text('{}: {}'.format(self.note, round(y, 4)))  # change text accordingly
+        self.fann.set_text('{}: {}'.format(self.note, y))  # change text accordingly
         # change positions of straight lines
         self.hline.set_ydata(y)
         self.vline.set_xdata(x)
@@ -69,7 +73,7 @@ class VisErrorApp():
         x = int(float(self.slide.get()))
         y = self.data[x]
         self.fann.xy = (x, y) # set annotation xy to new values
-        self.fann.set_text('{}: {}'.format(self.note, round(y,4))) # change text accordingly
+        self.fann.set_text('{}: {}'.format(self.note, y)) # change text accordingly
 
         # change positions of straight lines
         self.hline.set_ydata(y)
@@ -80,11 +84,14 @@ class VisErrorApp():
         self.Renderer.draw()
 
     def catch_up(self, data):
-        self.plotLatest(data)
         self.master.state('normal')
+        self.plotLatest(data)
+
+    def onMasterX(self):
+        self._sleep()
 
     def _sleep(self):
-        self.master.state('withdrawn')
+        self.master.withdraw()
         self.master.quit()
 
 
