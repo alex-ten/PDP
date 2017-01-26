@@ -58,7 +58,7 @@ def prep_figure(data, fig):
     panel_board.set_aspect('equal')
     width = max([l.sender[1] for l in data.main.values()])
     height = data.num_units
-    panel_board.set_xlim(0, (width + 9) * 2) # set width + x-padding for figure here
+    panel_board.set_xlim(0, (width + 6) * 2 + 1) # set width + x-padding for figure here
     panel_board.set_ylim(0, height + (6 * data.num_layers)) # set padding for each panel here
     panel_board.tick_params(labelcolor=(1., 1., 1., 0.), top='off', bottom='off', left='off', right='off')
     panel_board.spines['top'].set_visible(False)
@@ -77,8 +77,9 @@ def annotate_layer(origin, ax, layer, base_font_size):
         num_attributes += 1
 
     labels = []
-    # FP (left) panel:
-    subpanel_width = sender_size + num_attributes * 2 + 2
+
+    # Grid panel
+    # Placement
     subpanel_height = layer.size + 2 + 4
 
     text_W_x = sender_size / 2 + 1
@@ -87,8 +88,10 @@ def annotate_layer(origin, ax, layer, base_font_size):
     text_a_x = sender_size + 6.5
     text_y = origin + layer.size + 4.5
     text_inp_y = origin + 1.5
+    text_dednet_x = sender_size + 11.5
+    text_deda_x = sender_size + 13.5
 
-    title_x = subpanel_width
+    title_x = text_W_x
     title_y = origin + subpanel_height - 0.5
 
     labels.append(ax.text(title_x, title_y, r'${}$'.format(layer.name), ha='center', va='center', fontsize=base_font_size+base_font_size*0.5))
@@ -100,17 +103,8 @@ def annotate_layer(origin, ax, layer, base_font_size):
     labels.append(ax.text(1, text_inp_y, r'${}$'.format(sender_name), ha='left', va='top', fontsize=base_font_size-base_font_size*0.1))
     if targ:
         labels.append(ax.text(sender_size + 8.5, text_y, r'$t$', ha='center', fontsize=base_font_size))
-
-    # BP (right) panel:
-    text_W_x += subpanel_width
-    text_b_x += subpanel_width
-    text_net_x += subpanel_width
-    text_a_x += subpanel_width
-
-    labels.append(ax.text(text_W_x, text_y, r'$\frac{\partial E}{\partial w}$', ha='center', fontsize=base_font_size+base_font_size*0.2))
-    labels.append(ax.text(text_b_x, text_y, r'$\frac{\partial E}{\partial b}$', ha='center', fontsize=base_font_size+base_font_size*0.2))
-    labels.append(ax.text(text_net_x, text_y, r'$\frac{\partial E}{\partial net}$', ha='center', fontsize=base_font_size+base_font_size*0.2))
-    labels.append(ax.text(text_a_x, text_y, r'$\frac{\partial E}{\partial a}$', ha='center', fontsize=base_font_size+base_font_size*0.2))
+    labels.append(ax.text(text_dednet_x, text_y, r'$\frac{\partial E}{\partial net}$', ha='center', fontsize=base_font_size+base_font_size*0.2))
+    labels.append(ax.text(text_deda_x, text_y, r'$\frac{\partial E}{\partial a}$', ha='center', fontsize=base_font_size+base_font_size*0.2))
 
     origin += subpanel_height
 
@@ -140,10 +134,9 @@ def layer_image(origin, ax, layer, epoch, pattern, colmap, nrange):
         targ = True
         num_attributes += 1
 
-    subpanel_width = sender_size + num_attributes * 2 + 2
     subpanel_height = layer.size + 2 + 4
 
-    # FP (left) panel
+    # Grid panel
     # Placement
     grid_W_x = 1
     grid_b_x = sender_size + 2
@@ -151,6 +144,8 @@ def layer_image(origin, ax, layer, epoch, pattern, colmap, nrange):
     grid_a_x = sender_size + 6
     grid_l_y = origin + 4
     grid_inp_y = origin + 2
+    grid_dednet_x = sender_size + 11
+    grid_deda_x = sender_size + 13
 
     # Drawing
     cgrid(grid_W_x, grid_l_y, ax, layer.W[epoch].T, colmap, nrange)
@@ -162,24 +157,14 @@ def layer_image(origin, ax, layer, epoch, pattern, colmap, nrange):
     if targ:
         cgrid(sender_size + 8, grid_l_y, ax, np.reshape(layer.t[epoch][pattern], (layer.size, 1)), colmap, nrange, t=True)
 
-    # BP (right) panel
-    # Placement
-    grid_W_x += subpanel_width
-    grid_b_x += subpanel_width
-    grid_net_x += subpanel_width
-    grid_a_x += subpanel_width
-
-    # Drawing
-    cgrid(grid_W_x, grid_l_y, ax, layer.ded_W[epoch].T, colmap, nrange)
-    cgrid(grid_b_x, grid_l_y, ax, np.reshape(layer.ded_b[epoch], (layer.size, 1)), colmap, nrange)
-    cgrid(grid_net_x, grid_l_y, ax, np.reshape(layer.ded_net[epoch][pattern], (layer.size, 1)), colmap, nrange)
-    cgrid(grid_a_x, grid_l_y, ax, np.reshape(layer.ded_act[epoch][pattern], (layer.size, 1)), colmap, nrange)
+    cgrid(grid_dednet_x, grid_l_y, ax, np.reshape(layer.ded_net[epoch][pattern], (layer.size, 1)), colmap, nrange)
+    cgrid(grid_deda_x, grid_l_y, ax, np.reshape(layer.ded_act[epoch][pattern], (layer.size, 1)), colmap, nrange)
 
     origin += subpanel_height
 
     return origin
 
-def draw_all_layers(snap, ax, epoch, pattern, colmap='coolwarm', nrange=2):
+def draw_all_layers(snap, ax, epoch, pattern, colmap='coolwarm', nrange=4):
     origin = 0
     for l in snap.main.values():
         origin = layer_image(origin, ax, l, epoch, pattern, colmap, nrange)
