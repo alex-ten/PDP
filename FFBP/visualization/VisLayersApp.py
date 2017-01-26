@@ -436,6 +436,11 @@ class VisLayersApp():
     def _set_bfs(self, scale = 0.4):
         return self._ppc * scale
 
+    def destroy(self):
+        self.master.withdraw()
+        self.master.quit()
+        self.master.destroy()
+
 
 def main():
 

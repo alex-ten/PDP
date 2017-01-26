@@ -94,6 +94,11 @@ class VisErrorApp():
         self.master.withdraw()
         self.master.quit()
 
+    def destroy(self):
+        self.master.withdraw()
+        self.master.quit()
+        self.master.destroy()
+
 
 def main():
     from FFBP.visualization.NetworkData import NetworkData
