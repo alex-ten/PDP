@@ -10,10 +10,11 @@ from FFBP.visualization.NetworkData import NetworkData
 
 class VisLayersApp():
     def __init__(self, master, snap, ppc = 20, dpi = 96, colors='coolwarm'):
-        title = 'FFBPlog_{}'.format(snap.sess_index)
-        print('[FFBP Viewer] Initializing viewer for {} ...'.format(title))
+        self.title = 'FFBPlog_{}'.format(snap.sess_index)
+        print('[FFBP Viewer] Initializing viewer for {} ...'.format(self.title))
         self.master = master
-        self.master.title(title)
+        self.master.title(self.title)
+        self.title_ast = '*** FFBPlog_{} ***'.format(snap.sess_index)
         # =========================== Figure preparation ===========================
         self.colors = colors
         self._ppc = ppc
@@ -110,7 +111,9 @@ class VisLayersApp():
         # Selectors:
         self.patternSelector = ttk.Combobox(self.widgetFrame,
                                             textvariable = self.patternVar,
-                                            values = list(snap.inp_names.keys()))
+                                            values = list(snap.inp_names.keys()),
+                                            )
+        self.patternSelector.bind('<<ComboboxSelected>>', self.onCombo)
         self.patternSelector.current(0)
 
         self.epochSlider = ttk.Scale(self.widgetFrame,
@@ -120,7 +123,8 @@ class VisLayersApp():
                                      from_ = 0,
                                      to =len(snap.epochs) - 1)
 
-        self.epochSlider.set(str(len(snap.epochs) - 1))
+        self.epochSlider.set(str(len(snap.epochs) - 1)) # Set the slider value after epochValLabel is created
+
 
         # Buttons:
         self.updateButton = ttk.Button(self.widgetFrame,
@@ -137,10 +141,12 @@ class VisLayersApp():
 
         # Labels:
         #   epoch info
-        self.epochValLabel = ttk.Label(self.epochSubFrame,
-                                       text = str(self._get_epoch(int(self.epochSlider.get()))),
-                                       font = ('Menlo', 30),
-                                       justify = tk.CENTER)
+        self.epochValLabel = tk.Label(self.epochSubFrame,
+                                      text = str(self._get_epoch(int(self.epochSlider.get()))),
+                                      fg = 'black',
+                                      font = ('Menlo', 30),
+                                      justify = tk.CENTER)
+
         self.epochSlider.config(command = self.onSlide)
 
         self.epochLabel = ttk.Label(self.epochSubFrame,
@@ -269,6 +275,7 @@ class VisLayersApp():
         self.master.lift()
         self.master.minsize(460, 125)
         self.master.maxsize(self.master.winfo_width(), self.master.winfo_height())
+        self._hang(0)
 
     def create_fig(self):
         # Create a figure
@@ -294,6 +301,7 @@ class VisLayersApp():
             vl.draw_all_layers(self.snap, self.panelBoard, epoch_ind, pattern_ind, colmap=self.colors)
             self._label_groups = vl.annotate(self.snap, self.panelBoard, self._set_bfs())
             self.figureRenderer.draw()
+            self._hang(0)
         else:
             messagebox.showinfo(title='Wrong selection',
                                 message='No such pattern. Please select a pattern from the list')
@@ -337,6 +345,9 @@ class VisLayersApp():
             if self.zoomoutButton.instate(['disabled']): self.zoomoutButton.state(['!disabled'])
             if self.zoominButton.instate(['disabled']): self.zoominButton.state(['!disabled'])
 
+    def onCombo(self, val):
+        self._hang(1)
+
     def onPick(self, event):
         thiscell = event.artist
         value = thiscell.get_cellval()
@@ -351,10 +362,10 @@ class VisLayersApp():
     def onSlide(self, val):
         val = float(val)
         self.epochValLabel.config(text = str(self._get_epoch(val)))
+        self._hang(1)
         hp = self.snap.hyperparams[int(val)]
         self.hpLabel.config(text = 'lrate: {}\nmrate: {}\nerror function: {}\nbatch size: {}\ntrain mode: {}'.format(
             hp[0], hp[1], '{}'.format(hp[2]).split()[1], hp[3], 'p-train' if hp[4] else 's-train'),)
-
 
     def onApply(self):
         print('Applying changes')
@@ -385,8 +396,17 @@ class VisLayersApp():
     def catch_up(self, snap):
         self.snap = snap
         self._plotLatest()
+        self._hang(0)
         self.master.state('normal')
         self.master.lift()
+
+    def _hang(self, b):
+        if b:
+            self.epochValLabel.config(fg='#ABABAB')
+            self.master.title(self.title_ast)
+        else:
+            self.epochValLabel.config(fg='black')
+            self.master.title(self.title)
 
     def _sleep(self):
         self.master.withdraw()
@@ -400,7 +420,7 @@ class VisLayersApp():
                            latest_epoch_ind,
                            0)
         self.epochSlider.config(to = float(latest_epoch_ind))
-        self.epochSlider.set(latest_epoch_ind) # ============================
+        self.epochSlider.set(latest_epoch_ind)
         self.figureRenderer.draw()
 
     def _get_epoch(self, slider_value):
