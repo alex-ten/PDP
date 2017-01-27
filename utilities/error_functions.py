@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 
 def clipped(x):
     # this handles cases when y * tf.log(y') outputs NaN
