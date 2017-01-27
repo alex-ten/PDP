@@ -5,8 +5,8 @@ from matplotlib.widgets import Slider, Button
 def fancy_annotation(ax, x, y, note, l_color='black', l_width=0.8, l_style=':'):
 
 # Orthogonal lines at last values of x and y
-    hor = plt.axhline(y, c=l_color, lw=l_width, ls=l_style) # add horizontal line
-    ver = plt.axvline(x, c=l_color, lw=l_width, ls=l_style) # add vertical line
+    hor = plt.axhline(y, c=l_color, lw=l_width, ls=l_style, zorder=10) # add horizontal line
+    ver = plt.axvline(x, c=l_color, lw=l_width, ls=l_style, zorder=10) # add vertical line
 
     # Annotate the last point (x, y)
     ann = ax.annotate('{}: {}'.format(note, np.around(y,4)),  # annotation string

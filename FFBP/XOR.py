@@ -15,7 +15,7 @@ path_to_trainset = os.getcwd() + '/FFBP/data/f_XOR.txt'
 path_to_params = os.getcwd() + '/FFBP/data/xor_params1.ckpt'
 
 trainSet = DataSet(path_to_trainset)
-testSet = trainSet
+testSet = DataSet(path_to_trainset)
 
 # ----------------------------- BUILD -----------------------------
 
@@ -45,7 +45,7 @@ xor.test_set = testSet
 
 # Change these values to explore hyperparameters
 xor.config(loss = errf.squared_error,
-           train_batch_size = 4,
+           train_batch_size = 1,
            learning_rate = .25,
            momentum = 0.9,
            test_func = evalf.tss,
@@ -56,6 +56,8 @@ xor.config(loss = errf.squared_error,
 xor.init_weights()
 
 xor.restore(path_to_params) # <-- Comment this line out for random weights
+
+xor.tnt(30000,20)
 
 
 code.interact(local = locals())

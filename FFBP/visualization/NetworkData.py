@@ -42,6 +42,7 @@ def main():
     print(data.epochs)
     print(data.error)
     print(data.inp_names)
+    print(data.inp_vects)
     print(data.hyperparams)
     # data.stdout()
 
