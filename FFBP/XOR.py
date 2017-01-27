@@ -57,7 +57,4 @@ xor.init_weights()
 
 xor.restore(path_to_params) # <-- Comment this line out for random weights
 
-xor.tnt(30000,20)
-
-
 code.interact(local = locals())
