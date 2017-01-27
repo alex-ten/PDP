@@ -209,19 +209,24 @@ class Network(object):
             start = time.time()
             self._inBar(t0, t1)
             for step in range(t0, t1):
+                if permute: dataset.permute()
                 if t1 > 1:
                     self._inBar(step, t1 - 1)
                 else:
                     self._inBar(1, 1)
-                if permute: dataset.permute()
-                train_dict, _ = self._feed_dict(dataset, batch_size=batch_size)
-                _, loss_val = self.sess.run([self.settings['opt_task'], self._loss],
-                                            feed_dict=train_dict)
+
+                epoch_loss = 0
+                for j in range(int(dataset._num_examples/batch_size)):
+                    train_dict, _ = self._feed_dict(dataset, batch_size=batch_size)
+                    _, loss_val = self.sess.run([self.settings['opt_task'], self._loss],
+                                                feed_dict=train_dict)
+                    epoch_loss += loss_val
 
                 # Collect stats (note that loss is measured before the gradients are applied):
-                self._lossHistory.append(loss_val)
+                self._lossHistory.append(epoch_loss)
 
-                if loss_val < ecrit:
+                if epoch_loss < ecrit:
+                    self._inBar(1, 1)
                     print('[{}] Reached critical loss value on epoch {}'.format(self.name, self.counter))
                     self._terminate = True
                     break
@@ -236,7 +241,7 @@ class Network(object):
                 self.counter += 1
 
     def _test(self, dataset, evalfunc, snapshot=False, checkpoint=False):
-        test_dict, inp_vects = self._feed_dict(dataset, batch_size=self.settings['batch_size'])
+        test_dict, inp_vects = self._feed_dict(dataset)
         inp_names = dataset.names
         test = evalfunc(self.model['labels'], self.model['network'][-1].act)
 

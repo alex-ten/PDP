@@ -1,5 +1,6 @@
 # CPR
 import numpy as np
+import code
 from collections import OrderedDict
 
 class DataSet(object):
@@ -69,7 +70,21 @@ class DataSet(object):
         return imgs_np_array, lbls_np_array, names
 
 def main():
-    x = DataSet('../exercises/ex_EightThings/f_EightThings.txt')
+    x = DataSet('/Users/alexten/Projects/PDP/FFBP/data/f_XOR.txt')
     for k,v in x.names.items(): print(k,v)
+
+    num_epochs = 5
+    num_patterns = 4
+    batch_size = 2
+    permute = True
+
+    for i in range(num_epochs):
+        if permute:
+            x.permute()
+        print('\nThis is epoch {}'.format(i))
+        for j in range(int(num_patterns/batch_size)):
+            print('  - minibatch {}:'.format(j))
+            print(x.next_batch(batch_size)[0])
+
 
 if __name__=='__main__': main()
