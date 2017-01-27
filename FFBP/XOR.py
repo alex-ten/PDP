@@ -45,7 +45,7 @@ xor.test_set = testSet
 
 # Change these values to explore hyperparameters
 xor.config(loss = errf.squared_error,
-           train_batch_size = 1,
+           train_batch_size = 4,
            learning_rate = .25,
            momentum = 0.9,
            test_func = evalf.tss,
