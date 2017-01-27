@@ -288,7 +288,7 @@ class VisLayersApp():
         height_cells = network_size + (6 * self.snap.num_layers)
         height_pixels = height_cells * self._ppc
         height_inches = height_pixels / self._dpi
-        fig = plt.figure(2, figsize=(width_inches, height_inches), facecolor='w', dpi=self._dpi)
+        fig = plt.figure(self.snap.sess_index, figsize=(width_inches, height_inches), facecolor='w', dpi=self._dpi)
         return fig
 
     def onUpdate(self):
@@ -327,11 +327,15 @@ class VisLayersApp():
         self.figure.canvas.draw()
         self.figWidth = int(nW)
         self.figHeight = int(nH)
+
         # Adjust master window size to figure size, so that regions outside figure are always hidden
         if direction < 0 and self.figWidth < self.master.winfo_width():
-            self.master.geometry('{}x{}+0+0'.format(
+            xx,yy = self.master.winfo_x(), self.master.winfo_y()
+            self.master.geometry('{}x{}+{}+{}'.format(
                 min(self.figWidth, self.maxWindWidth) + 20,
-                min(self.figHeight + 125, self.maxWindHeight)))
+                min(self.figHeight + 125, self.maxWindHeight),
+                xx,
+                yy))
         self.master.maxsize(min(self.figWidth, self.maxWindWidth) + 20, min(self.figHeight + 125, self.maxWindHeight))
 
     def checkPPC(self):
