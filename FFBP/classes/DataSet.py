@@ -40,14 +40,17 @@ class DataSet(object):
         inds, = np.where(np.all(self.images == p, axis=1))
         bucket = []
         for i in inds:
-            bucket.append(self.names[i])
+            bucket.append(list(self.names.keys())[i])
         if len(bucket) > 1:
             return bucket
         else:
-            return bucket[0]
+            try:
+                return bucket[0]
+            except IndexError:
+                ValueError('Item is not in the set')
 
     def get_img(self, s):
-        return self.images[self.names.index(s)]
+        return self.images[list(self.names.keys()).index(s)]
 
     def split_set(self,train,valid,test):
         pass
