@@ -2,7 +2,7 @@ import os
 
 class LayerLog(object):
     def __init__(self, layer):
-        self.name = layer.layer_name
+        self.name = layer.name
         self.size = int(layer.size)
         self.sender = (layer.sender_name,layer.sender_size)
         self.inp = []

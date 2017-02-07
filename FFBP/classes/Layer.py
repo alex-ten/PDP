@@ -33,22 +33,28 @@ def wrange_initializer(wrange):
 
 
 class Layer(object):
-    def __init__(self, input_tensor, size, act, layer_name, layer_type='nd', bias=True, bias_val=None, stop_grad=False):
-        self.inp = input_tensor
-        self.sender_size = int(input_tensor.get_shape()[1])
-        self.sender_name = extract_name(input_tensor.name)
+    # TODO: bias parameter should work for all initialization methods
+    def __init__(self, input, size, act, layer_name, layer_type='nd', bias=True, bias_val=None, stop_grad=False):
+        self.inp = input
+        if type(self.inp) is list:
+            self.sender_name = '/'.join([extract_name(l.name) for l in self.inp])
+            self.inp = tf.concat(1, [self.get_tensor(l) for l in self.inp],
+                                 name=self.sender_name)
+            self.sender_size = int(self.inp.get_shape()[1])
+        else:
+            self.sender_size = self.get_inp_info(self.inp)[0]
+            self.sender_name = self.get_inp_info(self.inp)[1]
         self.size = size
-        self.layer_name = layer_name
+        self.name = layer_name
         self.layer_type = layer_type
         self.bias_on = bias
         self.bias_val = bias_val
         self.actf = act
         self.stop_grad = stop_grad
         self.W = self.b = None
-        self.init_wrange()
 
     def init_orthogonal(self, scope=1.1):
-        with tf.variable_scope(self.layer_name, reuse=False):
+        with tf.variable_scope(self.name, reuse=False):
             self.W = tf.get_variable(name='weights',
                                      shape=[self.size, self.sender_size],
                                      dtype=tf.float32,
@@ -62,8 +68,8 @@ class Layer(object):
             if self.actf != None:
                 self.act = self.actf(self.net)
 
-    def init_wrange(self, wrange=0):
-        with tf.variable_scope(self.layer_name, reuse=False, initializer = wrange_initializer(wrange)):
+    def init_custom(self, initializer):
+        with tf.variable_scope(self.name, reuse=False, initializer=initializer):
             self.W = tf.get_variable(name = 'weights',
                                      shape = [self.sender_size, self.size],
                                      dtype = tf.float32)
@@ -71,10 +77,44 @@ class Layer(object):
                                      shape = [1, self.size],
                                      dtype = tf.float32)
         with tf.name_scope('net'):
-            self.net = tf.matmul(self.inp, self.W) + self.b
+            self.net = tf.matmul(self.get_tensor(self.inp), self.W) + self.b
             if self.stop_grad: self.net = tf.stop_gradient(self.net)
         with tf.name_scope('act'):
             self.act = self.actf(self.net)
+
+    def init_wrange(self, wrange):
+        self.init_custom(wrange_initializer(wrange))
+
+    def assign_weights(self, wrange):
+        # Assigns new values to already initialized weights. Non-initialized weights will be overwritten by
+        # variable initialization
+        with tf.get_default_session().as_default():
+            w = tf.random_uniform(
+                [self.sender_size, self.size],
+                minval=wrange[0],
+                maxval=wrange[1],
+                dtype=tf.float32,
+                seed=wrange[2] if len(wrange) > 2 else None).eval()
+            b = tf.random_uniform(
+                [1, self.size],
+                minval=wrange[0],
+                maxval=wrange[1],
+                dtype=tf.float32,
+                seed=wrange[2] if len(wrange) > 2 else None).eval()
+            self.W.assign(w).eval()
+            self.b.assign(b).eval()
+
+    def get_inp_info(self, obj):
+        if type(obj) is tf.Tensor:
+            return int(obj.get_shape()[1]), extract_name(obj.name)
+        else:
+            return obj.size, obj.name
+
+    def get_tensor(self, obj):
+        if type(obj) is tf.Tensor:
+            return obj
+        else:
+            return obj.act
 
     def __str__(self):
         return '<Layer object>'

@@ -18,7 +18,7 @@ relation = tf.placeholder(tf.float32, shape=[None,4], name='relation')
 labels = tf.placeholder(tf.float32, shape=[None,36], name='labels')
 
 representation = Layer(
-    input_tensor=item,
+    input=item,
     size=8,
     act=actf.sigmoid,
     layer_name='representation',
@@ -26,8 +26,7 @@ representation = Layer(
 representation.init_wrange([-.45, .45, 1])
 
 hidden = Layer(
-    # concatenate representation.activations and relation (name properly for better visualization)
-    input_tensor=tf.concat(1,[representation.act, relation], name='representation/relation'),
+    input = [representation, relation],
     size=12,
     act=actf.sigmoid,
     layer_name='hidden',
@@ -35,7 +34,7 @@ hidden = Layer(
 hidden.init_wrange([-.45, .45, 1])
 
 attribute = Layer(
-    input_tensor=hidden.act,
+    input=hidden,
     size=36,
     act=actf.sigmoid,
     layer_name='attribute',
@@ -54,11 +53,10 @@ et_net.config(train_batch_size = 32,
               permute = True,
               ecrit = 2.5,
               loss = errf.squared_error,
-              test_func = evalf.tss,
-              test_scope='all',
+              test_func = evalf.tss
               )
 et_net.init_weights()
-
+# et_net.test(vis=True)
 code.interact(local=locals())
 
 # ------------------------------- RUN ------------------------------

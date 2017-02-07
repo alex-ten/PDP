@@ -155,7 +155,7 @@ class VisLayersApp():
                                     justify = tk.CENTER)
 
         #   draw cell onto tiny canvas
-        self.tinyFig = plt.figure(3, figsize=(40 / 96, 40 / 96), facecolor='white')
+        self.tinyFig = plt.figure(self.snap.sess_index+100, figsize=(40 / 96, 40 / 96), facecolor='white')
         self.tinyRenderer = FigureCanvasTkAgg(self.tinyFig, self.tinySub)
         self.tinyCanvas = self.tinyRenderer.get_tk_widget()
         self.tinyRenderer.draw()
@@ -371,14 +371,14 @@ class VisLayersApp():
         self.hpLabel.config(text = 'lrate: {}\nmrate: {}\nerror function: {}\nbatch size: {}\ntrain mode: {}'.format(
             hp[0], hp[1], '{}'.format(hp[2]).split()[1], hp[3], 'p-train' if hp[4] else 's-train'))
 
-        # find inputs that were presented on the give epoch and update the combobox
-        pattern_list = []
-        for k,v in self.snap.inp_names.items():
-            for r in self.snap.inp_vects[int(val)]:
-                if np.all(np.array(v)==r):
-                    pattern_list.append(k)
-        self.patternSelector['values'] = pattern_list
-        self.patternSelector.current(0)
+        # # find inputs that were presented on the given epoch and update the combobox
+        # pattern_list = []
+        # for k,v in self.snap.inp_names.items():
+        #     for r in self.snap.inp_vects[int(val)]:
+        #         if np.all(np.array(v)==r):
+        #             pattern_list.append(k)
+        # self.patternSelector['values'] = pattern_list
+        # self.patternSelector.current(0)
 
     def onApply(self):
         print('Applying changes')

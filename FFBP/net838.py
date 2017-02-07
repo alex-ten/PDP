@@ -1,50 +1,56 @@
-import code
+# ----------------------------- PRELIMINARIES -----------------------------
+
+
 import os
+import code
+import tensorflow as tf
 import utilities.activation_functions as actf
 import utilities.evaluation_functions as evalf
-import tensorflow as tf
-from utilities.model import model
-
 import utilities.error_functions as errf
+from utilities.model import model
 from FFBP.classes.DataSet import DataSet
 from FFBP.classes.Layer import Layer
 from FFBP.classes.Network import Network
 
-path_to_trainset = os.getcwd()+'/FFBP/data/f_net838.txt'
-trainSet = DataSet(path_to_trainset)
+path = os.getcwd()+'/FFBP/data/f_net838.txt'
+trainSet = DataSet(path)
 testSet = trainSet
+
+# ----------------------------- CONSTRUCTION -------------------------------
 
 input_layer = tf.placeholder(tf.float32, shape=[None,8], name='input')
 targets = tf.placeholder(tf.float32, shape=[None,8], name='target')
 
-hidden = Layer(input_tensor = input_layer,
+hid = Layer(input = input_layer,
 	 	size = 3,
 		act = actf.sigmoid,
 		layer_name = 'hidden', 
 		layer_type = 'hidden')
-hidden.init_wrange([-1, 1, 1])
+hid.init_wrange([-1,1,1])
 
-
-output = Layer(input_tensor = hidden.act, 
+output = Layer(input = hid,
 		size = 8, 
 		act = actf.sigmoid,
 		layer_name = 'output', 
 		layer_type = 'output')
-output.init_wrange([-1, 1, 1])
+output.init_wrange([-1,1,2])
 
-model838 = model(input_layer, [hidden, output], targets)
+
+model838 = model(input_layer, [hid, output], targets)
 net838 = Network(model838, name='net838')
 
 net838.train_set = trainSet
 net838.test_set = testSet
 
-net838.initconfig(loss = errf.squared_error, train_batch_size = 8, learning_rate = .3, momentum = .9, test_func = evalf.tss, test_scope ='all')
+net838.initconfig(loss = errf.squared_error,
+				  train_batch_size = 8,
+				  learning_rate = .2,
+				  momentum = .9,
+				  permute = False,
+				  ecrit = 0.01,
+				  test_func = evalf.tss)
+
+
+# --------------------------------- RUN -----------------------------------
 
 code.interact(local=locals())
-
-# def main():
-#
-# 	net838.tnt(500,50,0)
-# 	net838.test(vis=True)
-#
-# if __name__=='__main__': main()

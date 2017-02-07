@@ -8,6 +8,7 @@ import numpy as np
 import tensorflow as tf
 
 from FFBP.classes.Logger import Logger, LayerLog
+from FFBP.classes.Layer import Layer
 from FFBP.visualization.NetworkData import NetworkData
 from FFBP.visualization.VisErrorApp import VisErrorApp
 from FFBP.visualization.VisLayersApp import VisLayersApp
@@ -47,15 +48,19 @@ class Network(object):
                    permute = False,
                    ecrit = 0.01,
                    test_func = None,
-                   test_scope = 'all'):
+                   wrange = None):
+        self.init_weights()
         self.config(loss, train_batch_size, learning_rate,
                     momentum, permute, ecrit, test_func, wrange)
-        self.init_weights()
 
     def init_weights(self):
         # Initialize weights and biases
+        # This method must be called BEFORE config
+        for l in self.model['network']:
+            if l.W is None and l.b is None:
+                l.init_wrange([-1,1])
         Wb_vars = self.graph.get_collection('Wb')
-        init_Wb_vars = tf.initialize_variables(Wb_vars)
+        init_Wb_vars = tf.variables_initializer(Wb_vars)
         self.sess.run(init_Wb_vars)
 
     def config(self,
@@ -66,7 +71,7 @@ class Network(object):
                permute = False,
                ecrit = 0.01,
                test_func = None,
-               wrange = 0):
+               wrange = None):
         self._loss = loss(self.model['labels'], self.model['network'][-1].act)
         self._opt = tf.train.MomentumOptimizer(learning_rate, momentum)
         self.settings['loss_func'] = loss
@@ -78,30 +83,23 @@ class Network(object):
         self.settings['test_func'] = test_func
         self.settings['opt_task'] = self._opt.minimize(self._loss, global_step=self._global_step)
         self.settings['saver'] = tf.train.Saver(max_to_keep = 0)
+
         for l in self.model['network']:
             # When run in current session tf.gradients returns a list of numpy arrays with
             # batch_size number of rows and Layer.size number of columns.
-            l.W.assign(tf.random_uniform(
-                [l.sender_size, l.size],
-                minval = wrange[0],
-                maxval = wrange[1],
-                dtype = tf.float32,
-                seed = wrange[2] if len(wrange)>2 else None).eval()).eval()
-            l.b.assign(tf.random_uniform(
-                [1, l.size],
-                minval = wrange[0],
-                maxval = wrange[1],
-                dtype = tf.float32,
-                seed = wrange[2] if len(wrange)>2 else None).eval()).eval()
+            if wrange is not None:
+                with self.sess.as_default():
+                    l.assign_weights(wrange)
             l.ded_net = tf.gradients(self._loss, l.net)
             l.ded_act = tf.gradients(self._loss, l.act)
             l.ded_W = tf.gradients(self._loss, l.W)
             l.ded_b = tf.gradients(self._loss, l.b)
+
         init = init_rest()
         self.sess.run(init)
 
     def restore(self, path, xor=True):
-        # STILL UNDER DEVELOPMENT
+        # NOT FINISHED
         # todo generalize this methods to enable restore of any set of variables
         if xor: restore_xor(path, model=self.model)
 
@@ -286,7 +284,7 @@ class Network(object):
                     t = ['t']
                     vals.append(batch[self.model['labels']])
                 state = zip(attributes + t, vals)
-                snap[l.layer_name].append(state)
+                snap[l.name].append(state)
             pickle.dump(snap, open(self.logger.child_path + '/snap.pkl', 'wb'))
         except FileNotFoundError:
             new_snap = collections.OrderedDict({'epochs': np.array([self.counter], dtype=int),
@@ -308,7 +306,7 @@ class Network(object):
                     vals.append(batch[self.model['labels']])
                 state = zip(attributes + t, vals)
                 log.append(state)
-                new_snap[l.layer_name] = log
+                new_snap[l.name] = log
             pickle.dump(new_snap, open(self.logger.child_path + '/snap.pkl', 'wb'))
 
     def _feed_dict(self, dataset, **kwargs):
@@ -333,7 +331,8 @@ class Network(object):
         # Takes a layer object and returns a list of requested attributes
         basket = []
         for attribute in scope:
-            basket.append(getattr(layer, attribute))
+            fetch = getattr(layer, attribute)
+            basket.append(fetch.act if type(fetch) is Layer else fetch)
         return basket
 
     def _inBar(self, i, l):

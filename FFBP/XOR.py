@@ -22,14 +22,13 @@ testSet = DataSet(path_to_trainset)
 image = tf.placeholder(tf.float32, shape=[None,2], name='input')
 label = tf.placeholder(tf.float32, shape=[None,1], name='target')
 
-hidden1 = Layer(input_tensor = image,
+hidden1 = Layer(input = image,
                 size = 2,
                 act = actf.sigmoid,
                 layer_name = 'hidden1',
-                layer_type = 'hidden',
-                stop_grad=False)
+                layer_type = 'hidden')
 
-output =  Layer(input_tensor = hidden1.act,
+output =  Layer(input = hidden1,
                 size = 1,
                 act = actf.sigmoid,
                 layer_name = 'output',
@@ -42,6 +41,7 @@ xor = Network(xor_model, name='XOR Network')
 
 xor.train_set = trainSet
 xor.test_set = testSet
+xor.init_weights()
 
 # Change these values to explore hyperparameters
 xor.config(loss = errf.squared_error,
@@ -53,8 +53,9 @@ xor.config(loss = errf.squared_error,
            ecrit = 0.01,
            wrange=[-0.5,0.5])
 
-xor.init_weights()
-
 xor.restore(path_to_params) # <-- Comment this line out for random weights
+
+xor.tnt(3000,30)
+xor.test(True)
 
 code.interact(local = locals())

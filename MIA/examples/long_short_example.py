@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import style
 from matplotlib.widgets import Slider, Button
-from MIA.Bayes_examples.dynamic_annotation import fancy_annotation
+from MIA.examples.dynamic_annotation import fancy_annotation
 style.use('ggplot')
 
 def infer(prior, likelihood_A, likelihood_B):

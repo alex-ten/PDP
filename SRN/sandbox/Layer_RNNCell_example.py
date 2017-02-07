@@ -34,7 +34,7 @@ out = Layer(input_tensor = hid.act,
             act = actf.sigmoid,
             layer_name = 'prediction',
             layer_type = 'output')
-out.init_wrange([-1, 1])
+out.init_weights([-1, 1])
 
 sess = tf.InteractiveSession()
 sess.run(tf.initialize_all_variables())
