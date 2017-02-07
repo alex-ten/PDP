@@ -1,3 +1,5 @@
+# model from https://arxiv.org/pdf/1411.2738.pdf
+
 import os
 import code
 import tensorflow as tf
@@ -9,7 +11,6 @@ import utilities.error_functions as errf
 from FFBP.classes.DataSet import DataSet
 from FFBP.classes.Layer import Layer
 from FFBP.classes.Network import Network
-
 
 path_to_trainset = os.getcwd() + '/FFBP/data/embeddings_data.txt'
 
