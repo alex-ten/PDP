@@ -55,7 +55,5 @@ xor.config(loss = errf.squared_error,
 
 xor.restore(path_to_params) # <-- Comment this line out for random weights
 
-xor.tnt(3000,30)
-xor.test(True)
 
 code.interact(local = locals())

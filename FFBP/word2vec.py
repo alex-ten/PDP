@@ -45,11 +45,11 @@ w2v.test_set = testSet
 w2v.init_weights()
 
 # Change these values to explore hyperparameters
-w2v.config(loss = errf.cross_entropy,
+w2v.config(loss = errf.squared_error,
            train_batch_size = 12,
            learning_rate = .02,
            momentum = 0,
-           test_func = evalf.tce,
+           test_func = evalf.tss,
            permute = False,
            ecrit = 0.01)
 

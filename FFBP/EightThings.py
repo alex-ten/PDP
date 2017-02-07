@@ -47,22 +47,16 @@ et_net = Network(eight_things, name = '8t_network')
 # ----------------------------- SETUP -----------------------------
 et_net.train_set = ET
 et_net.test_set = ET
+
+et_net.init_weights()
 et_net.config(train_batch_size = 32,
               learning_rate = 0.1,
               momentum = 0,
               permute = True,
               ecrit = 2.5,
               loss = errf.squared_error,
-              test_func = evalf.tss
-              )
-et_net.init_weights()
-# et_net.test(vis=True)
-code.interact(local=locals())
+              test_func = evalf.tss)
 
 # ------------------------------- RUN ------------------------------
-#
-# def main():
-#     et_net.tnt(330,30,0)
-#     et_net.test(vis=True)
-#
-# if __name__=="__main__":  main()
+
+code.interact(local=locals())
