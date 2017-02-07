@@ -22,22 +22,22 @@ def printProgress (iteration, total, prefix = '', suffix = '', decimals = 1, bar
         sys.stdout.flush()
 # █
 
-# def main():
+def main():
 
-#     from time import sleep
+    from time import sleep
 
-#     # make a list
-#     items = list(range(0, 100))
-#     i     = 0
-#     l     = len(items)
+    # make a list
+    items = list(range(0, 100))
+    i     = 0
+    l     = len(items)
 
-#     # Initial call to print 0% progress
-#     printProgress(i, l, prefix = 'Training:', suffix = 'Complete', barLength = 15)
-#     for item in items:
-#         # Do stuff...
-#         sleep(0.2)
-#         # Update Progress Bar
-#         i += 1
-#         printProgress(i, l, prefix = 'Training:', suffix = 'Complete', barLength = 15)
+    # Initial call to print 0% progress
+    printProgress(i, l, prefix = 'Training:', suffix = 'Complete', barLength = 15)
+    for item in items:
+        # Do stuff...
+        sleep(0.2)
+        # Update Progress Bar
+        i += 1
+        printProgress(i, l, prefix = 'Training:', suffix = 'Complete', barLength = 15)
 
-# if __name__=="__main__": main()
+if __name__=="__main__": main()

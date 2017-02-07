@@ -205,14 +205,9 @@ class Network(object):
             t0 = self.counter
             t1 = t0 + num_epochs
             start = time.time()
-            self._inBar(t0, t1)
+            self._inBar(0, num_epochs)
             for step in range(t0, t1):
                 if permute: dataset.permute()
-                if t1 > 1:
-                    self._inBar(step, t1 - 1)
-                else:
-                    self._inBar(1, 1)
-
                 epoch_loss = 0
                 for j in range(int(dataset._num_examples/batch_size)):
                     train_dict, _ = self._feed_dict(dataset, batch_size=batch_size)
@@ -223,13 +218,17 @@ class Network(object):
                 # Collect stats (note that loss is measured before the gradients are applied):
                 self._lossHistory.append(epoch_loss)
 
+                # Print things to stdout
                 if epoch_loss < ecrit:
-                    self._inBar(1, 1)
-                    print('[{}] Reached critical loss value on epoch {}'.format(self.name, self.counter))
+                    # self._inBar(1, 1)
+                    print('\n[{}] Reached critical loss value on epoch {}'.format(self.name, self.counter))
                     self._terminate = True
                     break
+                if num_epochs > 1:
+                    self._inBar(step-t0, num_epochs-1)
+                else:
+                    self._inBar(1, 1)
 
-                # Print something to stdout
                 if (step + 1) == t1:
                     training_duration = time.time() - start
                     self._inPrint('[{}] Done training for {}/{} epochs ({} seconds)'.format(self.name,
