@@ -20,15 +20,17 @@ class ViewerExecutive():
 def main():
     proceed = True
     VEX = ViewerExecutive(tk.Tk())
+    usrdir = input('[FFBP Viewer] Provide user directory (if any), or press \'enter\' to use default directory: ')
+    usrdir = usrdir.strip()
     while proceed:
-        path = input('[FFBP Viewer] Enter name of log directory OR corresponding index: ')\
+        path = input('[FFBP Viewer] Enter name of log directory OR corresponding index: ')
         # Get path to snap file
         try:
             ID = int(path)
-            path = os.getcwd()+'/FFBP/logs/FFBPlog_{}/snap.pkl'.format(path)
+            path = os.getcwd()+'/FFBP{}/logs/FFBPlog_{}/snap.pkl'.format('/'+ usrdir if len(usrdir) else '', path)
         except ValueError:
             ID = int(path.split(sep='_')[-1])
-            path = os.getcwd()+'/FFBP/logs/' + path + '/snap.pkl'
+            path = os.getcwd()+'/FFBP{}/logs/'.format('/'+ usrdir if len(usrdir) else '') + path + '/snap.pkl'
         with open(path, 'rb'):
             snap = NetworkData(path)
             VEX.view(snap, ID)

@@ -18,12 +18,12 @@ from utilities.restore_params import restore_xor
 
 
 class Network(object):
-    def __init__(self, model, name='NN'):
+    def __init__(self, model, name='NN', logdir=''):
         self.name = name
         self.model = model
         self.sess = tf.InteractiveSession()
         self.graph = tf.get_default_graph()
-        self.logger = Logger()
+        self.logger = Logger(logdir)
         self.counter = 0
         self.train_set = None
         self.test_set = None

@@ -25,12 +25,12 @@ class LayerLog(object):
 
 
 class Logger():
-    def __init__(self):
+    def __init__(self, path=''):
         self.sess_index = 0
-        self.parent_path = os.getcwd() + '/FFBP/logs'
+        self.parent_path = os.getcwd() + '/FFBP{}/logs'.format('/'+ path if len(path) else '')
+        print(self.parent_path,'-----------------------:>')
         self.may_be_make_parent()
         self.child_path = self.may_be_make_child()
-
 
     def may_be_make_parent(self):
         try:
