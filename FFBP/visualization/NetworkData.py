@@ -1,6 +1,6 @@
 import pickle
 import numpy as np
-
+import code
 class NetworkData(object):
     def __init__(self, path):
         with open(path, 'rb') as opened_file:
@@ -35,6 +35,7 @@ class NetworkData(object):
                                                         np.shape(v[0])[1]))
             print('\n')
         print('===' * 20, '')
+
 
 def main():
     path = input('Enter path to snapshot: ')

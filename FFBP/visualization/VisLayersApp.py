@@ -296,8 +296,8 @@ class VisLayersApp():
         key = self.patternSelector.get()
         if key in self.snap.inp_names.keys():
             self.panelBoard.clear()
-            ind_map = self.snap.inp_vects[epoch_ind]
-            pattern_ind = np.where(np.all(ind_map == self.snap.inp_names[key], axis=1))[0][0]
+            ind_map = list(self.snap.inp_names.keys())
+            pattern_ind = ind_map.index(key)
             vl.draw_all_layers(self.snap, self.panelBoard, epoch_ind, pattern_ind, colmap=self.colors)
             self._label_groups = vl.annotate(self.snap, self.panelBoard, self._set_bfs())
             self.figureRenderer.draw()

@@ -1,4 +1,4 @@
-inp_label,            input,             output,
+words,                input,             output,
 eat_apple,            1 0 0 0 0 0 0 0,   0 0 0 1 0 0 0 0,
 eat_orange,           1 0 0 0 0 0 0 0,   0 0 1 0 0 0 0 0,
 eat_rice,             1 0 0 0 0 0 0 0,   0 0 0 0 1 0 0 0,
