@@ -160,7 +160,7 @@ class Network(object):
         if self._errVisApp is None:
             root1 = tk.Tk()
             root1.title('FFBPlog_{}'.format(self.logger.sess_index))
-            figure = plt.figure(1, facecolor='w', dpi=self._vis_settings['dpi'])
+            figure = plt.figure(self.logger.sess_index+300, facecolor='w', dpi=self._vis_settings['dpi'])
             self._errVisApp = VisErrorApp(root1,
                                           figure,
                                           self._lossHistory,
@@ -257,13 +257,12 @@ class Network(object):
                                         global_step=self.counter)
 
         # Stdout
-        testName = test.name.split(sep='_')[0].split(sep=':')[0]
         if self._training:  # . . . During training
             self._inPrint('[{}] Test after epoch {}:'.format(self.name, self.counter))
-            self._inPrint('[{}] Error tensor |{}| = {}'.format(self.name, testName, test_result))
+            self._inPrint('[{}] Error = {}'.format(self.name, test_result))
         else:  # . . . . . . . . . . Before training
             self._inPrint('[{}] Initial test...'.format(self.name))
-            self._inPrint('[{}] Error tensor [{}] = {}'.format(self.name, testName, test_result))
+            self._inPrint('[{}] Error = {}'.format(self.name, test_result))
         self._last_test = self.counter
         return test_result
 
