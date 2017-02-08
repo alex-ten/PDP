@@ -1,5 +1,4 @@
 from FFBP.visualization import visError as ve
-import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import tkinter as tk
 from tkinter import ttk

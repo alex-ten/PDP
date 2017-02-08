@@ -1,6 +1,6 @@
 import pickle
 import numpy as np
-import code
+
 class NetworkData(object):
     def __init__(self, path):
         with open(path, 'rb') as opened_file:
@@ -45,6 +45,5 @@ def main():
     print(data.inp_names)
     print(data.inp_vects)
     print(data.hyperparams)
-    # data.stdout()
 
 if __name__=='__main__': main()

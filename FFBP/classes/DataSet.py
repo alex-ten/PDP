@@ -1,6 +1,5 @@
 # CPR
 import numpy as np
-import code
 from collections import OrderedDict
 
 class DataSet(object):
