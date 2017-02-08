@@ -1,6 +1,7 @@
 import numpy as np
 import pickle
 import os
+from PDPATH import PDPATH
 
 
 def new_input(s, features, batch_size = 1):
@@ -13,7 +14,7 @@ def new_input(s, features, batch_size = 1):
 
 class MIAInput(object):
     def __init__(self, s, batch_size):
-        features_path = os.getcwd() + '/MIA/raw/'
+        features_path = PDPATH() + '/MIA/raw/'
         with open(features_path + 'features.pkl', 'rb') as f:
             features = pickle.load(f)
         x0,x1,x2 = new_input(s, features, batch_size)

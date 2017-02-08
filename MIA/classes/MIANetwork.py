@@ -1,4 +1,3 @@
-import os
 import pickle
 import tkinter as tk
 
@@ -7,6 +6,7 @@ import numpy as np
 from MIA.classes.Logger import Logger
 from MIA.classes.MIAInput import MIAInput
 from MIA.classes.MIAViewer import ViewerExecutive
+from PDPATH import PDPATH
 
 
 def softmax(x):
@@ -34,7 +34,7 @@ def choose_one(x):
 
 class MIANetwork(object):
     def __init__(self, OLgivenW, OFgivenL, batch_size = 1000, timesteps = 20, top_down = True, name='MIA network'):
-        weights_path = os.getcwd() + '/MIA/weights/'
+        weights_path = PDPATH() + '/MIA/weights/'
 
         with open(weights_path + 'FtoL_weights.pkl', 'rb') as f:
             self.FtoL_weights = pickle.load(f)

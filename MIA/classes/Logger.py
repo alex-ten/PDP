@@ -1,9 +1,10 @@
 import os
 import pickle
+from PDPATH import PDPATH
 
 class Logger():
     def __init__(self):
-        self.parent_path = os.getcwd() + '/MIA/logs'
+        self.parent_path = PDPATH() + '/MIA/logs'
         self.may_be_make_parent()
 
     def may_be_make_parent(self):

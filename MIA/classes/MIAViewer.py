@@ -1,4 +1,3 @@
-import os
 import pickle
 import numpy as np
 import tkinter as tk
@@ -7,9 +6,9 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 from collections import OrderedDict
-import argparse
+from PDPATH import PDPATH
 
-path_to_wordsr = os.getcwd() + '/MIA/raw/wordsr.txt'
+path_to_wordsr = PDPATH() + '/MIA/raw/wordsr.txt'
 
 xmax = 4
 ymax = 6
