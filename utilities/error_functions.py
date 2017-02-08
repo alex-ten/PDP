@@ -10,7 +10,8 @@ def cross_entropy(target, activation):
                           name='cross_entropy')
 
 def cross_entropy_s(target, activation):
-    return -tf.reduce_sum(tf.log(clipped(activation)))
+    return -tf.reduce_sum(target, tf.log(clipped(activation)),
+                          name='cross_entropy')
 
 def squared_error(target, activation):
     return tf.reduce_sum(tf.squared_difference(target, activation),
