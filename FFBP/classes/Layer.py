@@ -2,10 +2,12 @@
 import tensorflow as tf
 import numpy as np
 
+# Functions
 def extract_name(s):
     s = s.split('/', 1)[0]
     s = s.split(':', 1)[0]
     return s
+
 
 def orthogonal_initializer(scale = 1.1):
     # From Lasagne and Keras. Reference: Saxe et al., http://arxiv.org/abs/1312.6120
@@ -20,6 +22,7 @@ def orthogonal_initializer(scale = 1.1):
         return tf.constant(scale * q[:shape[0], :shape[1]], dtype=tf.float32)
     return _initializer
 
+
 def wrange_initializer(wrange):
     if wrange == 0:
         return tf.constant_initializer(0)
@@ -32,14 +35,16 @@ def wrange_initializer(wrange):
                                          seed = seed)
 
 
+# Classes
 class Layer(object):
-    # TODO: bias parameter should work for all initialization methods
+    '''
+    Layer class implements an artificial nerual network layer
+    '''
     def __init__(self, input, size, act, layer_name, layer_type='nd', bias=True, bias_val=None, stop_grad=False):
         self.inp = input
         if type(self.inp) is list:
             self.sender_name = '/'.join([extract_name(l.name) for l in self.inp])
-            self.inp = tf.concat(1, [self.get_tensor(l) for l in self.inp],
-                                 name=self.sender_name)
+            self.inp = tf.concat(1, [self.get_tensor(l) for l in self.inp], name=self.sender_name)
             self.sender_size = int(self.inp.get_shape()[1])
         else:
             self.sender_size = self.get_inp_info(self.inp)[0]
@@ -53,22 +58,11 @@ class Layer(object):
         self.stop_grad = stop_grad
         self.W = self.b = None
 
-    def init_orthogonal(self, scope=1.1):
-        with tf.variable_scope(self.name, reuse=False):
-            self.W = tf.get_variable(name='weights',
-                                     shape=[self.size, self.sender_size],
-                                     dtype=tf.float32,
-                                     initializer=orthogonal_initializer(scope))
-            self.net = tf.matmul(self.inp, self.W, name ='net')
-            if self.bias_on:
-                self.b = tf.get_variable('biases', [self.size], tf.float32)
-                if self.bias_val != None:
-                    self.b = self.b.assign(tf.constant(self.bias_val, shape = [self.size]))
-                self.net = self.net + self.b
-            if self.actf != None:
-                self.act = self.actf(self.net)
-
     def init_custom(self, initializer):
+        # A general way to set weights initializer. Tensorflow offers a range of useful initializers.
+        # Consult the following link to see all options:
+        # https://www.tensorflow.org/api_docs/python/state_ops/sharing_variables
+        # To set your initializer, pass the tf.initializer() to this method's parameter
         with tf.variable_scope(self.name, reuse=False, initializer=initializer):
             self.W = tf.get_variable(name = 'weights',
                                      shape = [self.sender_size, self.size],
@@ -121,6 +115,7 @@ class Layer(object):
 
 
 class RecurrentLayer(object):
+    # This class is not complete.
     def __init__(self, input_tensor, size, init_state, act, layer_name, layer_type='nd', bias=True, bias_val=None,
                  stop_grad=False):
         self.input_tensor = input_tensor
