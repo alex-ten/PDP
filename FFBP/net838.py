@@ -11,7 +11,7 @@ from FFBP.classes.DataSet import DataSet
 from FFBP.classes.Layer import Layer
 from FFBP.classes.Network import Network
 
-path = os.getcwd()+'/FFBP/data/f_net838.txt'
+path = os.path.expanduser('~')+'/FFBP/data/f_net838.txt'
 trainSet = DataSet(path)
 testSet = trainSet
 
