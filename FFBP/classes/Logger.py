@@ -1,4 +1,5 @@
 import os
+from PDPATH import PDPATH
 
 class LayerLog(object):
     def __init__(self, layer):
@@ -27,7 +28,7 @@ class LayerLog(object):
 class Logger():
     def __init__(self, path=''):
         self.sess_index = 0
-        self.parent_path = os.getcwd() + '/FFBP{}/logs'.format('/'+ path if len(path) else '')
+        self.parent_path = PDPATH() + '/FFBP{}/logs'.format('/'+ path if len(path) else '')
         self.may_be_make_parent()
         self.child_path = self.may_be_make_child()
 

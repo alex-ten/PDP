@@ -1,4 +1,3 @@
-import os
 import code
 import tensorflow as tf
 
@@ -9,10 +8,10 @@ import utilities.error_functions as errf
 from FFBP.classes.DataSet import DataSet
 from FFBP.classes.Layer import Layer
 from FFBP.classes.Network import Network
+from PDPATH import PDPATH
 
-
-path_to_trainset = os.getcwd() + '/FFBP/data/f_XOR.txt'
-path_to_params = os.getcwd() + '/FFBP/data/xor_params1.ckpt'
+path_to_trainset = PDPATH() + '/FFBP/data/f_XOR.txt'
+path_to_params = PDPATH() + '/FFBP/data/xor_params1.ckpt'
 
 trainSet = DataSet(path_to_trainset)
 testSet = DataSet(path_to_trainset)

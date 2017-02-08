@@ -1,6 +1,5 @@
 # ----------------------------- PRELIMINARIES -----------------------------
 
-import os
 import code
 import tensorflow as tf
 import utilities.activation_functions as actf
@@ -10,8 +9,9 @@ from utilities.model import model
 from FFBP.classes.DataSet import DataSet
 from FFBP.classes.Layer import Layer
 from FFBP.classes.Network import Network
+from PDPATH import PDPATH
 
-path = os.path.expanduser('~')+'/PDP/FFBP/data/f_net838.txt'
+path = PDPATH() + '/FFBP/data/f_net838.txt'
 trainSet = DataSet(path)
 testSet = trainSet
 

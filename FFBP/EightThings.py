@@ -8,9 +8,10 @@ from utilities.model import model
 from FFBP.classes.DataSet import DataSet
 from FFBP.classes.Layer import Layer
 from FFBP.classes.Network import Network
+from PDPATH import PDPATH
 
 # ----------------------------- BUILD -----------------------------
-path_to_trainset = os.getcwd()+'/FFBP/data/f_EightThings.txt'
+path_to_trainset = PDPATH() + '/FFBP/data/f_EightThings.txt'
 ET = DataSet(path_to_trainset)
 
 item = tf.placeholder(tf.float32, shape=[None,8], name='item')
