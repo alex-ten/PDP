@@ -1,6 +1,5 @@
 # ----------------------------- PRELIMINARIES -----------------------------
 
-
 import os
 import code
 import tensorflow as tf
@@ -18,14 +17,14 @@ testSet = trainSet
 
 # ----------------------------- CONSTRUCTION -------------------------------
 
-input_layer = tf.placeholder(tf.float32, shape=[None,8], name='input')
-targets = tf.placeholder(tf.float32, shape=[None,8], name='target')
+PHinp = tf.placeholder(tf.float32, shape=[None, 8], name='input')
+PHout = tf.placeholder(tf.float32, shape=[None, 8], name='target')
 
-hid = Layer(input = input_layer,
-	 	size = 3,
-		act = actf.sigmoid,
-		layer_name = 'hidden', 
-		layer_type = 'hidden')
+hid = Layer(input = PHinp,
+			size = 3,
+			act = actf.sigmoid,
+			layer_name = 'hidden',
+			layer_type = 'hidden')
 hid.init_wrange([-1,1,1])
 
 output = Layer(input = hid,
@@ -33,10 +32,10 @@ output = Layer(input = hid,
 		act = actf.sigmoid,
 		layer_name = 'output', 
 		layer_type = 'output')
-output.init_wrange([-1,1,2])
+output.init_wrange([-1,1,1])
 
 
-model838 = model(input_layer, [hid, output], targets)
+model838 = model(PHinp, [hid, output], PHout)
 net838 = Network(model838, name='net838')
 
 net838.train_set = trainSet
@@ -44,7 +43,7 @@ net838.test_set = testSet
 
 net838.initconfig(loss = errf.squared_error,
 				  train_batch_size = 8,
-				  learning_rate = .2,
+				  learning_rate = .3,
 				  momentum = .9,
 				  permute = False,
 				  ecrit = 0.01,
