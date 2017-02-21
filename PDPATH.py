@@ -1,7 +1,10 @@
 import os
 
-def PDPATH():
- return os.path.dirname(os.path.abspath(__file__))
+def PDPATH(x=''):
+    if x:
+        return os.path.dirname(os.path.abspath(__file__)) + x
+    else:
+        return os.path.dirname(os.path.abspath(__file__))
 
 def main():
     print(PDPATH())

@@ -3,43 +3,54 @@ from __future__ import division
 from __future__ import print_function
 
 import time
-
 import numpy as np
 import tensorflow as tf
+from tabulate import tabulate
 
-from SRN.sandbox import reader
-from classes.RNNModels import Basic_LSTM_Model, Basic_RNN_Model
+from RNN.classes.RNNModels import Basic_LSTM_Model, Basic_RNN_Model
+from RNN.classes.Logger import Logger
+from RNN import reader
+
+from utilities.make_table import make_table
+from PDPATH import PDPATH
+
 logging = tf.logging
 
 def data_type():
   return tf.float32
 
 
+def get_config():
+    return Configs()
+
+
+class Configs(object):
+    init_scale = 0.1
+    learning_rate = 0.05
+    max_grad_norm = 5
+    num_layers = 1
+    num_steps = 3
+    hidden_size = 12
+    max_epoch = 5000
+    max_max_epoch = 5000
+    keep_prob = 1
+    lr_decay = 1
+    batch_size = 4
+    vocab_size = 8
+
+
 class InputData(object):
     """The input data."""
-    def __init__(self, config, data, name=None):
+    def __init__(self, config, data, testset=False, name=None):
+        # if testset:
+        #   do something different for input_data and targets
+        #       - We can discard targets and just look at relative ratios
         self.vocab_size = config.vocab_size
         self.batch_size = batch_size = config.batch_size
         self.num_steps = num_steps = config.num_steps
         self.epoch_size = ((len(data) // batch_size) - 1) // num_steps
         self.input_data, self.targets = reader.enqueuer(
             data, batch_size, num_steps, name=name)
-
-
-class Configs(object):
-    """Small config."""
-    init_scale = 0.1
-    learning_rate = 0.05
-    max_grad_norm = 5
-    num_layers = 3
-    num_steps = 3
-    hidden_size = 10
-    max_epoch = 5
-    max_max_epoch = 1000
-    keep_prob = 1.0
-    lr_decay = 1
-    batch_size = 4
-    vocab_size = 8
 
 
 def run_epoch(session, model, eval_op=None, verbose=False):
@@ -51,6 +62,7 @@ def run_epoch(session, model, eval_op=None, verbose=False):
     iters = 0
     output = None
     state = session.run(model.initial_state)
+
     # Values to extract from running the graph (cost, final state, and may be eval_op)
     fetches = {'cost': model.cost,
                'final_state': model.final_state}
@@ -62,15 +74,18 @@ def run_epoch(session, model, eval_op=None, verbose=False):
     # Run the model epoch_size times
     for step in range(model.input.epoch_size):
         feed_dict = {}
+        # feed zero values to a the RNN's hidden state
+        # the below might be confusing without some background on LSTM's state implementation
+        # For more info see: http://r2rt.com/recurrent-neural-networks-in-tensorflow-ii.html
         try:
             for i, (c, h) in enumerate(model.initial_state):
-                # feed zero values to the model's initial state if state is a tuple
                 feed_dict[c] = state[i].c
                 feed_dict[h] = state[i].h
         except TypeError:
             feed_dict[model.initial_state] = state
 
         # Evaluate fetches by running the graph
+        # THIS IS WHERE THE ACTION OCCURS
         vals = session.run(fetches, feed_dict)
         cost = vals["cost"]
         state = vals["final_state"]
@@ -89,13 +104,8 @@ def run_epoch(session, model, eval_op=None, verbose=False):
     return np.exp(costs / iters), output
 
 
-def get_config():
-    return Configs()
-
-
 def main(_):
-    path = '/Users/alexten/Projects/PDP/SRN/sandbox/simple-examples/tiny_data'
-
+    path = PDPATH('/RNN/data/tiny_data')
     raw_data = reader.raw_data(path)
     train_data, valid_data, test_data, _ = raw_data
 
@@ -111,27 +121,37 @@ def main(_):
         with tf.name_scope("Train"):
             train_input = InputData(config=config, data=train_data, name="TrainInput")
             with tf.variable_scope("Model", reuse=None, initializer=initializer):
-                m = Basic_LSTM_Model(is_training=True, config=config, input_=train_input)
+                m = Basic_RNN_Model(is_training=True, config=config, input_=train_input, BPTT=False)
 
         with tf.name_scope("Test"):
           test_input = InputData(config=eval_config, data=test_data, name="TestInput")
           with tf.variable_scope("Model", reuse=True, initializer=initializer):
-            mtest = Basic_LSTM_Model(is_training=False, config=eval_config, input_=test_input)
+            mtest = Basic_RNN_Model(is_training=False, config=eval_config, input_=test_input)
 
-        sv = tf.train.Supervisor(logdir=path+'/junk')
+        logger = Logger()
+        sv = tf.train.Supervisor(logdir = logger.child_path)
+        perp_train = []
+        perp_test = []
+        out = []
         with sv.managed_session() as session:
             for i in range(config.max_max_epoch):
                 lr_decay = config.lr_decay ** max(i + 1 - config.max_epoch, 1)
                 m.assign_lr(session, config.learning_rate * lr_decay)
-                # print("Epoch: %d Learning rate: %.3f" % (i, session.run(m.lr)))
+                # print("Epoch: {} Learning rate: {}".format(i, np.around(session.run(m.lr),3)))
                 train_perplexity, _ = run_epoch(session, m, eval_op=m.train_op, verbose=False)
+                perp_train.append(train_perplexity)
 
-                if i % (config.max_max_epoch // 100) == 0:
-                    print("Epoch: {} Perplexity = {}".format(i, train_perplexity))
+                if i % (config.max_max_epoch // 10) == 0:
                     test_perplexity, outputs = run_epoch(session, mtest)
-                    np.set_printoptions(precision=2, suppress=True)
-                    print(outputs)
-
+                    print("Epoch: {}\nTrain perplexity = {}\nTest perplexity: {}".format(i, train_perplexity, test_perplexity))
+                    print(make_table(a = outputs,
+                                     rkeys = [y for y in reader._read_words(path+'/tiny.test.txt')[1:] if y != '<eos>'],
+                                     ckeys = reader._build_vocab(path+'/tiny.test.txt', True)))
+                    print(session.run(mtest._input.input_data).reshape([1,-1]))
+                    print(session.run(mtest._input.targets).reshape([1,-1]))
+                    print(np.argmax(outputs, axis=1))
+                    perp_test.append(test_perplexity)
+                    out.append(outputs)
 
 
 if __name__ == "__main__": tf.app.run()

@@ -1,5 +1,5 @@
 import pickle
-from SRN.FSM import DataSet
+from RNN.FSM import DataSet
 
 s1 = 'ABCDEFX'
 s2 = 'ABCX'

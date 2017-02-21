@@ -1,4 +1,4 @@
-from SRN.sandbox.ops import *
+from RNN.versions.ops import *
 
 hid_dim = 20
 learning_rate = 1e-3

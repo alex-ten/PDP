@@ -121,14 +121,14 @@ class Basic_RNN_Model(object):
       size = config.hidden_size
       vocab_size = config.vocab_size
 
-      # SNN / ======================================================================================
+      # SRN / ======================================================================================
       srn_cell = tf.nn.rnn_cell.BasicRNNCell(size, None, tf.nn.sigmoid)
 
       if is_training and config.keep_prob < 1:
           srn_cell = tf.nn.rnn_cell.DropoutWrapper(
               srn_cell, output_keep_prob=config.keep_prob)
       cell = tf.nn.rnn_cell.MultiRNNCell([srn_cell] * config.num_layers, state_is_tuple=False)
-      # ====================================================================================== / SNN
+      # ====================================================================================== / SRN
 
       self._initial_state = cell.zero_state(batch_size, data_type())
 
@@ -147,7 +147,7 @@ class Basic_RNN_Model(object):
           for time_step in range(num_steps):
               if time_step > 0: tf.get_variable_scope().reuse_variables()
               (cell_act, newstate) = cell(inputs[:, time_step, :], state)
-              targ_list.append(input_.targets[time_step, :]) # ***** experimental feature *****
+              targ_list.append(input_.targets) # ***** experimental feature *****
               if not BPTT:
                   state = tf.stop_gradient(newstate)  # SRN
               else:

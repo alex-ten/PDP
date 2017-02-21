@@ -94,7 +94,7 @@ class DataSet(object):
             print(k, v)
 
 def main():
-    data = DataSet('/Users/alexten/Projects/PDP/SRN/pickles/a_through_x.pkl')
+    data = DataSet('/Users/alexten/Projects/PDP/RRN/pickles/a_through_x.pkl')
     data.raw2onehot()
     data.raw2inds()
 
@@ -110,9 +110,9 @@ def main():
 
     data.show_oh_map()
     for i in range(1):
-        x, y = data.next_batch(2)
+        x, y, _, __ = data.next_batch(2)
         print(x)
-        # print(y)
+        print(y)
 
 
 if __name__=='__main__': main()

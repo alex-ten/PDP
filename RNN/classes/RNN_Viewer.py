@@ -4,8 +4,8 @@ from tkinter import messagebox
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from SRN.visualization import visRNN as vis
-from SRN.visualization.RNData import RNData
+from RNN.visualization import visRNN as vis
+from RNN.visualization.RNData import RNData
 
 def get_vecs(snap, pattern_ind, max_len):
     a = int(pattern_ind * max_len)

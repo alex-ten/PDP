@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 
 import utilities.activation_functions as actf
-from constructors.Layer import Layer, RecurrentLayer
+from FFBP.classes import Layer
 
 batch_size = 1
 data_dim = 4

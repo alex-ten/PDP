@@ -8,11 +8,11 @@ from matplotlib import style
 
 style.use('ggplot')
 
-from SRN.FSM.DataSet import DataSet
-import FFBP.classes.logger as logger
+from RNN.FSM.DataSet import DataSet
+import FFBP.classes.Logger as logger
 from utilities import mask
-from classes.RNNCell import RNNCell
-from classes.Layer import wrange_initializer
+from RNN.classes.RNNCell import RNNCell
+from FFBP.classes.Layer import wrange_initializer
 
 data = DataSet('pickles/240x50.pkl')
 data.raw2onehot()

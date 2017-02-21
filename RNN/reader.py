@@ -7,6 +7,7 @@ import collections
 import os
 
 import tensorflow as tf
+from PDPATH import PDPATH
 
 
 def _read_words(filename):
@@ -15,13 +16,15 @@ def _read_words(filename):
     return f.read().decode('utf-8').replace("\n", "<eos>").split()
 
 
-def _build_vocab(filename):
+def _build_vocab(filename, sorted_words_only=False):
     # Long list of word sequences separated by <eos>
     data = _read_words(filename)
     # Stores tallies of unique words in data, e.g. {''<unk>': 4794, 'the': 4529, '<eos>': 3761}
     counter = collections.Counter(data)
     # Creates an ordered list of 2-tuples containing a WORD and its TALLY
-    count_pairs = sorted(counter.items(), key=lambda x: (-x[1], x[0]))
+    count_pairs = sorted(counter.items(), key=lambda x: (-x[1], x[0])) # x[0] is a backup criterion in case -x[1] are equal
+    if sorted_words_only:
+        return [x[0] for x in count_pairs]
     # Creates a tuple of words sorted in descending order from most frequent to least frequent
     words, _ = list(zip(*count_pairs))
     # Assign a unique integer ID to each word
@@ -35,6 +38,7 @@ def _file_to_word_ids(filename, word_to_id):
     # Indices correspond to frequency of occurance in the corpus (0 means the most frequent index)
     data = _read_words(filename)
     r = []
+
     for word in data:
         if word in word_to_id:
             r.append(word_to_id[word])
@@ -82,7 +86,7 @@ def enqueuer(raw_data, batch_size, num_steps, name=None):
     Raises:
     tf.errors.InvalidArgumentError: if batch_size or num_steps are too high.
     """
-    with tf.name_scope(name, "PTBProducer", [raw_data, batch_size, num_steps]):
+    with tf.name_scope(name, "InputEnqueuer", [raw_data, batch_size, num_steps]):
         raw_data = tf.convert_to_tensor(raw_data, name = "raw_data", dtype = tf.int32)
 
         data_len = tf.size(raw_data)
@@ -95,14 +99,13 @@ def enqueuer(raw_data, batch_size, num_steps, name=None):
     with tf.control_dependencies([assertion]):
         epoch_size = tf.identity(epoch_size, name = "epoch_size")
 
-    i = tf.train.range_input_producer(epoch_size, shuffle=False).dequeue() # output dequeued an item from the queue object
-    x = tf.slice(data, [0, i * num_steps], [batch_size, num_steps]) # slices data a dequeued integer
+    i = tf.train.range_input_producer(epoch_size, shuffle=False).dequeue() # output queue index from the queue object (relies on tf.train.Supervisor)
+    x = tf.slice(data, [0, i * num_steps], [batch_size, num_steps]) # slice data
     y = tf.slice(data, [0, i * num_steps + 1], [batch_size, num_steps])
     return x, y
 
 def main():
-    file = '/Users/alexten/Projects/PDP/SRN/sandbox/simple-examples/tiny_data/tiny.train.txt'
-
+    file = PDPATH('/RNN/data/tiny_data/tiny.train.txt')
     print('Step 1. Convert raw corpus into a long list:')
     print(_read_words(file))
 
@@ -111,5 +114,8 @@ def main():
 
     print('Step 3. Convert words into word IDs:')
     print(_file_to_word_ids(file, _build_vocab(file)))
+
+    print('Add step. Sort unique words by frequency or alphabetically:')
+    print(_build_vocab(file, True))
 
 if __name__=='__main__': main()

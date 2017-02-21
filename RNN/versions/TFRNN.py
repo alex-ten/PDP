@@ -2,13 +2,13 @@ import numpy as np
 import tensorflow as tf
 from matplotlib import style
 
-from SRN.FSM.DataSet import DataSet
+from RNN.FSM.DataSet import DataSet
 from utilities.printProgress import printProgress
 from utilities import mask
 
 style.use('ggplot')
 import matplotlib.pyplot as plt
-from classes.Layer import wrange_initializer
+from FFBP.classes.Layer import wrange_initializer
 
 
 data = DataSet('pickles/240x50.pkl')
