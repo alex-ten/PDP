@@ -113,14 +113,14 @@ def run_epoch(session, model, eval_op=None, verbose=False):
 
 
 def main(_):
-    path = PDPATH('/RNN/data/tiny_data')
+    path = PDPATH('/RNN/data/ptb_data')
     raw_data = reader.raw_data(path)
     train_data, valid_data, test_data, _ = raw_data
 
     config = get_config()
     eval_config = get_config()
-    eval_config.batch_size = 4
-    eval_config.num_steps = 3
+    eval_config.batch_size = 1
+    eval_config.num_steps = 1
 
     with tf.Graph().as_default():
         initializer = tf.random_uniform_initializer(-config.init_scale,
