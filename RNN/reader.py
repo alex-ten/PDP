@@ -104,6 +104,7 @@ def enqueuer(raw_data, batch_size, num_steps, name=None):
     y = tf.slice(data, [0, i * num_steps + 1], [batch_size, num_steps])
     return x, y
 
+
 def main():
     file = PDPATH('/RNN/data/tiny_data/tiny.train.txt')
     print('Step 1. Convert raw corpus into a long list:')

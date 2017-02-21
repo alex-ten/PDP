@@ -5,7 +5,6 @@ from __future__ import print_function
 import time
 import numpy as np
 import tensorflow as tf
-from tabulate import tabulate
 
 from RNN.classes.RNNModels import Basic_LSTM_Model, Basic_RNN_Model
 from RNN.classes.Logger import Logger
@@ -14,7 +13,16 @@ from RNN import reader
 from utilities.make_table import make_table
 from PDPATH import PDPATH
 
+flags = tf.flags
 logging = tf.logging
+
+flags.DEFINE_string("save_path", None,
+                    "Model output directory.")
+flags.DEFINE_bool("use_fp16", False,
+                  "Train using 16-bit floats instead of 32bit floats")
+
+FLAGS = flags.FLAGS
+
 
 def data_type():
   return tf.float32
@@ -25,18 +33,18 @@ def get_config():
 
 
 class Configs(object):
-    init_scale = 0.1
-    learning_rate = 0.05
+    init_scale = 0.05
+    learning_rate = 1.0
     max_grad_norm = 5
-    num_layers = 1
-    num_steps = 3
-    hidden_size = 12
-    max_epoch = 5000
-    max_max_epoch = 5000
-    keep_prob = 1
-    lr_decay = 1
-    batch_size = 4
-    vocab_size = 8
+    num_layers = 2
+    num_steps = 35
+    hidden_size = 650
+    max_epoch = 6
+    max_max_epoch = 39
+    keep_prob = 0.5
+    lr_decay = 0.8
+    batch_size = 20
+    vocab_size = 10000
 
 
 class InputData(object):
@@ -122,6 +130,8 @@ def main(_):
             train_input = InputData(config=config, data=train_data, name="TrainInput")
             with tf.variable_scope("Model", reuse=None, initializer=initializer):
                 m = Basic_RNN_Model(is_training=True, config=config, input_=train_input, BPTT=False)
+            tf.summary.scalar("Training Loss", m.cost)
+            tf.summary.scalar("Learning Rate", m.lr)
 
         with tf.name_scope("Test"):
           test_input = InputData(config=eval_config, data=test_data, name="TestInput")
@@ -133,7 +143,7 @@ def main(_):
         perp_train = []
         perp_test = []
         out = []
-        with sv.managed_session() as session:
+        with sv.managed_session(config=tf.ConfigProto(log_device_placement=True)) as session:
             for i in range(config.max_max_epoch):
                 lr_decay = config.lr_decay ** max(i + 1 - config.max_epoch, 1)
                 m.assign_lr(session, config.learning_rate * lr_decay)
@@ -152,6 +162,10 @@ def main(_):
                     print(np.argmax(outputs, axis=1))
                     perp_test.append(test_perplexity)
                     out.append(outputs)
+
+        if FLAGS.save_path:
+            print("Saving model to {}.".format(PDPATH('/RNN/')+FLAGS.save_path))
+            sv.saver.save(session, FLAGS.save_path, global_step=sv.global_step)
 
 
 if __name__ == "__main__": tf.app.run()
