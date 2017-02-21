@@ -129,14 +129,14 @@ def main(_):
         with tf.name_scope("Train"):
             train_input = InputData(config=config, data=train_data, name="TrainInput")
             with tf.variable_scope("Model", reuse=None, initializer=initializer):
-                m = Basic_RNN_Model(is_training=True, config=config, input_=train_input, BPTT=False)
+                m = Basic_LSTM_Model(is_training=True, config=config, input_=train_input, BPTT=False)
             tf.summary.scalar("Training Loss", m.cost)
             tf.summary.scalar("Learning Rate", m.lr)
 
         with tf.name_scope("Test"):
           test_input = InputData(config=eval_config, data=test_data, name="TestInput")
           with tf.variable_scope("Model", reuse=True, initializer=initializer):
-            mtest = Basic_RNN_Model(is_training=False, config=eval_config, input_=test_input)
+            mtest = Basic_LSTM_Model(is_training=False, config=eval_config, input_=test_input)
 
         logger = Logger()
         sv = tf.train.Supervisor(logdir = logger.child_path)
