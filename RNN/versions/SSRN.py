@@ -9,7 +9,7 @@ _input = tf.placeholder(tf.float32,shape=[None,data_dim])
 _prev_hid = tf.placeholder(tf.float32,shape=[None,hid_dim])
 _target = tf.placeholder(tf.float32,shape=[None,data_dim])
 
-hid = linear(tf.concat(1,[_input,_prev_hid]),hid_dim,'hid',tf.nn.relu)
+hid = linear(tf.concat(axis=1,values=[_input,_prev_hid]),hid_dim,'hid',tf.nn.relu)
 out = linear(hid,data_dim,'out')
 
 loss = tf.reduce_mean(tf.reduce_sum(tf.square(out-_target),1))
@@ -17,7 +17,7 @@ loss = tf.reduce_mean(tf.reduce_sum(tf.square(out-_target),1))
 train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss)
 
 sess = tf.Session()
-sess.run(tf.initialize_all_variables())
+sess.run(tf.global_variables_initializer())
 
 #fake data
 data_x = np.random.rand(mb_dim,seq_len+1,data_dim)

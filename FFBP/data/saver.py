@@ -12,7 +12,7 @@ b1 = tf.Variable(rb1, dtype=tf.float32)
 w2 = tf.Variable(rw2, dtype=tf.float32)
 b2 = tf.Variable(rb2, dtype=tf.float32)
 
-init = tf.initialize_all_variables()
+init = tf.global_variables_initializer()
 saver = tf.train.Saver({'w_1': w1, 'b_1': b1, 'w_2':w2, 'b_2':b2})
 with tf.Session() as sess:
     sess.run(init)

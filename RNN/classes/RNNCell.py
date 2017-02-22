@@ -22,6 +22,6 @@ class RNNCell(object):
 
     def step(self, x):
         # update the hidden state
-        self.state = self.actf(tf.matmul(tf.concat(1, [x, self.state]), self.W) + self.b)
+        self.state = self.actf(tf.matmul(tf.concat(axis=1, values=[x, self.state]), self.W) + self.b)
         return self.state
 

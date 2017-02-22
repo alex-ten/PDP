@@ -16,7 +16,7 @@ class Basic_LSTM_Model(object):
     vocab_size = config.vocab_size
 
     # LSTM =====================================================================================
-    lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(size, forget_bias=0.0, state_is_tuple=True)
+    lstm_cell = tf.contrib.rnn.BasicLSTMCell(size, forget_bias=0.0, state_is_tuple=True)
 
     if is_training and config.keep_prob < 1:
       lstm_cell = tf.nn.rnn_cell.DropoutWrapper(
@@ -51,7 +51,7 @@ class Basic_LSTM_Model(object):
         (cell_output, state) = cell(inputs[:, time_step, :], state)
         outputs.append(cell_output)
 
-    output = tf.reshape(tf.concat(1, outputs), [-1, size])
+    output = tf.reshape(tf.concat(axis=1, values=outputs), [-1, size])
     softmax_w = tf.get_variable(
         "softmax_w", [size, vocab_size], dtype=data_type())
     softmax_b = tf.get_variable("softmax_b", [vocab_size], dtype=data_type())
@@ -122,7 +122,7 @@ class Basic_RNN_Model(object):
       vocab_size = config.vocab_size
 
       # SRN / ======================================================================================
-      srn_cell = tf.nn.rnn_cell.BasicRNNCell(size, None, tf.nn.sigmoid)
+      srn_cell = tf.contrib.rnn.BasicRNNCell(size, None, tf.nn.sigmoid)
 
       if is_training and config.keep_prob < 1:
           srn_cell = tf.nn.rnn_cell.DropoutWrapper(
@@ -154,7 +154,7 @@ class Basic_RNN_Model(object):
                   state = newstate  # BPTT
               hid_states.append(cell_act)
 
-      output = tf.reshape(tf.concat(1, hid_states), [-1, size])
+      output = tf.reshape(tf.concat(axis=1, values=hid_states), [-1, size])
       softmax_w = tf.get_variable(
           "softmax_w", [size, vocab_size], dtype=data_type())
       softmax_b = tf.get_variable("softmax_b", [vocab_size], dtype=data_type())
@@ -164,7 +164,7 @@ class Basic_RNN_Model(object):
 
       # ------------- SPARSE SOFTMAX CROSS ENTROPY WITH LOGITS ----------------
       labels = tf.reshape(input_.targets, [-1])
-      loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, labels)
+      loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=labels)
 
       # ---------------- SIGMOID CROSS ENTROPY WITH LOGITS --------------------
       # labels = tf.reshape(tf.concat(1, targ_list), [-1, vocab_size])

@@ -60,7 +60,7 @@ def fprop(inp, targ, use_mask = None, compute_loss = True):
             else:
                 state = newstate # BPTT
             hid_states.append(state)
-    hid_states = tf.reshape(tf.concat(1, hid_states), [-1, hid_size])
+    hid_states = tf.reshape(tf.concat(axis=1, values=hid_states), [-1, hid_size])
     logits = tf.matmul(hid_states, W) + b
     if not compute_loss:
         return tf.nn.sigmoid(logits), hid_states
@@ -75,8 +75,8 @@ def fprop(inp, targ, use_mask = None, compute_loss = True):
         # loss = tf.nn.softmax_cross_entropy_with_logits(logits, labels)
 
         # ---------------- SIGMOID CROSS ENTROPY WITH LOGITS --------------------
-        labels = tf.reshape(tf.concat(1, targ_list), [-1, data_dim])
-        loss = tf.nn.sigmoid_cross_entropy_with_logits(logits, labels)
+        labels = tf.reshape(tf.concat(axis=1, values=targ_list), [-1, data_dim])
+        loss = tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=labels)
         predictions = tf.nn.sigmoid(logits)
 
         # --------------------- MAYBE RETURN VARIABLES ---------------------------
@@ -149,7 +149,7 @@ def main():
     test_inp = tf.placeholder(tf.float32, shape=[test_batch_size, max_len, data_dim], name='item')
 
     sess = tf.InteractiveSession()
-    sess.run(tf.initialize_all_variables())
+    sess.run(tf.global_variables_initializer())
 
     # simple_test(test_inp, test_data, test_batch_size)
 

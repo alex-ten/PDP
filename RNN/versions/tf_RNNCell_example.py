@@ -15,9 +15,9 @@ with tf.variable_scope('RNN'):
 sigm = tf.nn.sigmoid(inp_vec)
 
 sess = tf.InteractiveSession()
-sess.run(tf.initialize_all_variables())
+sess.run(tf.global_variables_initializer())
 
-rnn_variables = [v for v in tf.all_variables()
+rnn_variables = [v for v in tf.global_variables()
                  if v.name.startswith('RNN')]
 
 # Input array

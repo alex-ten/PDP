@@ -37,7 +37,7 @@ out = Layer(input_tensor = hid.act,
 out.init_weights([-1, 1])
 
 sess = tf.InteractiveSession()
-sess.run(tf.initialize_all_variables())
+sess.run(tf.global_variables_initializer())
 
 outputs = []
 with tf.variable_scope(hid.layer_name):  # this sets the scope for the ‘reuse_variables’ below

@@ -59,27 +59,27 @@ learn = opt.apply_gradients(dEds)
 pairs = {x_: data_set.images, y_: data_set.labels}
 
 # Define the variable initialization operation
-init_op = tf.initialize_all_variables()
+init_op = tf.global_variables_initializer()
 
 # Define the saver operation to load pre-existing xor_files
 # Keys in the dictionary must be the same ones that were used to store the xor_files (see saver.py file)
 saver_op = tf.train.Saver({'w_1': w1, 'b_1': b1, 'w_2': w2, 'b_2': b2})
 
 # Define summary operation(s)
-loss_summary = tf.scalar_summary('loss', loss)
-tss_summary = tf.scalar_summary('tss', tss) # loss and tss are equivalent
-w1_summary = tf.histogram_summary(w1.name, w1) # This and the next 5 lines generate summaries for weights, biases and activaitons
-b1_summary = tf.histogram_summary(b1.name, b1)
-w2_summary = tf.histogram_summary(w2.name, w2)
-b2_summary = tf.histogram_summary(b2.name, b2)
-h_summary = tf.histogram_summary(hidden.name, hidden)
-o_summary = tf.histogram_summary(output.name, output)
+loss_summary = tf.summary.scalar('loss', loss)
+tss_summary = tf.summary.scalar('tss', tss) # loss and tss are equivalent
+w1_summary = tf.summary.histogram(w1.name, w1) # This and the next 5 lines generate summaries for weights, biases and activaitons
+b1_summary = tf.summary.histogram(b1.name, b1)
+w2_summary = tf.summary.histogram(w2.name, w2)
+b2_summary = tf.summary.histogram(b2.name, b2)
+h_summary = tf.summary.histogram(hidden.name, hidden)
+o_summary = tf.summary.histogram(output.name, output)
 
 # Merge all summaries to make Summary Writing easier
-merged = tf.merge_all_summaries()
+merged = tf.summary.merge_all()
 
 # Append Summary protocol buffers to the event file at the current directory
-summary_writer = tf.train.SummaryWriter(os.getcwd()+'/events', graph=tf.get_default_graph())
+summary_writer = tf.summary.FileWriter(os.getcwd()+'/events', graph=tf.get_default_graph())
 
 
 

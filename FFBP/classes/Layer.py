@@ -44,7 +44,7 @@ class Layer(object):
         self.inp = input
         if type(self.inp) is list:
             self.sender_name = '/'.join([extract_name(l.name) for l in self.inp])
-            self.inp = tf.concat(1, [self.get_tensor(l) for l in self.inp], name=self.sender_name)
+            self.inp = tf.concat(axis=1, values=[self.get_tensor(l) for l in self.inp], name=self.sender_name)
             self.sender_size = int(self.inp.get_shape()[1])
         else:
             self.sender_size = self.get_inp_info(self.inp)[0]
