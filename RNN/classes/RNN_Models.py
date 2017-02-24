@@ -19,16 +19,15 @@ class Basic_LSTM_Model(object):
     lstm_cell = tf.contrib.rnn.BasicLSTMCell(size, forget_bias=0.0, state_is_tuple=True)
 
     if is_training and config.keep_prob < 1:
-      lstm_cell = tf.nn.rnn_cell.DropoutWrapper(
+      lstm_cell = tf.contrib.rnn.DropoutWrapper(
           lstm_cell, output_keep_prob=config.keep_prob)
-    cell = tf.nn.rnn_cell.MultiRNNCell([lstm_cell] * config.num_layers, state_is_tuple=True)
+    cell = tf.contrib.rnn.MultiRNNCell([lstm_cell] * config.num_layers, state_is_tuple=True)
     # ===================================================================================== LSTM
 
     self._initial_state = cell.zero_state(batch_size, data_type())
 
     with tf.device("/cpu:0"):
-      embedding = tf.get_variable(
-          "embedding", [vocab_size, size], dtype=data_type())
+      embedding = tf.get_variable("embedding", [vocab_size, size], dtype=data_type())
       inputs = tf.nn.embedding_lookup(embedding, input_.input_data)
 
     if is_training and config.keep_prob < 1:
@@ -58,9 +57,10 @@ class Basic_LSTM_Model(object):
     logits = tf.matmul(output, softmax_w) + softmax_b
 
     if not is_training: # ***** experimental feature *****
-        self.seq_outputs = tf.nn.softmax(logits)
+        self.seq_outputs = tf.nn.softmax(logits, name='softmax_OUT')
+        tf.add_to_collection('softmax_OUT', self.seq_outputs)
 
-    loss = tf.nn.seq2seq.sequence_loss_by_example(
+    loss = tf.contrib.legacy_seq2seq.sequence_loss_by_example(
         [logits],
         [tf.reshape(input_.targets, [-1])],
         [tf.ones([batch_size * num_steps], dtype=data_type())])
@@ -125,9 +125,9 @@ class Basic_RNN_Model(object):
       srn_cell = tf.contrib.rnn.BasicRNNCell(size, None, tf.nn.sigmoid)
 
       if is_training and config.keep_prob < 1:
-          srn_cell = tf.nn.rnn_cell.DropoutWrapper(
+          srn_cell = tf.contrib.rnn.DropoutWrapper(
               srn_cell, output_keep_prob=config.keep_prob)
-      cell = tf.nn.rnn_cell.MultiRNNCell([srn_cell] * config.num_layers, state_is_tuple=False)
+      cell = tf.contrib.rnn.MultiRNNCell([srn_cell] * config.num_layers, state_is_tuple=False)
       # ====================================================================================== / SRN
 
       self._initial_state = cell.zero_state(batch_size, data_type())
@@ -160,7 +160,7 @@ class Basic_RNN_Model(object):
       softmax_b = tf.get_variable("softmax_b", [vocab_size], dtype=data_type())
       logits = tf.matmul(output, softmax_w) + softmax_b
       if not is_training: # ***** experimental feature *****
-          self.seq_outputs = tf.nn.softmax(logits)
+          self.seq_outputs = tf.nn.softmax(logits, name='softmax_OUT')
 
       # ------------- SPARSE SOFTMAX CROSS ENTROPY WITH LOGITS ----------------
       labels = tf.reshape(input_.targets, [-1])

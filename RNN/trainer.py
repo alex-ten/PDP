@@ -3,23 +3,26 @@ from __future__ import division
 from __future__ import print_function
 
 import time
+import pickle
 import numpy as np
 import tensorflow as tf
 
-from RNN.classes.RNNModels import Basic_LSTM_Model, Basic_RNN_Model
+from RNN.classes.RNN_Models import Basic_LSTM_Model, Basic_RNN_Model
+from RNN.classes.Data import InputData
 from RNN.classes.Logger import Logger
 from RNN import reader
 
-from utilities.make_table import make_table
+from utilities.printProgress import printProgress
 from PDPATH import PDPATH
 
 flags = tf.flags
 logging = tf.logging
 
-flags.DEFINE_string("save_path", None,
-                    "Model output directory.")
-flags.DEFINE_bool("use_fp16", False,
-                  "Train using 16-bit floats instead of 32bit floats")
+flags.DEFINE_string("name", None, "Model name. If none, directories will be named with default names")
+flags.DEFINE_string("train_data", None, "Training data directory (must contain .train, .test, .valid .txt files).")
+flags.DEFINE_string("save_as", None, "Model output directory.")
+flags.DEFINE_bool("use_fp16", False, "Train using 16-bit floats instead of 32bit floats")
+flags.DEFINE_bool("prog", False, "Show progress bar in stdout (for interactive usage).")
 
 FLAGS = flags.FLAGS
 
@@ -32,33 +35,29 @@ def get_config():
     return Configs()
 
 
+def save_config(c, filename):
+    # Pickle a Configs object with .config extension
+    # Also save configs as a txt file
+    pickle.dump(c, open(filename+'.config', 'wb'))
+    with open(filename+'.config.txt', 'w') as txt:
+        txt.write('class Configs(object):\n')
+        for i in [attr for attr in dir(c) if not attr.startswith('__')]:
+            txt.write('    {} = {}\n'.format(i, c.__getattribute__(i)))
+
+
 class Configs(object):
-    init_scale = 0.05
+    init_scale = 0.04
     learning_rate = 1.0
-    max_grad_norm = 5
+    max_grad_norm = 10
     num_layers = 2
     num_steps = 35
-    hidden_size = 650
-    max_epoch = 6
-    max_max_epoch = 39
-    keep_prob = 0.5
-    lr_decay = 0.8
+    hidden_size = 1500
+    max_epoch = 14
+    max_max_epoch = 55
+    keep_prob = 0.35
+    lr_decay = 1/1.15
     batch_size = 20
     vocab_size = 10000
-
-
-class InputData(object):
-    """The input data."""
-    def __init__(self, config, data, testset=False, name=None):
-        # if testset:
-        #   do something different for input_data and targets
-        #       - We can discard targets and just look at relative ratios
-        self.vocab_size = config.vocab_size
-        self.batch_size = batch_size = config.batch_size
-        self.num_steps = num_steps = config.num_steps
-        self.epoch_size = ((len(data) // batch_size) - 1) // num_steps
-        self.input_data, self.targets = reader.enqueuer(
-            data, batch_size, num_steps, name=name)
 
 
 def run_epoch(session, model, eval_op=None, verbose=False):
@@ -113,14 +112,20 @@ def run_epoch(session, model, eval_op=None, verbose=False):
 
 
 def main(_):
-    path = PDPATH('/RNN/data/ptb_data')
+    if FLAGS.train_data: path = PDPATH('/RNN/train_data/'+FLAGS.train_data)
+    else:
+        print('Provide path to training data, e.g: train.py --train_data=\'path\'')
+        return
+
+    logger = Logger()
+
     raw_data = reader.raw_data(path)
     train_data, valid_data, test_data, _ = raw_data
 
     config = get_config()
     eval_config = get_config()
-    eval_config.batch_size = 1
-    eval_config.num_steps = 1
+    eval_config.batch_size = 4
+    eval_config.num_steps = 3
 
     with tf.Graph().as_default():
         initializer = tf.random_uniform_initializer(-config.init_scale,
@@ -129,43 +134,56 @@ def main(_):
         with tf.name_scope("Train"):
             train_input = InputData(config=config, data=train_data, name="TrainInput")
             with tf.variable_scope("Model", reuse=None, initializer=initializer):
-                m = Basic_LSTM_Model(is_training=True, config=config, input_=train_input)
+                m = Basic_LSTM_Model(is_training=True, config=config, input_=train_input)       # <--- Choose model architecture here
             tf.summary.scalar("Training Loss", m.cost)
             tf.summary.scalar("Learning Rate", m.lr)
 
         with tf.name_scope("Test"):
           test_input = InputData(config=eval_config, data=test_data, name="TestInput")
           with tf.variable_scope("Model", reuse=True, initializer=initializer):
-            mtest = Basic_LSTM_Model(is_training=False, config=eval_config, input_=test_input)
+            mtest = Basic_LSTM_Model(is_training=False, config=eval_config, input_=test_input)  # <--- And here
 
-        logger = Logger()
-        sv = tf.train.Supervisor(logdir = logger.child_path)
+        logger.make_child_i(logger.logs_path, 'RNNlog')
+        saver = tf.train.Saver(tf.get_collection(tf.GraphKeys.VARIABLES, scope='Model'), sharded=False)
+        sv = tf.train.Supervisor(logdir = logger.logs_child_path, saver=saver)
         perp_train = []
         perp_test = []
         out = []
         with sv.managed_session(config=tf.ConfigProto(log_device_placement=True)) as session:
+            if FLAGS.prog: printProgress(0, config.max_max_epoch, 'Training', 'Complete', barLength=60)
             for i in range(config.max_max_epoch):
                 lr_decay = config.lr_decay ** max(i + 1 - config.max_epoch, 1)
                 m.assign_lr(session, config.learning_rate * lr_decay)
-                # print("Epoch: {} Learning rate: {}".format(i, np.around(session.run(m.lr),3)))
                 train_perplexity, _ = run_epoch(session, m, eval_op=m.train_op, verbose=False)
                 perp_train.append(train_perplexity)
 
-                if i % (config.max_max_epoch // 10) == 0:
+                if config.max_max_epoch >= 10:
+                    if (i % (config.max_max_epoch // 10) == 0):
+                        test_perplexity, outputs = run_epoch(session, mtest)
+                        print("\nEpoch: {}\nTrain perplexity = {}\nTest perplexity: {}".format(i, train_perplexity,
+                                                                                               test_perplexity))
+                        perp_test.append(test_perplexity)
+                        out.append(outputs)
+                else:
                     test_perplexity, outputs = run_epoch(session, mtest)
-                    print("Epoch: {}\nTrain perplexity = {}\nTest perplexity: {}".format(i, train_perplexity, test_perplexity))
-                    print(make_table(a = outputs,
-                                     rkeys = [y for y in reader._read_words(path+'/tiny.test.txt')[1:] if y != '<eos>'],
-                                     ckeys = reader._build_vocab(path+'/tiny.test.txt', True)))
-                    print(session.run(mtest._input.input_data).reshape([1,-1]))
-                    print(session.run(mtest._input.targets).reshape([1,-1]))
-                    print(np.argmax(outputs, axis=1))
+                    print("\nEpoch: {}\nTrain perplexity = {}\nTest perplexity: {}".format(i, train_perplexity, test_perplexity))
                     perp_test.append(test_perplexity)
                     out.append(outputs)
 
-        if FLAGS.save_path:
-            print("Saving model to {}.".format(PDPATH('/RNN/')+FLAGS.save_path))
-            sv.saver.save(session, FLAGS.save_path, global_step=sv.global_step)
+                if FLAGS.prog:
+                    printProgress(i+1, config.max_max_epoch, 'Training', 'Complete', barLength=60)
+
+
+            if FLAGS.save_as:
+                if FLAGS.name:
+                    save_to = logger.make_child(logger.trained_path, FLAGS.name)
+                else:
+                    save_to = logger.make_child_i(logger.trained_path, 'model')
+
+                spath = save_to +'/'+ FLAGS.save_as
+                print("\nSaving model to {}.".format(spath))
+                saver.save(session, spath, global_step=sv.global_step)
+                save_config(config, filename=spath)
 
 
 if __name__ == "__main__": tf.app.run()
