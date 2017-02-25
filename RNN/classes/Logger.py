@@ -3,6 +3,7 @@ import os
 
 class Logger():
     def __init__(self, path=''):
+        self.sess_index = 0
         self.logs_path = PDPATH() + '/RNN/logs/'
         self.trained_path = PDPATH() + '/RNN/trained_models/'
         self.may_be_make_dir(self.logs_path)
