@@ -149,7 +149,13 @@ def main(_):
         perp_train = []
         perp_test = []
         out = []
-        with sv.managed_session(config=tf.ConfigProto(log_device_placement=True)) as session:
+
+        # Session runs here
+        # Setup session configs
+        sess_config = tf.ConfigProto(log_device_placement=True)
+        sess_config.gpu_options.allow_growth = True
+        # Start session context manager by calling to tf.train.Supervisor's managed_session
+        with sv.managed_session(config=sess_config) as session:
             if FLAGS.prog: printProgress(0, config.max_max_epoch, 'Training', 'Complete', barLength=60)
             for i in range(config.max_max_epoch):
                 lr_decay = config.lr_decay ** max(i + 1 - config.max_epoch, 1)
