@@ -1,0 +1,13 @@
+class Configs(object):
+    batch_size = 4
+    hidden_size = 20
+    init_scale = 0.1
+    keep_prob = 0.9
+    learning_rate = 0.01
+    lr_decay = 1
+    max_epoch = 5000
+    max_grad_norm = 10
+    max_max_epoch = 5000
+    num_layers = 1
+    num_steps = 3
+    vocab_size = 16
