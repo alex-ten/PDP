@@ -4,12 +4,84 @@ from __future__ import division
 from __future__ import print_function
 
 import collections
+import pickle
 import os
 
 import tensorflow as tf
 from PDPATH import PDPATH
 
+# additions to tensorflow tutorial
+class Vocab(object):
+    def __init__(self, s2id, end_of_sequence='<eos>', unknown_string = '<unk>'):
+        self.s2id = s2id
+        self.id2s = {}
+        self.eos = end_of_sequence
+        self.unk = unknown_string
+        for k,v in s2id.items():
+            self.id2s[v] = k
 
+    def getid(self, s):
+        try:
+            return self.s2id[s]
+        except KeyError:
+            return self.s2id[self.unk]
+
+    def gets(self, id):
+        try:
+            return self.id2s[id]
+        except KeyError:
+            print('ID {} is not in vocab'.format(id))
+
+
+def _read_raw_test(filename):
+    # reads test from file and splits each line into context (key) and targets (list of values)
+    r = collections.OrderedDict()
+    with tf.gfile.GFile(filename, 'r') as f:
+        for l in f.readlines():
+            context, items = l.split(sep='%')
+            items = items.replace('\n', '')            # Remove the newline character
+            items = items.replace(' ', '')             # Remove whitespaces
+            r[context] = items.split(sep=',')          # Split by separator (store targs by context in dict)
+    return r
+
+
+def _test_to_ids(test, vocab):
+    # converts a test dict to word ids from vocab and returns a list of items
+    # each item is a list of test items in their contexts
+    # maxlen is returned for padding
+    ids = []
+    meta = []
+    for context, items in test.items():
+        # Include meta information (length of context and number of targets)
+        cont_len = len(context.split())
+        num_targs = len(items)
+        meta.append((cont_len, num_targs))
+
+        # Convert test dict to ids from vocab
+        test_seqs = [(context + i + ' ' + vocab.eos) for i in items]
+        for seq in test_seqs:
+            converted_seq = [vocab.getid(i) for i in seq.split()]
+            ids.append(converted_seq)
+    return ids, meta
+
+
+def make_test(filename, vocab):
+    test_dict = _read_raw_test(filename)
+    converted_test = _test_to_ids(test_dict, vocab)
+    return converted_test
+
+
+
+def get_vocab(filename):
+    # unpickle Vocab
+    f = PDPATH('/RNN/vocabs/{}'.format(filename))
+    print(f)
+    v = pickle.load(open(f, 'rb'))
+    print(type(v))
+    return v
+
+
+# functions from tensorflow tutorial
 def _read_words(filename):
   with tf.gfile.GFile(filename, "r") as f:
     # Return a long list of word sequences with <eos> in-between individual sentences
@@ -104,19 +176,33 @@ def enqueuer(raw_data, batch_size, num_steps, name=None):
     y = tf.slice(data, [0, i * num_steps + 1], [batch_size, num_steps])
     return x, y
 
-
-def main():
-    file = PDPATH('/RNN/data/tiny_data/tiny.train.txt')
+# main scripts
+def demo1():
+    file = PDPATH('/RNN/test_data/ptb_word_data/test.txt')
     print('Step 1. Convert raw corpus into a long list:')
     print(_read_words(file))
 
-    print('Step 2. Build vocab (assign strings to IDs):')
+    print('\nStep 2. Build vocab (assign strings to IDs):')
     print(_build_vocab(file))
 
-    print('Step 3. Convert words into word IDs:')
+    print('\nStep 3. Convert words into word IDs:')
     print(_file_to_word_ids(file, _build_vocab(file)))
 
-    print('Add step. Sort unique words by frequency or alphabetically:')
+    print('\nAdd step. Sort unique words by frequency or alphabetically:')
     print(_build_vocab(file, True))
 
-if __name__=='__main__': main()
+def demo2():
+    file = PDPATH('/RNN/test_data/coffee.txt')
+    v = get_vocab('ptb.vocab')
+    a = _read_raw_test(file)
+    c,d = _test_to_ids(a, v)
+    for i in c: print(i)
+
+def make_vocab():
+
+    file = PDPATH('/RNN/train_data/tiny_data/train.txt')
+    s2id = _build_vocab(file)
+    V = Vocab(s2id)
+    pickle.dump(V, open(PDPATH('/RNN/vocabs/tiny.vocab'), 'wb'))
+
+if __name__=='__main__': demo2()
