@@ -1,2 +1,6 @@
-A % A,B,C,D,E,F
-D % A,B,C,D,E,F
+A   % B, F
+A B % A, B, C, D, E, F
+A F % A, B, C, D, E, F
+D   % B, F
+D B % A, B, C, D, E, F
+D G % A, B, C, D, E, F
