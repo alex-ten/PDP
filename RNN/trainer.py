@@ -26,6 +26,35 @@ flags.DEFINE_bool("prog", False, "Show progress bar in stdout (for interactive u
 
 FLAGS = flags.FLAGS
 
+class Configs(object):
+    init_scale = 0.04
+    learning_rate = 1.0
+    max_grad_norm = 10
+    num_layers = 2
+    num_steps = 35
+    hidden_size = 1500
+    max_epoch = 14
+    max_max_epoch = 55
+    keep_prob = 0.35
+    lr_decay = 1/1.15
+    batch_size = 20
+    vocab_size = 10000
+
+
+class TinyConfigs(object):
+    init_scale = 0.1
+    learning_rate = 0.01
+    max_grad_norm = 10
+    num_layers = 1
+    num_steps = 3
+    hidden_size = 20
+    max_epoch = 5000
+    max_max_epoch = 5000
+    keep_prob = .9
+    lr_decay = 1
+    batch_size = 4
+    vocab_size = 16
+
 
 def data_type():
   return tf.float32
@@ -43,21 +72,6 @@ def save_config(c, filename):
         txt.write('class Configs(object):\n')
         for i in [attr for attr in dir(c) if not attr.startswith('__')]:
             txt.write('    {} = {}\n'.format(i, c.__getattribute__(i)))
-
-
-class Configs(object):
-    init_scale = 0.04
-    learning_rate = 1.0
-    max_grad_norm = 10
-    num_layers = 2
-    num_steps = 35
-    hidden_size = 1500
-    max_epoch = 14
-    max_max_epoch = 55
-    keep_prob = 0.35
-    lr_decay = 1/1.15
-    batch_size = 20
-    vocab_size = 10000
 
 
 def run_epoch(session, model, eval_op=None, verbose=False):
@@ -122,10 +136,10 @@ def main(_):
     raw_data = reader.raw_data(path)
     train_data, valid_data, test_data, _ = raw_data
 
-    config = get_config()
-    eval_config = get_config()
-    eval_config.batch_size = 1
-    eval_config.num_steps = 1
+    config = TinyConfigs()
+    eval_config = TinyConfigs()
+    eval_config.batch_size = 4
+    eval_config.num_steps = 3
 
     with tf.Graph().as_default():
         initializer = tf.random_uniform_initializer(-config.init_scale,
@@ -144,7 +158,9 @@ def main(_):
             mtest = Basic_LSTM_Model(is_training=False, config=eval_config, input_=test_input)  # <--- And here
 
         logger.make_child_i(logger.logs_path, 'RNNlog')
-        saver = tf.train.Saver(tf.get_collection(tf.GraphKeys.VARIABLES, scope='Model'), sharded=False)
+        saver = tf.train.Saver(var_list=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='Model'),
+                               sharded=False,
+                               write_version=tf.train.SaverDef.V2)
         sv = tf.train.Supervisor(logdir = logger.logs_child_path, saver=saver)
         perp_train = []
         perp_test = []
@@ -188,7 +204,7 @@ def main(_):
 
                 spath = save_to +'/'+ FLAGS.save_as
                 print("\nSaving model to {}.".format(spath))
-                saver.save(session, spath, global_step=sv.global_step)
+                saver.save(session, spath+'-tfckpt', global_step=sv.global_step)
                 save_config(config, filename=spath)
 
 
