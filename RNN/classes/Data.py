@@ -31,7 +31,6 @@ class TestData(object):
         for irow, trow, seq in zip(test_inp, test_targ, data):
             irow[0:len(seq)-1] = np.array(seq[0:-1]).astype(int)
             trow[0:len(seq)-1] = np.array(seq[1:]).astype(int)
-
         self.input_data = test_inp
         self.targets = test_targ
 

@@ -10,7 +10,7 @@ import os
 import tensorflow as tf
 from PDPATH import PDPATH
 
-# additions to tensorflow tutorial
+# additions to tensorflow tutorial (see below)
 class Vocab(object):
     def __init__(self, s2id, end_of_sequence='<eos>', unknown_string = '<unk>'):
         self.s2id = s2id
@@ -75,13 +75,11 @@ def make_test(filename, vocab):
 def get_vocab(filename):
     # unpickle Vocab
     f = PDPATH('/RNN/vocabs/{}'.format(filename))
-    print(f)
     v = pickle.load(open(f, 'rb'))
-    print(type(v))
     return v
 
 
-# functions from tensorflow tutorial
+# reader functions from tensorflow tutorial
 def _read_words(filename):
   with tf.gfile.GFile(filename, "r") as f:
     # Return a long list of word sequences with <eos> in-between individual sentences
