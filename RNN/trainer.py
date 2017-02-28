@@ -48,12 +48,12 @@ class TinyConfigs(object):
     num_layers = 1
     num_steps = 3
     hidden_size = 20
-    max_epoch = 5000
-    max_max_epoch = 5000
-    keep_prob = .9
+    max_epoch = 10000
+    max_max_epoch = 10000
+    keep_prob = 1
     lr_decay = 1
     batch_size = 4
-    vocab_size = 16
+    vocab_size = 8
 
 
 def data_type():
@@ -204,7 +204,7 @@ def main(_):
 
                 spath = save_to +'/'+ FLAGS.save_as
                 print("\nSaving model to {}.".format(spath))
-                saver.save(session, spath+'-tfckpt', global_step=sv.global_step)
+                saver.save(session, spath, global_step=sv.global_step)
                 save_config(config, filename=spath)
 
 
