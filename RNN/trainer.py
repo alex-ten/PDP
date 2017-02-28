@@ -137,8 +137,8 @@ def main(_):
     raw_data = reader.raw_data(path)
     train_data, valid_data, test_data, _ = raw_data
 
-    config = TinyConfigs()
-    eval_config = TinyConfigs()
+    config = Configs()
+    eval_config = Configs()
     eval_config.batch_size = 4
     eval_config.num_steps = 3
 
