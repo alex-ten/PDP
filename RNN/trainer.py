@@ -169,7 +169,7 @@ def main(_):
 
         # Session runs here
         # Setup session configs
-        sess_config = tf.ConfigProto(log_device_placement=True)
+        sess_config = tf.ConfigProto(log_device_placement=False)
         sess_config.gpu_options.allow_growth = True
         # Start session context manager by calling to tf.train.Supervisor's managed_session
         with sv.managed_session(config=sess_config) as session:
