@@ -14,7 +14,7 @@ from RNN.classes.RNN_Models import Basic_LSTM_Model, Basic_RNN_Model
 from RNN.reader import Vocab
 from RNN.classes.Data import TestData
 from RNN import reader
-from RNN.trainer import run_epoch, TinyConfigs
+from RNN.trainer import run_epoch, TinyConfigs, Configs
 
 flags = tf.flags
 logging = tf.logging
@@ -24,8 +24,10 @@ flags.DEFINE_string("vocab", None, "Path to vocabulary")
 
 FLAGS = flags.FLAGS
 
+
 def peek(a):
     print(np.around(a,2))
+
 
 def data_type():
   return tf.float32
@@ -54,7 +56,7 @@ def run_test(session, model, model_input):
 
     # Create an empty container
     r = np.empty([num_condits, max_targs])
-    r[:] = np.NAN
+    r[:] = 0
 
     # Extract useful data
     targ_preds = np.squeeze(preds[np.arange(num_preds),targs])
@@ -93,6 +95,8 @@ def main(_):
                     continue
 
             b = run_test(session=session, model=mtest, model_input=test_input)
+            print(b)
+            b = b / np.sum(b, axis=1).reshape([-1,1])
             print(b)
 
 if __name__ == "__main__": tf.app.run()
