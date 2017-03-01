@@ -13,18 +13,26 @@ from PDPATH import PDPATH
 # additions to tensorflow tutorial (see below)
 class Vocab(object):
     def __init__(self, s2id, end_of_sequence='<eos>', unknown_string = '<unk>'):
-        self.s2id = s2id
-        self.id2s = {}
         self.eos = end_of_sequence
         self.unk = unknown_string
+        self.s2id = s2id
+        self.id2s = {}
         for k,v in s2id.items():
             self.id2s[v] = k
+
+        if not self.unk in list(self.s2id.keys()):
+            unk_id = max(list(self.id2s.keys())) + 1
+            self.s2id[self.unk] = unk_id
+            self.id2s[unk_id] = self.unk
 
     def getid(self, s):
         try:
             return self.s2id[s]
         except KeyError:
-            return self.s2id[self.unk]
+            try:
+                return self.s2id[self.unk]
+            except KeyError:
+                return
 
     def gets(self, id):
         try:
@@ -51,6 +59,7 @@ def _test_to_ids(test, vocab):
     # maxlen is returned for padding
     ids = []
     meta = []
+    unks = []
     for context, items in test.items():
         # Include meta information (length of context and number of targets)
         cont_len = len(context.split())
@@ -60,16 +69,21 @@ def _test_to_ids(test, vocab):
         # Convert test dict to ids from vocab
         test_seqs = [(context + i + ' ' + vocab.eos) for i in items]
         for seq in test_seqs:
-            converted_seq = [vocab.getid(i) for i in seq.split()]
+            spl = seq.split()
+            [unks.append(i) for i in spl if vocab.getid(i) == vocab.getid(vocab.unk)]
+            converted_seq = [vocab.getid(i) for i in spl]
             ids.append(converted_seq)
-    return ids, meta
+    return ids, meta, unks
 
 
 def make_test(filename, vocab):
+    print('Preparing test...')
     test_dict = _read_raw_test(filename)
-    converted_test = _test_to_ids(test_dict, vocab)
-    return converted_test
-
+    converted_test, meta, unks = _test_to_ids(test_dict, vocab)
+    print('Found {} unknown items:'.format(len(unks)))
+    for unk in unks:
+        print('  * {}'.format(unk))
+    return converted_test, meta
 
 
 def get_vocab(filename):
@@ -201,6 +215,6 @@ def make_vocab():
     file = PDPATH('/RNN/train_data/tiny_data/train.txt')
     s2id = _build_vocab(file)
     V = Vocab(s2id)
-    pickle.dump(V, open(PDPATH('/RNN/vocabs/tiny.vocab'), 'wb'))
+    pickle.dump(V, open(PDPATH('/RNN/vocabs/tiny.voc'), 'wb'))
 
-if __name__=='__main__': demo2()
+if __name__=='__main__': make_vocab()
