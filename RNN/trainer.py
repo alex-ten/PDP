@@ -10,9 +10,11 @@ import tensorflow as tf
 from RNN.classes.RNN_Models import Basic_LSTM_Model, Basic_RNN_Model
 from RNN.classes.Data import InputData
 from RNN.classes.Logger import Logger
+from RNN.classes.Configs import Configs
 from RNN import reader
 
 from utilities.printProgress import printProgress
+from utilities.save_plot import save_plot
 from PDPATH import PDPATH
 
 flags = tf.flags
@@ -26,36 +28,6 @@ flags.DEFINE_bool("prog", False, "Show progress bar in stdout (for interactive u
 
 FLAGS = flags.FLAGS
 
-class Configs(object):
-    """Medium config."""
-    init_scale = 0.05
-    learning_rate = 1.0
-    max_grad_norm = 5
-    num_layers = 2
-    num_steps = 35
-    hidden_size = 650
-    max_epoch = 6
-    max_max_epoch = 39
-    keep_prob = 0.5
-    lr_decay = 0.8
-    batch_size = 20
-    vocab_size = 10000
-
-
-class TinyConfigs(object):
-    init_scale = 0.1
-    learning_rate = 0.01
-    max_grad_norm = 10
-    num_layers = 1
-    num_steps = 3
-    hidden_size = 20
-    max_epoch = 10000
-    max_max_epoch = 10000
-    keep_prob = 1
-    lr_decay = 1
-    batch_size = 4
-    vocab_size = 8
-
 
 def data_type():
   return tf.float32
@@ -64,6 +36,15 @@ def data_type():
 def get_config():
     return Configs()
 
+
+def get_model(cell, is_training, **kwargs):
+    if cell == 'LSTM':
+        return Basic_LSTM_Model(is_training=is_training, config=kwargs['config'], input_=kwargs['input_'])
+    elif cell == 'RNN':
+        return Basic_RNN_Model(is_training=is_training, config=kwargs['config'], input_=kwargs['input_'], BPTT=True)
+    elif cell == 'SRN':
+        return Basic_RNN_Model(is_training=is_training, config=kwargs['config'], input_=kwargs['input_'], BPTT=False)
+    return
 
 def save_config(c, filename):
     # Pickle a Configs object with .config extension
@@ -127,6 +108,24 @@ def run_epoch(session, model, eval_op=None, verbose=False):
 
 
 def main(_):
+
+    config = Configs(batch_size = 4,
+                    hidden_size = 20,
+                    init_scale = 0.5,
+                    keep_prob = 1,
+                    learning_rate = .5,
+                    lr_decay = 1,
+                    max_epoch = 1000,
+                    max_grad_norm = 10,
+                    max_max_epoch = 1000,
+                    model = 'LSTM',      # Set of available models: 'LSTM', 'RNN', 'SRN'
+                    num_layers = 1,
+                    num_steps = 3,
+                    vocab_size = 16)
+    eval_config = config.clone()
+    eval_config.batch_size = 4
+    eval_config.num_steps = 3
+
     if FLAGS.train_data: path = PDPATH('/RNN/train_data/'+FLAGS.train_data)
     else:
         print('Provide path to training data, e.g: train.py --train_data=\'path\'')
@@ -137,34 +136,35 @@ def main(_):
     raw_data = reader.raw_data(path)
     train_data, valid_data, test_data, _ = raw_data
 
-    config = Configs()
-    eval_config = Configs()
-    eval_config.batch_size = 4
-    eval_config.num_steps = 3
-
     with tf.Graph().as_default():
         initializer = tf.random_uniform_initializer(-config.init_scale,
-                                                    config.init_scale,
-                                                    seed = 1)
+                                                     config.init_scale,
+                                                     seed = 1)
         with tf.name_scope("Train"):
             train_input = InputData(config=config, data=train_data, name="TrainInput")
             with tf.variable_scope("Model", reuse=None, initializer=initializer):
-                m = Basic_LSTM_Model(is_training=True, config=config, input_=train_input)       # <--- Choose model architecture here
+                m = get_model(config.model, is_training=True, config=config, input_=train_input)
             tf.summary.scalar("Training Loss", m.cost)
             tf.summary.scalar("Learning Rate", m.lr)
 
+        with tf.name_scope("Valid"):
+            valid_input = InputData(config=config, data=valid_data, name="ValidInput")
+            with tf.variable_scope("Model", reuse=True, initializer=initializer):
+                mvalid = get_model(config.model, is_training=False, config=config, input_=valid_input)
+            tf.summary.scalar("Validation Loss", mvalid.cost)
+
         with tf.name_scope("Test"):
-          test_input = InputData(config=eval_config, data=test_data, name="TestInput")
-          with tf.variable_scope("Model", reuse=True, initializer=initializer):
-            mtest = Basic_LSTM_Model(is_training=False, config=eval_config, input_=test_input)  # <--- And here
+            test_input = InputData(config=eval_config, data=test_data, name="TestInput")
+            with tf.variable_scope("Model", reuse=True, initializer=initializer):
+                mtest = get_model(config.model, is_training=False, config=eval_config, input_=test_input)
 
         logger.make_child_i(logger.logs_path, 'RNNlog')
         saver = tf.train.Saver(var_list=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='Model'),
                                sharded=False,
                                write_version=tf.train.SaverDef.V2)
         sv = tf.train.Supervisor(logdir = logger.logs_child_path, saver=saver)
-        perp_train = []
-        perp_test = []
+        train_log = []
+        valid_log = []
         out = []
 
         # Session runs here
@@ -175,27 +175,33 @@ def main(_):
         with sv.managed_session(config=sess_config) as session:
             if FLAGS.prog: printProgress(0, config.max_max_epoch, 'Training', 'Complete', barLength=60)
             for i in range(config.max_max_epoch):
+                fin = i + 1
+                valid_perplexity, _ = run_epoch(session, mvalid)
+                valid_log.append(valid_perplexity)
+                if len(valid_log) >= 2:
+                    if valid_log[-1] > valid_log[-2]:
+                        break
+
                 lr_decay = config.lr_decay ** max(i + 1 - config.max_epoch, 1)
                 m.assign_lr(session, config.learning_rate * lr_decay)
-                train_perplexity, _ = run_epoch(session, m, eval_op=m.train_op, verbose=False)
-                perp_train.append(train_perplexity)
 
-                if config.max_max_epoch >= 10:
-                    if (i % (config.max_max_epoch // 10) == 0):
-                        test_perplexity, outputs = run_epoch(session, mtest)
-                        print("\nEpoch: {}\nTrain perplexity = {}\nTest perplexity: {}".format(i, train_perplexity,
-                                                                                               test_perplexity))
-                        perp_test.append(test_perplexity)
-                        out.append(outputs)
+                train_perplexity, _ = run_epoch(session, m, eval_op=m.train_op)
+                train_log.append(train_perplexity)
+
+                output_frequency = 5
+                if config.max_max_epoch >= output_frequency:
+                    if (i % (config.max_max_epoch // output_frequency) == 0):
+                        print("Epoch: {}    Train perplexity = {}   Validation perplexity: {}".format(i, train_perplexity,
+                                                                                               valid_perplexity))
                 else:
-                    test_perplexity, outputs = run_epoch(session, mtest)
-                    print("\nEpoch: {}\nTrain perplexity = {}\nTest perplexity: {}".format(i, train_perplexity, test_perplexity))
-                    perp_test.append(test_perplexity)
-                    out.append(outputs)
-
+                    print("Epoch: {}    Train perplexity = {}   Validation perplexity: {}".format(i, train_perplexity,
+                                                                                                 valid_perplexity))
                 if FLAGS.prog:
                     printProgress(i+1, config.max_max_epoch, 'Training', 'Complete', barLength=60)
 
+            test_perplexity, outputs = run_epoch(session, mtest)
+            print('\nStopped training on epoch {}'.format(fin))
+            print("Test perplexity: {}".format(test_perplexity))
 
             if FLAGS.save_as:
                 if FLAGS.name:
@@ -207,6 +213,7 @@ def main(_):
                 print("\nSaving model to {}.".format(spath))
                 saver.save(session, spath, global_step=sv.global_step)
                 save_config(config, filename=spath)
+                save_plot('Learning curves from {}'.format(FLAGS.save_as), save_to, train_log, valid_log)
 
 
 if __name__ == "__main__": tf.app.run()

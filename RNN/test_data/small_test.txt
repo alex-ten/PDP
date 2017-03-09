@@ -1,0 +1,4 @@
+the dog  % is, are, has, have, was, were
+the dogs % is, are, has, have, was, were
+the boy  % is, are, has, have, was, were
+the boys % is, are, has, have, was, were

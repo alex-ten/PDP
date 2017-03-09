@@ -11,10 +11,11 @@ import matplotlib.pyplot as plt
 from PDPATH import PDPATH
 
 from RNN.classes.RNN_Models import Basic_LSTM_Model, Basic_RNN_Model
+from RNN.classes.Configs import Configs
 from RNN.reader import Vocab
 from RNN.classes.Data import TestData
 from RNN import reader
-from RNN.trainer import run_epoch, TinyConfigs, Configs
+from RNN.trainer import run_epoch
 
 flags = tf.flags
 logging = tf.logging
@@ -40,8 +41,6 @@ def load_configs(path):
 
 
 def run_test(session, model, model_input):
-    np.set_printoptions(2,suppress=True)
-
     # Run test epoch
     perp, preds = run_epoch(session, model)
 
@@ -94,9 +93,12 @@ def main(_):
                     saver.restore(session, os.path.join(model_path,ckpt))
                     continue
 
+
+            np.set_printoptions(precision=4, suppress=False, linewidth=100)
             b = run_test(session=session, model=mtest, model_input=test_input)
             print(b)
             b = b / np.sum(b, axis=1).reshape([-1,1])
+            np.set_printoptions(precision=4, suppress=False, linewidth=100)
             print(b)
 
 if __name__ == "__main__": tf.app.run()

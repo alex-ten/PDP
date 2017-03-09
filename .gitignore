@@ -98,4 +98,8 @@ FFBP/logdir/*
 
 FFBP/notes.txt
 
+RNN/trained_models/*
+
+RNN/test_data/*
+
 reference_files/*
