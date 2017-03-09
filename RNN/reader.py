@@ -189,7 +189,7 @@ def enqueuer(raw_data, batch_size, num_steps, name=None):
     return x, y
 
 # main scripts
-def demo1():
+def reader_demo():
     file = PDPATH('/RNN/test_data/ptb_word_data/test.txt')
     print('Step 1. Convert raw corpus into a long list:')
     print(_read_words(file))
@@ -203,18 +203,31 @@ def demo1():
     print('\nAdd step. Sort unique words by frequency or alphabetically:')
     print(_build_vocab(file, True))
 
-def demo2():
-    file = PDPATH('/RNN/test_data/coffee.txt')
-    v = get_vocab('ptb.vocab')
-    a = _read_raw_test(file)
-    c,d = _test_to_ids(a, v)
-    for i in c: print(i)
+def vocab_demo():
+    v = get_vocab('ptb.voc')
+    items = ['the', 'dog', 'dogs', 'boy', 'boys', 'is','are','has','have','was','were']
+    for i in items:
+        print(i, v.getid(i))
 
 def make_vocab():
-
     file = PDPATH('/RNN/train_data/tiny_data/train.txt')
     s2id = _build_vocab(file)
     V = Vocab(s2id)
     pickle.dump(V, open(PDPATH('/RNN/vocabs/tiny.voc'), 'wb'))
 
-if __name__=='__main__': make_vocab()
+
+def sandbox():
+    def f(filename, sorted_words_only=False):
+        # Long list of word sequences separated by <eos>
+        data = _read_words(filename)
+        # Stores tallies of unique words in data, e.g. {''<unk>': 4794, 'the': 4529, '<eos>': 3761}
+        counter = collections.Counter(data)
+        return counter
+    file = PDPATH('/RNN/train_data/ptb_word_data/train.txt')
+    d=f(file)
+
+    items = ['the', 'dog', 'dogs', 'boy', 'boys', 'is', 'are', 'has', 'have', 'was', 'were']
+    for i in items:
+        print(i, d[i])
+
+if __name__=='__main__': sandbox()
