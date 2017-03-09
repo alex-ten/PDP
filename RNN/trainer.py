@@ -29,8 +29,8 @@ flags.DEFINE_bool("prog", False, "Show progress bar in stdout (for interactive u
 FLAGS = flags.FLAGS
 
 
-def data_type():
-  return tf.float32
+def print_(i,t,v):
+    print("Epoch: {}    Train perplexity = {}   Validation perplexity: {}".format(i,t,v))
 
 
 def get_config():
@@ -45,6 +45,7 @@ def get_model(cell, is_training, **kwargs):
     elif cell == 'SRN':
         return Basic_RNN_Model(is_training=is_training, config=kwargs['config'], input_=kwargs['input_'], BPTT=False)
     return
+
 
 def save_config(c, filename):
     # Pickle a Configs object with .config extension
@@ -109,22 +110,22 @@ def run_epoch(session, model, eval_op=None, verbose=False):
 
 def main(_):
 
-    config = Configs(batch_size = 4,
-                    hidden_size = 20,
-                    init_scale = 0.5,
-                    keep_prob = 1,
-                    learning_rate = .5,
-                    lr_decay = 1,
-                    max_epoch = 1000,
+    config = Configs(batch_size = 20,
+                    hidden_size = 1500,
+                    init_scale = 0.04,
+                    keep_prob = 0.35,
+                    learning_rate = 1.0,
+                    lr_decay = 1/1.15,
+                    max_epoch = 14,
                     max_grad_norm = 10,
-                    max_max_epoch = 1000,
+                    max_max_epoch = 55,
                     model = 'LSTM',      # Set of available models: 'LSTM', 'RNN', 'SRN'
-                    num_layers = 1,
-                    num_steps = 3,
-                    vocab_size = 16)
+                    num_layers = 2,
+                    num_steps = 35,
+                    vocab_size = 10000)
     eval_config = config.clone()
-    eval_config.batch_size = 4
-    eval_config.num_steps = 3
+    eval_config.batch_size = 1
+    eval_config.num_steps = 1
 
     if FLAGS.train_data: path = PDPATH('/RNN/train_data/'+FLAGS.train_data)
     else:
@@ -190,12 +191,11 @@ def main(_):
 
                 output_frequency = 5
                 if config.max_max_epoch >= output_frequency:
-                    if (i % (config.max_max_epoch // output_frequency) == 0):
-                        print("Epoch: {}    Train perplexity = {}   Validation perplexity: {}".format(i, train_perplexity,
-                                                                                               valid_perplexity))
+                    if (i % (config.max_max_epoch // output_frequency) == 0) or i==config.max_max_epoch-1:
+                        print_(i, train_perplexity, valid_perplexity)
                 else:
-                    print("Epoch: {}    Train perplexity = {}   Validation perplexity: {}".format(i, train_perplexity,
-                                                                                                 valid_perplexity))
+                    print_(i, train_perplexity, valid_perplexity)
+
                 if FLAGS.prog:
                     printProgress(i+1, config.max_max_epoch, 'Training', 'Complete', barLength=60)
 
