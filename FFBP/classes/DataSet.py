@@ -11,7 +11,7 @@ class DataSet(object):
         self._marker_index = 0
 
     def permute(self):
-        if self._marker_index == self._num_examples or self._marker_index==0:
+        if self._marker_index == self._num_examples or self._marker_index == 0:
             rng_state = np.random.get_state()
             np.random.shuffle(self.images)
             np.random.set_state(rng_state)

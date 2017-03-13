@@ -1,4 +1,5 @@
 import pickle
+from PDPATH import PDPATH
 import numpy as np
 
 class NetworkData(object):
@@ -17,7 +18,7 @@ class NetworkData(object):
         self.num_layers = len(self.main)
         self.num_units = sum([x.size for x in self.main.values()])
 
-    def stdout(self):
+    def summary(self):
         print('')
         np.set_printoptions(precision=3, suppress=True, linewidth=200)
         print('==' * 10 + ' SNAPSHOT SUMMARY ' + '==' * 10, end='\n\n')
@@ -38,12 +39,26 @@ class NetworkData(object):
 
 
 def main():
-    path = input('Enter path to snapshot: ')
-    data = NetworkData(path)
-    print(data.epochs)
-    print(data.error)
-    print(data.inp_names)
-    print(data.inp_vects)
-    print(data.hyperparams)
+    proceed = True
+    usrdir = input('[FFBP Viewer] Provide user directory (if any), or press \'enter\' to use default directory: ')
+    usrdir = usrdir.strip()
+    while proceed:
+        path = input('[FFBP Viewer] Enter name of log directory OR corresponding index: ')
+        # Get path to snap file
+        try:
+            ID = int(path)
+            path = PDPATH('/FFBP{}/logs/FFBPlog_{}/snap.pkl'.format('/' + usrdir if len(usrdir) else '', path))
+        except ValueError:
+            ID = int(path.split(sep='_')[-1])
+            path = PDPATH('/FFBP{}/logs/'.format('/' + usrdir if len(usrdir) else '') + path + '/snap.pkl')
+        with open(path, 'rb'):
+            snap = NetworkData(path)
+            snap.summary()
+            print(snap.main['hidden1'])
+
+        print('[FFBP Viewer] Would you like to proceed?')
+        prompt = input("[y/n] -> ")
+        if prompt == 'n': proceed = False
+
 
 if __name__=='__main__': main()
