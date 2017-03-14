@@ -1,9 +1,13 @@
+import os
 import pickle
-from PDPATH import PDPATH
 import numpy as np
+
+
+from PDPATH import PDPATH
 
 class NetworkData(object):
     def __init__(self, path):
+        self.path = path.replace('snap.pkl','')
         with open(path, 'rb') as opened_file:
             snapshot = pickle.load(opened_file)
         self.error = snapshot.pop('error')
@@ -36,6 +40,16 @@ class NetworkData(object):
                                                         np.shape(v[0])[1]))
             print('\n')
         print('===' * 20, '')
+
+    def scsv(self, filename, layer, tind, variable):
+        if filename in os.listdir(self.path):
+            permit = 'ab'
+        else:
+            permit = 'wb'
+        a = self.main[layer].__dict__[variable][tind]
+        file = open(self.path + filename, mode=permit)
+        np.savetxt(file, a, delimiter=',')
+        file.close()
 
 
 def main():
