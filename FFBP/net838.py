@@ -11,9 +11,9 @@ from FFBP.classes.Layer import Layer
 from FFBP.classes.Network import Network
 from PDPATH import PDPATH
 
-path = PDPATH() + '/FFBP/data/f_net838.txt'
+path = PDPATH('/FFBP/data/f_net838.txt')
 trainSet = DataSet(path)
-testSet = trainSet
+testSet = DataSet(path)
 
 # ----------------------------- CONSTRUCTION -------------------------------
 

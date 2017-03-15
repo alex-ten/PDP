@@ -3,8 +3,8 @@ import numpy as np
 from collections import OrderedDict
 
 class DataSet(object):
-    def __init__(self, filename):
-        self.images, self.labels, self.names = self._load_txt(filename)
+    def __init__(self, filename, datatype=float):
+        self.images, self.labels, self.names = self._load_txt(filename, datatype)
         self.image_size = len(self.images[0])
         self._num_examples = len(self.images)
         self._epochs_completed = 0
@@ -54,7 +54,7 @@ class DataSet(object):
     def split_set(self,train,valid,test):
         pass
 
-    def _load_txt(self, filename):
+    def _load_txt(self, filename, datatype):
         imgs = []
         lbls = []
         names = OrderedDict()
@@ -64,9 +64,9 @@ class DataSet(object):
                 continue
             else:
                 l = line.split(sep=',')
-                imgs.append([float(x) for x in l[1].split()])
+                imgs.append([datatype(x) for x in l[1].split()])
                 names[l[0].split()[0]] = imgs[-1]
-                lbls.append([float(x) for x in l[2].split()])
+                lbls.append([datatype(x) for x in l[2].split()])
         imgs_np_array = np.array(imgs)
         lbls_np_array = np.array(lbls)
         return imgs_np_array, lbls_np_array, names
