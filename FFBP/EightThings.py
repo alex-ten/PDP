@@ -11,7 +11,7 @@ from FFBP.classes.Network import Network
 from PDPATH import PDPATH
 
 # ----------------------------- BUILD -----------------------------
-path_to_trainset = PDPATH() + '/FFBP/data/f_EightThings.txt'
+path_to_trainset = PDPATH('/FFBP/data/f_EightThings.txt')
 ET = DataSet(path_to_trainset)
 
 item = tf.placeholder(tf.float32, shape=[None,8], name='item')
