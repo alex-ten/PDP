@@ -64,9 +64,9 @@ class DataSet(object):
                 continue
             else:
                 l = line.split(sep=',')
-                imgs.append([int(x) for x in l[1].split()])
+                imgs.append([float(x) for x in l[1].split()])
                 names[l[0].split()[0]] = imgs[-1]
-                lbls.append([int(x) for x in l[2].split()])
+                lbls.append([float(x) for x in l[2].split()])
         imgs_np_array = np.array(imgs)
         lbls_np_array = np.array(lbls)
         return imgs_np_array, lbls_np_array, names

@@ -22,7 +22,7 @@ class NetworkData(object):
         self.num_layers = len(self.main)
         self.num_units = sum([x.size for x in self.main.values()])
 
-    def summary(self):
+    def sum(self):
         print('')
         np.set_printoptions(precision=3, suppress=True, linewidth=200)
         print('==' * 10 + ' SNAPSHOT SUMMARY ' + '==' * 10, end='\n\n')

@@ -30,7 +30,7 @@ class Logger():
         self.sess_index = 0
         self.parent_path = PDPATH() + '/FFBP{}/logs'.format('/'+ path if len(path) else '')
         self.may_be_make_parent()
-        self.child_path = self.may_be_make_child()
+        self.child_path = self.make_child_i(self.parent_path)
 
     def may_be_make_parent(self):
         try:
@@ -38,17 +38,19 @@ class Logger():
         except FileExistsError:
             pass
 
-    def may_be_make_child(self):
-        last_ind = self.get_last()
+    def make_child_i(self, parent):
+        last_ind = self.get_last(parent, 'FFBPlog')
         if last_ind is not None:
             self.sess_index = last_ind + 1
         dirname = 'FFBPlog_{}'.format(self.sess_index)
-        child_path = self.parent_path + '/' + dirname
+        child_path = parent + '/' + dirname
         os.mkdir(child_path)
+        self.logs_child_path = child_path
         return child_path
 
-    def get_last(self):
-        contents = os.listdir(self.parent_path)
+    def get_last(self, parent, name):
+        contents = os.listdir(parent)
+        contents = [x for x in contents if x.startswith(name)]
         inds = [int(os.path.splitext(x)[0].split(sep='/')[-1].split(sep='_')[-1]) for x in contents]
         try:
             return sorted(inds).pop()

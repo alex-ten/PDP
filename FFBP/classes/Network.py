@@ -274,8 +274,11 @@ class Network(object):
             snap['inp_vects'].append(inp_vects)
             snap['epochs'] = np.append(snap['epochs'], [self.counter], axis=0)
             snap['error'] = np.append(snap['error'], [test_measure], axis=0)
-            # TO-DO: FIGURE OUT AN ELEGANT WAY TO DO THE APPENDING ================
-            snap['hyperparams'].append([self.settings['lrate'],self.settings['mrate'],self.settings['loss_func'],self.settings['batch_size'], self.settings['permute']])
+            snap['hyperparams'].append([self.settings['lrate'],
+                                        self.settings['mrate'],
+                                        self.settings['loss_func'],
+                                        self.settings['batch_size'],
+                                        self.settings['permute']])
             for l in self.model['network']:
                 vals = self.sess.run(self._fetch(l, attributes), feed_dict=batch)
                 if l.layer_type == 'output':
