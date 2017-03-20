@@ -11,7 +11,6 @@ class LayerLog(object):
         self.b = []
         self.net = []
         self.act = []
-        self.targ = []
         self.ded_W = []
         self.ded_b = []
         self.ded_net = []
