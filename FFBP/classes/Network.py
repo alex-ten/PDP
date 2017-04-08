@@ -98,6 +98,20 @@ class Network(object):
         init = init_rest()
         self.sess.run(init)
 
+    def set_lrate(self, lrate):
+        self.settings['lrate'] = lrate
+        self._opt = tf.train.MomentumOptimizer(lrate, self.settings['mrate'])
+        self.settings['opt_task'] = self._opt.minimize(self._loss, global_step=self._global_step)
+        init = init_rest()
+        self.sess.run(init)
+
+    def set_momentum(self, mrate):
+        self.settings['lrate'] = mrate
+        self._opt = tf.train.MomentumOptimizer(self.settings['lrate'], mrate)
+        self.settings['opt_task'] = self._opt.minimize(self._loss, global_step=self._global_step)
+        init = init_rest()
+        self.sess.run(init)
+
     def restore(self, path, xor=True):
         # NOT FINISHED
         # todo generalize this methods to enable restore of any set of variables

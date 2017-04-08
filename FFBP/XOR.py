@@ -56,3 +56,4 @@ xor.restore(path_to_params) # <-- Comment this line out for random weights
 
 
 code.interact(local = locals())
+
